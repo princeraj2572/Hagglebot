@@ -2,4 +2,6 @@
 @tailwind components;
 @tailwind utilities;
 
-body { @apply bg-navy-950 text-slate-100; }
+body { @apply bg-navy-950 text-slate-100 antialiased; }
+:focus-visible { outline: none; }
+input, textarea, select { color-scheme: dark; }
