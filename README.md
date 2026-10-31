@@ -117,7 +117,8 @@ pnpm build && pnpm start
 
 Then: **Load demo scenario** -> **Negotiate** -> open a chat -> **Confirm and Pay** on a deal and
 log in with your sandbox *buyer* account in the PayPal popup. Data is stored in `data/hagglebot.db`
-(override with `HAGGLEBOT_DB`).
+(override with `HAGGLEBOT_DB`). `HAGGLEBOT_STEP_DELAY_MS` (default 1200) paces the negotiation so it reads as a live
+conversation; set it to `0` for instant runs.
 
 No browser? Watch the four negotiations from the terminal:
 
@@ -137,6 +138,11 @@ never goes below its floor), the full negotiation engine against all four seller
 safety gate, pause/resume, the SQLite repository, the payment service (with a fake PayPal
 controller), and the REST API routes. The live PayPal calls are exercised by `pnpm paypal:smoke`
 and the in-app checkout, which need your sandbox credentials.
+
+## Deploy (optional)
+
+A `render.yaml` is included for a free Render web service. It is **untested**: the supported way to run Hagglebot is locally.
+Don't expose an instance publicly, because there is no authentication.
 
 ## Project layout
 

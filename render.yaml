@@ -1,0 +1,22 @@
+# Optional deploy to Render (free). NOT verified: the project is designed to run locally.
+# SQLite lives on the ephemeral disk, so data resets on each deploy, which is fine for a demo.
+services:
+  - type: web
+    name: hagglebot
+    runtime: node
+    plan: free
+    buildCommand: corepack enable && pnpm install --frozen-lockfile && pnpm build
+    startCommand: pnpm start
+    envVars:
+      - key: PAYPAL_CLIENT_ID
+        sync: false
+      - key: PAYPAL_CLIENT_SECRET
+        sync: false
+      - key: PAYPAL_SELLER_EMAIL
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: GROQ_API_KEY
+        sync: false
+      - key: HAGGLEBOT_STEP_DELAY_MS
+        value: "1200"
