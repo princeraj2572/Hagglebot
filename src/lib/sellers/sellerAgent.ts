@@ -21,10 +21,12 @@ export class PersonaSeller implements Seller {
   constructor(
     private readonly persona: Persona,
     private readonly llm: LLM | null,
+    /** Resume point after a restart: the last ask this seller quoted. */
+    initialAsk: number | null = null,
   ) {
     this.id = persona.id;
     this.name = persona.name;
-    this.ask = persona.listPrice;
+    this.ask = initialAsk ?? persona.listPrice;
   }
 
   private get floor(): number {
