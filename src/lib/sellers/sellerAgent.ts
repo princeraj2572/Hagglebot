@@ -100,7 +100,7 @@ export class PersonaSeller implements Seller {
     }
     if (m.action === "refuse") {
       return id === "fatima"
-        ? `I appreciate the interest, but that's well below what the ${item} is worth. My price stays at ${fmt(m.price)}.`
+        ? `I appreciate the interest, but that's well below what it's worth. My price stays at ${fmt(m.price)}.`
         : `Sorry, that's too low for me. I can't go that far. My price is ${fmt(m.price)}.`;
     }
     switch (id) {
