@@ -12,7 +12,7 @@ const input =
 const btn =
   "rounded-md px-3 py-2 text-sm font-medium transition focus:outline-none focus-visible:ring-2 focus-visible:ring-accent disabled:cursor-not-allowed disabled:opacity-50";
 const primary = `${btn} bg-accent text-navy-950 hover:brightness-110`;
-const ghost = `${btn} border border-navy-800 text-slate-200 hover:border-accent/60`;
+const ghost = `${btn} whitespace-nowrap border border-navy-800 text-slate-200 hover:border-accent/60`;
 
 export function WantsPanel(props: {
   wants: Want[];
