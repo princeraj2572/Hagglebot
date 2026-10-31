@@ -13,7 +13,8 @@
     "start": "next start",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "paypal:smoke": "tsx scripts/paypal-smoke.ts"
+    "paypal:smoke": "tsx scripts/paypal-smoke.ts",
+    "negotiate": "tsx scripts/negotiate.ts"
   },
   "dependencies": {
     "@google/generative-ai": "0.24.1",
