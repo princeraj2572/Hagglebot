@@ -10,6 +10,9 @@ export interface RunnerDeps {
   now?: () => number;
   log?: (msg: string, err?: unknown) => void;
   maxSteps?: number;
+  /** Pause between steps so the dashboard reads as a live conversation (0 = as fast as possible). */
+  stepDelayMs?: number;
+  sleep?: (ms: number) => Promise<void>;
 }
 
 /** Reads the status without control-flow narrowing (step() mutates threads across awaits). */
@@ -148,6 +151,7 @@ export class NegotiationRunner {
       },
     };
     this.live.set(thread.id, thread);
+    const sleep = this.d.sleep ?? ((ms: number) => new Promise<void>((r) => setTimeout(r, ms)));
     const loop = async (): Promise<void> => {
       await Promise.resolve(); // yield so the registration below always precedes cleanup
       try {
@@ -159,6 +163,8 @@ export class NegotiationRunner {
           await step(thread, want, seller, deps);
           repo.saveThread(thread);
           if (statusOf(thread) === "deal") repo.createDeal(thread);
+          const delay = this.d.stepDelayMs ?? 0;
+          if (delay > 0 && statusOf(thread) === "negotiating") await sleep(delay);
         }
       } catch (err) {
         // Fail safe: an unexpected error pauses the thread rather than guessing.

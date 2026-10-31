@@ -1,3 +1,6 @@
+import { PERSONAS } from "../lib/sellers/personas";
+import { PersonaSeller } from "../lib/sellers/sellerAgent";
+import { NegotiationRunner } from "./runner";
 import { describe, expect, it } from "vitest";
 import { makeKit, seedDemo } from "./testkit";
 
@@ -63,5 +66,22 @@ describe("NegotiationRunner", () => {
     runner.resume("stale");
     await runner.idle();
     expect(repo.getThread("stale")!.status).toBe("deal");
+  });
+});
+
+describe("NegotiationRunner pacing", () => {
+  it("waits between steps (but not after a thread has finished)", async () => {
+    const { repo } = makeKit();
+    const sleeps: number[] = [];
+    const runner = new NegotiationRunner({
+      repo, llm: null, stepDelayMs: 750, sleep: async (ms) => void sleeps.push(ms),
+      sellerFor: (c, ask) => new PersonaSeller(PERSONAS.find((p) => p.id === c.persona)!, null, ask),
+    });
+    const want = seedDemo(repo);
+    const [ferdi] = runner.start(want.id);
+    await runner.idle();
+    expect(repo.getThread(ferdi!.id)!.status).toBe("deal");
+    expect(sleeps.length).toBeGreaterThan(0);
+    expect(sleeps.every((ms) => ms === 750)).toBe(true);
   });
 });

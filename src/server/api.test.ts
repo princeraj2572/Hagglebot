@@ -17,7 +17,7 @@ import type { DashboardState } from "./state";
 
 let svc: Services;
 beforeEach(() => {
-  svc = buildServices({ HAGGLEBOT_DB: ":memory:" }); // no keys: template mode, PayPal off
+  svc = buildServices({ HAGGLEBOT_DB: ":memory:", HAGGLEBOT_STEP_DELAY_MS: "0" }); // no keys: template mode, PayPal off
   setServicesForTest(svc);
 });
 afterEach(() => setServicesForTest(undefined));

@@ -29,9 +29,11 @@ export function buildServices(env: Record<string, string | undefined> = process.
     paypal = null; // payments disabled until credentials exist
   }
 
+  const delay = Number(env.HAGGLEBOT_STEP_DELAY_MS ?? 1200);
   const runner = new NegotiationRunner({
     repo,
     llm,
+    stepDelayMs: Number.isFinite(delay) && delay >= 0 ? Math.min(delay, 30_000) : 1200,
     log: (m, e) => console.error(m, e),
     sellerFor: (contact, initialAsk) => {
       const persona = PERSONAS.find((p) => p.id === contact.persona);
