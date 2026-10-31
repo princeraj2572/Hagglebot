@@ -38,7 +38,12 @@ export interface Seller {
 }
 
 export type ThreadStatus = "negotiating" | "deal" | "walked_away" | "paused";
-export type WalkReason = "scam_detected" | "too_many_refusals" | "over_budget" | "message_limit";
+export type WalkReason =
+  | "scam_detected"
+  | "too_many_refusals"
+  | "over_budget"
+  | "message_limit"
+  | "purchased_elsewhere";
 
 export interface Thread {
   id: string;

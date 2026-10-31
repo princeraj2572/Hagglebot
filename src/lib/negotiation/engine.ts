@@ -14,7 +14,7 @@ export interface EngineDeps {
   onMessage?: (thread: Thread, message: Message) => void;
 }
 
-export function createThread(want: Want, seller: Seller, id: string = `${want.id}:${seller.id}`): Thread {
+export function createThread(want: Want, seller: Pick<Seller, "id" | "name">, id: string = `${want.id}:${seller.id}`): Thread {
   return {
     id, wantId: want.id, sellerId: seller.id, sellerName: seller.name, status: "negotiating",
     messages: [], lastOffer: null, lastAsk: null, refusals: 0, reason: null, detail: null, dealPrice: null,
