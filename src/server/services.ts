@@ -58,3 +58,8 @@ export function getServices(): Services {
   g.__hagglebot ??= buildServices();
   return g.__hagglebot;
 }
+
+/** Test hook: swap the process-wide services (e.g. for an in-memory database). */
+export function setServicesForTest(s: Services | undefined): void {
+  g.__hagglebot = s;
+}
