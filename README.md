@@ -36,6 +36,9 @@ Built for the PayPal AI Hackathon (Agentic Commerce).
 
 **Load demo scenario** loads this fixed wishlist so the demo runs reproducibly.
 
+No PayPal webhooks are used: the order is captured synchronously right after the buyer approves, so
+there are no webhook signatures to verify.
+
 ## How it stays honest and safe
 
 - The first message is always: *"Hi, I'm an AI buyer agent for [user]. May I ask about your listing?"*
@@ -88,9 +91,12 @@ so `pnpm install` builds it.
    ```
    PAYPAL_CLIENT_ID=...
    PAYPAL_CLIENT_SECRET=...
-   PAYPAL_BUYER_EMAIL=...     # sandbox personal account
-   PAYPAL_SELLER_EMAIL=...    # sandbox business account (the payee)
+   PAYPAL_BUYER_EMAIL=...     # sandbox personal account (shown in the UI as a login hint)
+   PAYPAL_SELLER_EMAIL=...    # the sandbox BUSINESS account that owns the app above (the payee); may be left blank
    ```
+
+   The buyer and seller must be different accounts. PayPal rejects orders whose payee isn't the
+   app's own business account, so don't point `PAYPAL_SELLER_EMAIL` at some other merchant.
 
 `.env.local` is gitignored, so never commit credentials. More detail: [docs/paypal-sandbox.md](docs/paypal-sandbox.md).
 

@@ -9,6 +9,8 @@ Hagglebot only ever talks to the PayPal **sandbox** (the environment is hard-cod
 3. **Testing tools -> Sandbox accounts**: you get a default *Business* (seller) and
    *Personal* (buyer) account. Note both emails; use *View/Edit account* to see the
    buyer's password.
+   `PAYPAL_SELLER_EMAIL` must be the *Business* account that owns the app (PayPal rejects other payees
+   without partner permissions) or be left blank. The buyer must be a different account.
 4. `cp .env.example .env.local` and fill in the four variables. `.env.local` is gitignored.
 
 ## Smoke test (create -> approve -> capture)
