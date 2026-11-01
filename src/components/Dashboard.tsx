@@ -105,7 +105,7 @@ export function Dashboard() {
             <NegotiationsPanel want={selected} threads={threads} onOpen={setOpenThread} onChanged={refresh} onError={setError} />
           </div>
           <div className={tab === "deals" ? "" : "hidden lg:block"}>
-            <DealsPanel deals={deals} wants={wants} paypalClientId={state.config.paypalClientId} onChanged={refresh} />
+            <DealsPanel deals={deals} wants={wants} paypalClientId={state.config.paypalClientId} buyerEmail={state.config.paypalBuyerEmail} onChanged={refresh} />
           </div>
         </div>
       )}

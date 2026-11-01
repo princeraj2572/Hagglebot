@@ -14,7 +14,7 @@ export interface Services {
   runner: NegotiationRunner;
   payments: PaymentService;
   /** Safe to expose to the browser: the sandbox client id is public by design. */
-  publicConfig: { paypalClientId: string | null; llmMode: "llm" | "template" };
+  publicConfig: { paypalClientId: string | null; paypalBuyerEmail: string | null; llmMode: "llm" | "template" };
 }
 
 export function buildServices(env: Record<string, string | undefined> = process.env): Services {
@@ -50,7 +50,7 @@ export function buildServices(env: Record<string, string | undefined> = process.
     sellerEmail: paypal?.sellerEmail,
   });
 
-  return { repo, runner, payments, publicConfig: { paypalClientId: paypal?.clientId ?? null, llmMode: haveLlm ? "llm" : "template" } };
+  return { repo, runner, payments, publicConfig: { paypalClientId: paypal?.clientId ?? null, paypalBuyerEmail: paypal?.buyerEmail ?? null, llmMode: haveLlm ? "llm" : "template" } };
 }
 
 const g = globalThis as unknown as { __hagglebot?: Services };

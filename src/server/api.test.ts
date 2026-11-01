@@ -45,7 +45,7 @@ describe("API", () => {
     await svc.runner.idle();
 
     const s = await state();
-    expect(s.config).toEqual({ paypalClientId: null, llmMode: "template" });
+    expect(s.config).toEqual({ paypalClientId: null, paypalBuyerEmail: null, llmMode: "template" });
     expect(s.wants[0]!.sellers).toHaveLength(4);
     expect(s.threads.map((t) => [t.sellerName, t.status]).sort()).toEqual([
       ["Chatty Chen", "deal"], ["Fast Ferdi", "deal"], ["Firm Fatima", "walked_away"], ["Shady Sam", "walked_away"],

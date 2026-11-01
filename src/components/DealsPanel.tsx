@@ -15,9 +15,10 @@ export function DealsPanel(props: {
   deals: Deal[];
   wants: WantRecord[];
   paypalClientId: string | null;
+  buyerEmail?: string | null;
   onChanged: () => void;
 }) {
-  const { deals, wants, paypalClientId, onChanged } = props;
+  const { deals, wants, paypalClientId, buyerEmail, onChanged } = props;
   const [paying, setPaying] = useState<string | null>(null);
   const wantName = (id: string) => wants.find((w) => w.id === id)?.item ?? "Item";
 
@@ -26,6 +27,7 @@ export function DealsPanel(props: {
       <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-400">Deals &amp; payments</h2>
       <p className="rounded-md border border-navy-800 bg-navy-900 px-3 py-2 text-xs text-slate-400">
         PayPal <strong className="text-slate-200">sandbox</strong> only. No real money moves.
+        {buyerEmail && <> Log in as the sandbox buyer <span className="font-mono text-slate-200">{buyerEmail}</span>.</>}
       </p>
       {deals.length === 0 && <p className="text-sm text-slate-500">Deals appear here when a seller agrees to a price within budget.</p>}
 
