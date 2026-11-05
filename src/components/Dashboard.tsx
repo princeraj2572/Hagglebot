@@ -2,7 +2,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { DashboardState } from "@/server/state";
 import { api } from "./api";
-import { ChatDrawer } from "./ChatDrawer";
 import { DealsPanel } from "./DealsPanel";
 import { NegotiationsPanel } from "./NegotiationsPanel";
 import { WantsPanel } from "./WantsPanel";
@@ -17,7 +16,6 @@ const TABS: { id: Tab; label: string }[] = [
 export function Dashboard() {
   const [state, setState] = useState<DashboardState | null>(null);
   const [selectedWant, setSelectedWant] = useState<string | null>(null);
-  const [openThread, setOpenThread] = useState<string | null>(null);
   const [tab, setTab] = useState<Tab>("wants");
   const [error, setError] = useState<string | null>(null);
   const live = useRef(false);
@@ -55,8 +53,6 @@ export function Dashboard() {
   );
   const threads = (state?.threads ?? []).filter((t) => t.wantId === selected?.id);
   const deals = (state?.deals ?? []).filter((d) => d.wantId === selected?.id);
-  const chat = state?.threads.find((t) => t.id === openThread);
-  const closeChat = useCallback(() => setOpenThread(null), []);
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-6">
@@ -102,15 +98,13 @@ export function Dashboard() {
             />
           </div>
           <div className={tab === "negotiations" ? "" : "hidden lg:block"}>
-            <NegotiationsPanel want={selected} threads={threads} onOpen={setOpenThread} onChanged={refresh} onError={setError} />
+            <NegotiationsPanel want={selected} threads={threads} onChanged={refresh} onError={setError} />
           </div>
           <div className={tab === "deals" ? "" : "hidden lg:block"}>
             <DealsPanel deals={deals} wants={wants} paypalClientId={state.config.paypalClientId} buyerEmail={state.config.paypalBuyerEmail} onChanged={refresh} onError={setError} />
           </div>
         </div>
       )}
-
-      {chat && <ChatDrawer thread={chat} onClose={closeChat} />}
 
       <footer className="mt-10 border-t border-line pt-4 text-xs text-muted">
         Hagglebot always identifies itself as an AI agent, never exceeds your budget, and only pays through the PayPal sandbox. Demo software, not financial advice.

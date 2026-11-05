@@ -4,6 +4,7 @@ import type { Thread } from "@/lib/negotiation/types";
 import type { DashboardState } from "@/server/state";
 import { api } from "./api";
 import { REASON_LABEL, usd } from "./format";
+import { Conversation } from "./Conversation";
 import { StatusChip } from "./StatusChip";
 
 type Want = DashboardState["wants"][number];
@@ -55,11 +56,10 @@ function atStep(t: Thread, n: number): Thread {
 export function NegotiationsPanel(props: {
   want: Want | undefined;
   threads: Thread[];
-  onOpen: (threadId: string) => void;
   onChanged: () => void;
   onError: (msg: string) => void;
 }) {
-  const { want, threads, onOpen, onChanged, onError } = props;
+  const { want, threads, onChanged, onError } = props;
   const [busy, setBusy] = useState(false);
   // Negotiations that finished before this page opened replay once, so the haggling is visible.
   const seen = useRef(new Set<string>());
@@ -113,7 +113,19 @@ export function NegotiationsPanel(props: {
     }
   };
 
-  if (!want) return <p className="text-sm text-muted">Pick a want, or load the demo, to see sellers haggle.</p>;
+  if (!want) {
+    return (
+      <div className="max-w-md space-y-3">
+        <h2 className="text-xl font-semibold">An AI agent that haggles for you</h2>
+        <ol className="list-decimal space-y-1 pl-5">
+          <li>Tell Hagglebot what you want and the most you will pay.</li>
+          <li>It chats with every seller at once, never goes over your budget and walks away from scams.</li>
+          <li>When a seller agrees to a price, you pay through PayPal.</li>
+        </ol>
+        <p className="text-sm text-muted">Add a want on the left, or load the demo scenario to watch it work.</p>
+      </div>
+    );
+  }
   const axis = axisFor(want.maxPrice, threads);
   const shown = replaying ? threads.map((t) => atStep(t, step)) : threads;
   const best = threads.filter((t) => t.status === "deal" && t.dealPrice !== null).sort((a, b) => (a.dealPrice as number) - (b.dealPrice as number))[0];
@@ -155,7 +167,7 @@ export function NegotiationsPanel(props: {
           <Legend />
           <ul className="border-t border-line">
             {shown.map((t) => (
-              <Lane key={t.id} t={t} budget={want.maxPrice} axis={axis} busy={busy} replay={replaying} onOpen={onOpen} run={run} />
+              <Lane key={t.id} t={t} budget={want.maxPrice} axis={axis} busy={busy} replay={replaying} run={run} />
             ))}
           </ul>
         </>
@@ -177,16 +189,14 @@ function Legend() {
   );
 }
 
-function Lane({ t, budget, axis, busy, replay, onOpen, run }: {
+function Lane({ t, budget, axis, busy, replay, run }: {
   t: Thread;
   budget: number;
   axis: ReturnType<typeof axisFor>;
   busy: boolean;
   replay: boolean;
-  onOpen: (id: string) => void;
   run: (fn: () => Promise<unknown>) => Promise<void>;
 }) {
-  const last = t.messages.at(-1);
   const scam = t.reason === "scam_detected";
   const asks = t.messages.filter((m) => m.from === "seller" && m.price !== null).map((m) => m.price as number);
   const offers = t.messages.filter((m) => m.from === "buyer" && m.price !== null).map((m) => m.price as number);
@@ -278,10 +288,9 @@ function Lane({ t, budget, axis, busy, replay, onOpen, run }: {
         )}
         {t.status === "paused" && t.detail && <span className="text-muted"> · {t.detail}</span>}
       </p>
-      {last && <p className="mt-1 line-clamp-2 font-serif text-[15px] leading-relaxed text-muted">“{last.text}”</p>}
+      <Conversation t={t} />
 
-      <div className="-ml-3 mt-2 flex gap-1">
-        <button className={link} onClick={() => onOpen(t.id)}>Open chat</button>
+      <div className="-ml-3 mt-1 flex gap-1">
         {t.status === "negotiating" && !replay && (
           <button className={`${btn} text-ink hover:text-scam`} disabled={busy} onClick={() => run(() => api(`/api/threads/${t.id}/pause`, "POST"))}>
             Pause
