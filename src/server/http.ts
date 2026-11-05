@@ -1,6 +1,4 @@
 import { NextResponse } from "next/server";
-import { PaymentError } from "./payments";
-import { RunnerError } from "./runner";
 import { ValidationError } from "./validate";
 
 const MAX_BODY = 8 * 1024;
@@ -29,12 +27,18 @@ function sameOrigin(req: Request): boolean {
   }
 }
 
+/**
+ * Match by name, not instanceof: Next.js can bundle a route and the shared services separately,
+ * so the same error class may exist twice and instanceof would miss it.
+ */
+const isNamed = (err: unknown, name: string): err is Error & { code: string } => err instanceof Error && err.name === name;
+
 function toResponse(err: unknown): NextResponse {
   const json = (error: string, status: number) => NextResponse.json({ error }, { status });
-  if (err instanceof ValidationError) return json(err.message, 400);
-  if (err instanceof RunnerError) return json(err.message, err.code === "not_found" ? 404 : err.code === "conflict" ? 409 : 400);
-  if (err instanceof PaymentError) {
-    const status = { not_configured: 503, not_found: 404, conflict: 409, paypal: 502 }[err.code];
+  if (isNamed(err, "ValidationError")) return json(err.message, 400);
+  if (isNamed(err, "RunnerError")) return json(err.message, err.code === "not_found" ? 404 : err.code === "conflict" ? 409 : 400);
+  if (isNamed(err, "PaymentError")) {
+    const status = ({ not_configured: 503, not_found: 404, conflict: 409, paypal: 502 } as Record<string, number>)[err.code] ?? 500;
     return json(err.message, status);
   }
   console.error("Unhandled API error", err);
