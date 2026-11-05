@@ -74,12 +74,12 @@ export class PersonaSeller implements Seller {
     const transcript = ctx.history.map((h: Message) => `${h.from === "buyer" ? "BUYER" : "YOU"}: ${h.text}`).join("\n");
     try {
       const out = await this.llm.generate({
-        system: `You play a seller in a negotiation simulation for a hackathon demo. ${this.persona.style} Write ONE short chat message (max 3 sentences) in character. Follow the instruction exactly; never use a price other than the ones given.`,
+        system: `You play a seller in a negotiation simulation for a hackathon demo. ${this.persona.style} Write ONE short chat message (max 3 sentences) in character. Follow the instruction exactly; never use a price other than the ones given (you may repeat the buyer's current offer). Never repeat a phrase, joke or small-talk topic from your earlier messages: bring something new each time.`,
         turns: [{ role: "user", content: `Conversation so far:\n${transcript || "(none)"}\n\nInstruction: ${this.describeMove(ctx, m)}` }],
-        temperature: 0.8,
+        temperature: 0.9,
       });
       const text = out.trim().replace(/^["']|["']$/g, "");
-      const allowed = new Set([m.price, m.fee, m.price + m.fee, 39]);
+      const allowed = new Set([m.price, m.fee, m.price + m.fee, 39, ...(ctx.buyerOffer !== null ? [ctx.buyerOffer] : [])]);
       const amounts = extractAmounts(text);
       const mentionsPrice = amounts.includes(m.price);
       const onlyAllowed = amounts.every((a) => allowed.has(a));
@@ -101,9 +101,14 @@ export class PersonaSeller implements Seller {
       return `You've got a deal at ${fmt(m.price)} for the ${item}!`;
     }
     if (m.action === "refuse") {
-      return id === "fatima"
-        ? `I appreciate the interest, but that's well below what it's worth. My price stays at ${fmt(m.price)}.`
-        : `Sorry, that's too low for me. I can't go that far. My price is ${fmt(m.price)}.`;
+      const n = ctx.history.filter((h: Message) => h.from === "seller").length;
+      const firm = [
+        `I appreciate the interest, but that's well below what it's worth. My price stays at ${fmt(m.price)}.`,
+        `I understand, but the price reflects the real condition and value. I'm holding at ${fmt(m.price)}.`,
+        `Thank you for the offer, though I can't go that low. ${fmt(m.price)} is firm.`,
+        `I've already come as far as I can. The ${item} stays at ${fmt(m.price)}.`,
+      ];
+      return id === "fatima" ? firm[n % firm.length]! : `Sorry, that's too low for me. I can't go that far. My price is ${fmt(m.price)}.`;
     }
     switch (id) {
       case "ferdi":

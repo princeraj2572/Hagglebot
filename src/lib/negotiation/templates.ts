@@ -7,7 +7,15 @@ export function disclosure(buyerName: string): string {
 }
 
 /** Plain templates: the degraded mode when no LLM is reachable. */
-export function templateBody(move: Move, want: Want, opts: { comparing: number }): string {
+const COUNTER_VARIANTS: ((price: string, item: string, extra: string) => string)[] = [
+  (price, item, extra) => `Thanks for your reply. I can offer ${price} for the ${item}.${extra}`,
+  (price) => `I appreciate you coming down. Could we settle at ${price}?`,
+  (price) => `That's closer. I'm ready to pay right away at ${price}, if that works for you.`,
+  (price) => `We're nearly there. Would ${price} with shipping included do it?`,
+  (price) => `Thanks for working with me on this. How does ${price} sound?`,
+];
+
+export function templateBody(move: Move, want: Want, opts: { comparing: number; turn?: number }): string {
   switch (move.type) {
     case "opening": {
       const notes = want.notes.trim() ? ` What matters to ${want.buyerName}: ${want.notes.trim()}.` : "";
@@ -15,7 +23,8 @@ export function templateBody(move: Move, want: Want, opts: { comparing: number }
     }
     case "counter": {
       const extra = opts.comparing > 1 ? " I'm comparing a few listings, so I can move quickly at a fair price." : "";
-      return `Thanks for your reply. I can offer ${fmt(move.price)} for the ${want.item}.${extra}`;
+      const pick = COUNTER_VARIANTS[Math.max(0, (opts.turn ?? 1) - 1) % COUNTER_VARIANTS.length]!;
+      return pick(fmt(move.price), want.item, extra);
     }
     case "accept":
       return `That works. We have a deal at ${fmt(move.price)} for the ${want.item}, all-in with no extra fees. I'll arrange payment through PayPal and confirm here once it's done.`;
