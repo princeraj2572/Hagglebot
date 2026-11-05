@@ -29,7 +29,7 @@ export function Topbar(props: {
           </nav>
         )}
 
-        <div className="ml-auto flex items-center gap-3">
+        <div className="ml-auto flex shrink-0 items-center gap-3 whitespace-nowrap">
           {live > 0 && (
             <span className="num inline-flex items-center gap-2 rounded-full bg-ultra/10 px-3 py-1 text-sm font-medium text-ultra" role="status">
               <span aria-hidden className="h-2 w-2 rounded-full bg-ultra motion-safe:animate-pulse" />
