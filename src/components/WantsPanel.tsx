@@ -1,5 +1,7 @@
 "use client";
 import { useState } from "react";
+import { STYLE_INFO } from "@/lib/negotiation/strategy";
+import { NEGOTIATION_STYLES, type NegotiationStyle } from "@/lib/negotiation/types";
 import { PERSONAS } from "@/lib/sellers/personas";
 import type { DashboardState } from "@/server/state";
 import { api } from "./api";
@@ -17,7 +19,9 @@ export function WantsPanel(props: {
   onError: (msg: string) => void;
 }) {
   const { wants, selectedId, onSelect, onChanged, onError } = props;
-  const [form, setForm] = useState({ item: "", maxPrice: "", notes: "", buyerName: "" });
+  const [form, setForm] = useState<{ item: string; maxPrice: string; notes: string; buyerName: string; style: NegotiationStyle }>({
+    item: "", maxPrice: "", notes: "", buyerName: "", style: "balanced",
+  });
   const [showForm, setShowForm] = useState(false);
   const [busy, setBusy] = useState(false);
   const formOpen = showForm || wants.length === 0;
@@ -80,6 +84,23 @@ export function WantsPanel(props: {
             <textarea className={`${input} mt-1`} rows={2} maxLength={500} value={form.notes} placeholder="prefer black, must ship this week"
               onChange={(e) => setForm({ ...form, notes: e.target.value })} />
           </label>
+          <fieldset className="space-y-1.5">
+            <legend className="text-[13px] text-muted">How hard should it haggle?</legend>
+            {NEGOTIATION_STYLES.map((s) => (
+              <label
+                key={s}
+                className={`flex cursor-pointer items-start gap-2 rounded-md border px-2.5 py-2 text-sm transition-colors duration-150 ${
+                  form.style === s ? "border-ultra bg-ultra/5" : "border-line [@media(hover:hover)]:hover:border-ink/40"
+                }`}
+              >
+                <input type="radio" name="style" value={s} checked={form.style === s} onChange={() => setForm({ ...form, style: s })} className="mt-1 accent-[#2B3FD6]" />
+                <span>
+                  <b className="font-semibold">{STYLE_INFO[s].label}</b>
+                  <span className="block text-[13px] text-muted">{STYLE_INFO[s].description}</span>
+                </span>
+              </label>
+            ))}
+          </fieldset>
           <button className={`${primary} w-full`} disabled={busy} type="submit">
             Add want
           </button>
@@ -126,6 +147,8 @@ function WantCard({ want: w, selected, onSelect, run }: {
         {w.notes && <span className="mt-1 block break-words text-[13px] text-muted">{w.notes}</span>}
         <span className="mt-1 block text-[13px] text-muted">
           {w.status === "purchased" ? "Purchased" : `${w.sellers.length} seller${w.sellers.length === 1 ? "" : "s"}`}
+          {" · "}
+          {STYLE_INFO[w.style ?? "balanced"].label}
         </span>
       </button>
 

@@ -8,6 +8,7 @@ import { Detail } from "./Detail";
 import { usd } from "./format";
 import { Inbox } from "./Inbox";
 import { axisFor } from "./Lane";
+import { openingOffer, STYLE_INFO } from "@/lib/negotiation/strategy";
 
 type Want = DashboardState["wants"][number];
 type View = "conversations" | "deals";
@@ -146,6 +147,9 @@ export function NegotiationsPanel(props: {
       <div className="min-w-0">
         <h2 className="break-words text-2xl font-bold tracking-tight">{want.item}</h2>
         {want.notes && <p className="mt-1 break-words text-sm text-muted">{want.notes}</p>}
+        <p className="mt-1 text-sm text-muted" title={STYLE_INFO[want.style ?? "balanced"].description}>
+          {STYLE_INFO[want.style ?? "balanced"].label} style · opens at {usd(openingOffer(want))}
+        </p>
       </div>
 
       {!started ? (
