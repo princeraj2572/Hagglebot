@@ -2,6 +2,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { DashboardState } from "@/server/state";
 import { api } from "./api";
+import { Avatar } from "./Avatar";
 import { DealsPanel } from "./DealsPanel";
 import { NegotiationsPanel } from "./NegotiationsPanel";
 import { WantsPanel } from "./WantsPanel";
@@ -58,7 +59,7 @@ export function Dashboard() {
     <div className="mx-auto max-w-7xl px-4 py-6">
       <header className="mb-6 flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Hagglebot</h1>
+          <h1 className="flex items-center gap-3 text-3xl font-bold tracking-tight"><Avatar name="Hagglebot" size="lg" />Hagglebot</h1>
           <p className="text-sm text-muted">An AI buyer agent that negotiates for you and pays via PayPal.</p>
         </div>
         <p className="rounded-full border border-line px-3 py-1 text-xs text-muted" data-testid="mode-badge">

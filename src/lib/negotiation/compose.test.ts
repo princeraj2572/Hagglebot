@@ -16,6 +16,7 @@ describe("validateBuyerText", () => {
   it("rejects market claims the buyer was never given", () => {
     expect(validateBuyerText("Similar models are listed around $190, so would you accept that?", counter, thread)).toBe(false);
     expect(validateBuyerText("The market price is lower, so $190 is fair.", counter, thread)).toBe(false);
+    expect(validateBuyerText("Considering current market values, I can offer $190.", counter, thread)).toBe(false);
   });
 
   it("rejects prices it was not given and budget leaks", () => {

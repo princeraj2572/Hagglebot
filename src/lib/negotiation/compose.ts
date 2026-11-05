@@ -23,7 +23,7 @@ Output ONLY the chat message text, with no greeting (the greeting is added separ
 
 const HUMAN_CLAIM_RE = /\b(i am|i'm|as a)\s+(a\s+)?(human|person|real person)\b/i;
 /** Market claims the buyer was never given ("similar models are listed around $175"). */
-const FABRICATION_RE = /\b(listed|listing|selling|sell|sold|going|priced)\s+(at|around|for|from)\b|\bsimilar\s+(models?|items?|listings?)\b|\bmarket\s+(price|value|rate)\b|\b(seeing|seen|found)\s+(\w+\s+)?elsewhere\b/i;
+const FABRICATION_RE = /\b(listed|listing|selling|sell|sold|going|priced)\s+(at|around|for|from)\b|\bsimilar\s+(models?|items?|listings?)\b|\bmarket\s+(prices?|values?|rates?)\b|\b(seeing|seen|found)\s+(\w+\s+)?elsewhere\b/i;
 const LEAK_RE = /\b(my|the)\s+(\w+\s+)?(max(imum)?|budget|limit|ceiling)\b|\bup to\b.*\$/i;
 
 /** One fresh angle per turn, so successive counter-offers do not read like the same sentence. */

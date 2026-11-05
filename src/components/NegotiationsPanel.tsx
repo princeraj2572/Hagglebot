@@ -4,6 +4,7 @@ import type { Thread } from "@/lib/negotiation/types";
 import type { DashboardState } from "@/server/state";
 import { api } from "./api";
 import { REASON_LABEL, usd } from "./format";
+import { Avatar, tagline } from "./Avatar";
 import { Conversation } from "./Conversation";
 import { StatusChip } from "./StatusChip";
 
@@ -164,8 +165,9 @@ export function NegotiationsPanel(props: {
               Replaying the negotiation. <button className="text-ultra underline-offset-4 hover:underline" onClick={skipReplay}>Skip</button>
             </p>
           )}
+          <Roster threads={shown} />
           <Legend />
-          <ul className="border-t border-line">
+          <ul className="space-y-4">
             {shown.map((t) => (
               <Lane key={t.id} t={t} budget={want.maxPrice} axis={axis} busy={busy} replay={replaying} run={run} />
             ))}
@@ -173,6 +175,58 @@ export function NegotiationsPanel(props: {
         </>
       )}
     </section>
+  );
+}
+
+/** Who Hagglebot is talking to right now, and what each conversation is waiting on. */
+function Roster({ threads }: { threads: Thread[] }) {
+  const live = threads.filter((t) => t.status === "negotiating").length;
+  const deals = threads.filter((t) => t.status === "deal").length;
+  const walked = threads.filter((t) => t.status === "walked_away").length;
+  const line = (t: Thread): string => {
+    const last = t.messages.at(-1);
+    if (t.status === "negotiating") return last?.from === "buyer" ? `${t.sellerName} is replying…` : "Hagglebot is writing…";
+    if (t.status === "deal") return `Deal at ${usd(t.dealPrice)}`;
+    if (t.status === "paused") return "Paused";
+    return t.reason === "scam_detected" ? "Scam detected" : "Walked away";
+  };
+  return (
+    <div>
+      <p className="num text-base">
+        {live > 0 ? (
+          <>
+            <span aria-hidden className="mr-2 inline-block h-2.5 w-2.5 rounded-full bg-ultra align-middle motion-safe:animate-pulse" />
+            Live: Hagglebot is talking to <b>{live}</b> of <b>{threads.length}</b> sellers right now
+          </>
+        ) : (
+          <>
+            Hagglebot talked to <b>{threads.length}</b> sellers: <b>{deals}</b> {deals === 1 ? "deal" : "deals"}, <b>{walked}</b> walked away
+          </>
+        )}
+      </p>
+      <ul className="mt-2 grid gap-2 sm:grid-cols-2">
+        {threads.map((t, i) => {
+          const active = t.status === "negotiating";
+          return (
+            <li key={t.id}>
+              <a
+                href={`#lane-${t.id}`}
+                className={`flex items-center gap-3 rounded-md border bg-paper px-3 py-2 ${active ? "border-ultra" : "border-line"}`}
+              >
+                <Avatar name={t.sellerName} />
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate text-sm font-semibold">
+                    <span className="num mr-1.5 font-normal text-muted">{i + 1}/{threads.length}</span>
+                    {t.sellerName}
+                  </span>
+                  <span className={`block truncate text-sm ${active ? "font-medium text-ultra" : "text-muted"}`}>{line(t)}</span>
+                </span>
+              </a>
+            </li>
+          );
+        })}
+      </ul>
+    </div>
   );
 }
 
@@ -216,11 +270,18 @@ function Lane({ t, budget, axis, busy, replay, run }: {
   const ring = t.status === "deal" ? "ring-2 ring-ink" : "";
   const move = lastMove(t);
   const saved = t.status === "deal" && t.dealPrice !== null ? budget - t.dealPrice : 0;
+  const edge = scam ? "border-l-scam" : t.status === "deal" ? "border-l-ink" : t.status === "negotiating" ? "border-l-ultra" : t.status === "paused" ? "border-l-tag" : "border-l-muted";
 
   return (
-    <li className="border-b border-line py-4" data-testid={`thread-${t.sellerName}`}>
-      <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-        <span className="text-lg font-semibold">{t.sellerName}</span>
+    <li id={`lane-${t.id}`} className={`scroll-mt-4 rounded-md border border-l-4 border-line bg-paper p-4 ${edge}`} data-testid={`thread-${t.sellerName}`}>
+      <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+        <span className="flex items-center gap-3">
+          <Avatar name={t.sellerName} size="lg" />
+          <span>
+            <span className="block text-lg font-semibold leading-tight">{t.sellerName}</span>
+            <span className="block text-sm text-muted">{tagline(t.sellerName)}</span>
+          </span>
+        </span>
         <span className="flex items-center gap-3">
           {saved > 0 && (
             <span className="num relative bg-tag py-0.5 pl-5 pr-2.5 text-sm font-bold text-ink [clip-path:polygon(12px_0,100%_0,100%_100%,12px_100%,0_50%)] motion-safe:animate-tag-in">
@@ -253,20 +314,20 @@ function Lane({ t, budget, axis, busy, replay, run }: {
         {open && gap !== null && gap > 0 && (
           <div className={`absolute h-2 -translate-y-1/2 rounded-full bg-ink/15 ${fade}`}
             style={{ top: "50%", left: `${Math.min(axis.pct(t.lastAsk as number), axis.pct(t.lastOffer as number))}%`, width: `${Math.abs(axis.pct(t.lastAsk as number) - axis.pct(t.lastOffer as number))}%` }}>
-            <span className="num absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 whitespace-nowrap bg-chalk px-1 text-xs font-medium">{usd(gap)} apart</span>
+            <span className="num absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 whitespace-nowrap bg-paper px-1 text-xs font-medium">{usd(gap)} apart</span>
           </div>
         )}
 
         {t.lastAsk !== null && (
           <span className={`${dot} bg-tag text-tag ${ring}`} style={{ top: ASK_Y, left: axis.pos(t.lastAsk) }}>
             <i key={t.lastAsk} aria-hidden className="absolute inset-0 rounded-full ring-2 ring-current motion-safe:animate-ping-once motion-reduce:hidden" />
-            <b className="num absolute bottom-full left-1/2 mb-1 -translate-x-1/2 bg-chalk px-0.5 text-xs font-semibold text-ink">{usd(t.lastAsk)}</b>
+            <b className="num absolute bottom-full left-1/2 mb-1 -translate-x-1/2 bg-paper px-0.5 text-xs font-semibold text-ink">{usd(t.lastAsk)}</b>
           </span>
         )}
         {offerNow !== null && (
           <span className={`${dot} bg-ultra text-ultra ${ring}`} style={{ top: OFFER_Y, left: axis.pos(offerNow) }}>
             <i key={offerNow} aria-hidden className="absolute inset-0 rounded-full ring-2 ring-current motion-safe:animate-ping-once motion-reduce:hidden" />
-            <b className="num absolute left-1/2 top-full mt-1 -translate-x-1/2 bg-chalk px-0.5 text-xs font-semibold text-ink">{usd(offerNow)}</b>
+            <b className="num absolute left-1/2 top-full mt-1 -translate-x-1/2 bg-paper px-0.5 text-xs font-semibold text-ink">{usd(offerNow)}</b>
           </span>
         )}
         {scam && <span aria-hidden className="absolute right-0 top-1/2 -translate-y-1/2 text-xl font-bold text-scam">×</span>}
