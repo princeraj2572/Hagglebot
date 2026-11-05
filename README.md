@@ -157,8 +157,16 @@ and the in-app checkout, which need your sandbox credentials.
 
 ## Deploy (optional)
 
-A `render.yaml` is included for a free Render web service. It is **untested**: the supported way to run Hagglebot is locally.
-Don't expose an instance publicly, because there is no authentication.
+A `render.yaml` is included for a free Render web service (**New > Blueprint**, pick this repo, then fill in the
+secret values it asks for). The start-up path was smoke-tested locally the way Render runs it: a clean production
+build, a brand-new database path, the API, and a full negotiation. I have **not** deployed it to Render itself.
+
+- The free plan sleeps after inactivity, so the first visit can take about a minute to wake up.
+- SQLite lives on the instance disk, which is ephemeral: data resets on each deploy and when the instance
+  spins down. **Load demo scenario** recreates it in one click.
+- There is no authentication, so anyone with the URL can start negotiations that use your LLM quota (PayPal
+  stays sandbox-only). Use free-tier keys and suspend the service after judging.
+- The supported way to run Hagglebot is still locally.
 
 ## Project layout
 

@@ -1,5 +1,8 @@
-# Optional deploy to Render (free). NOT verified: the project is designed to run locally.
-# SQLite lives on the ephemeral disk, so data resets on each deploy, which is fine for a demo.
+# Deploy to Render (free web service): New > Blueprint, pick this repo, fill in the secret values.
+# The start-up path was smoke-tested locally the way Render runs it (clean production build, a fresh database
+# path, the API and a full negotiation). It has not been deployed to Render itself.
+# SQLite lives on the instance disk, which is ephemeral: data resets on each deploy and when a free instance
+# spins down after inactivity. That is fine for a demo, because "Load demo scenario" recreates it.
 services:
   - type: web
     name: hagglebot
@@ -7,11 +10,19 @@ services:
     plan: free
     buildCommand: corepack enable && pnpm install --frozen-lockfile && pnpm build
     startCommand: pnpm start
+    healthCheckPath: /
     envVars:
+      # Same Node major as CI; the app needs 20 or newer.
+      - key: NODE_VERSION
+        value: "22"
       - key: PAYPAL_CLIENT_ID
         sync: false
       - key: PAYPAL_CLIENT_SECRET
         sync: false
+      # Shown in the UI as a hint for which sandbox buyer account to log in with.
+      - key: PAYPAL_BUYER_EMAIL
+        sync: false
+      # Must be the sandbox BUSINESS account that owns the REST app; leave blank to pay the app's own account.
       - key: PAYPAL_SELLER_EMAIL
         sync: false
       - key: GEMINI_API_KEY
