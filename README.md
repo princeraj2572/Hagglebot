@@ -19,8 +19,11 @@ Built for the PayPal AI Hackathon (Agentic Commerce).
 2. **Sellers**: add seller contacts (each is a simulated persona behind a mock chat endpoint).
 3. **Negotiate**: Hagglebot opens a chat with every seller in parallel. It opens with a low anchor,
    concedes in small steps, never exceeds your budget, and walks away gracefully.
-4. **Dashboard**: wishlist on the left, live negotiations in the middle (latest offer, status, a
-   read-along chat view, a **Pause** killswitch per thread), deals and payments on the right.
+4. **Dashboard**: an app layout. Wants on the left; in the middle a summary (budget, who is live, best
+   deal, deals ready) and two tabs. **Conversations** is an inbox of sellers (who is writing now, the
+   latest message, the current price, unread dots) next to the selected seller's **price lane** (their ask,
+   our offer, the gap closing) and the full chat, with a **Pause** killswitch per thread. **Deals** holds
+   the receipts and payments.
 5. **Pay**: for a closed deal, **Confirm and Pay** opens the PayPal sandbox checkout (Orders v2:
    create, approve in the popup, capture). On success Hagglebot messages the seller a confirmation
    containing the PayPal **payer-id** as proof of payment, and withdraws from the other sellers.
@@ -49,6 +52,11 @@ there are no webhook signatures to verify.
   concession ladder and walk-away rules live in plain, tested TypeScript, so no prompt can talk the
   bot into overpaying. Model output is rejected (and replaced by a template) if it names a price it
   wasn't given, reveals the budget, claims to be human, or omits the price.
+- **A visible guardrail log:** every safety decision is saved next to the message it shaped and shown under
+  it in the chat: the AI disclosure added by code, a model draft that was rejected (and why, for example
+  an invented market claim or a price it was not given), a deal accepted because it is within budget, the
+  rule behind a walk-away, and the scam signals that stopped a conversation. These notes are for you and
+  are never sent to the seller.
 - **Walk-away rules:** more than 3 refusals, scam detected, price above budget, or the 15-message
   limit. The scam detector flags hidden fees, off-platform or gift-card payment, urgency pressure,
   and totals that exceed the agreed price.
