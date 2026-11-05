@@ -15,7 +15,10 @@ Built for the PayPal AI Hackathon (Agentic Commerce).
 
 ## What it does
 
-1. **Wishlist**: add an item, a max price and notes ("prefer black, must ship this week").
+1. **Wishlist**: add an item, a max price and notes ("prefer black, must ship this week"), and choose how
+   hard to haggle: **Patient** (opens at 60% of budget, concedes slowly, tolerates more refusals),
+   **Balanced** (70%, the default) or **Quick** (80%, closes sooner, walks away from stubborn sellers
+   faster). The style only changes the pacing; the budget ceiling and the 15-message limit never move.
 2. **Sellers**: add seller contacts (each is a simulated persona behind a mock chat endpoint).
 3. **Negotiate**: Hagglebot opens a chat with every seller in parallel. It opens with a low anchor,
    concedes in small steps, never exceeds your budget, and walks away gracefully.
