@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import type { Deal, WantRecord } from "@/server/repo";
+import { api } from "./api";
 import { usd } from "./format";
 import { PayPalCheckout } from "./PayPalCheckout";
 
@@ -8,6 +9,7 @@ const LABEL: Record<Deal["status"], string> = {
   awaiting_payment: "Ready to pay",
   order_created: "Payment in progress",
   paid: "Paid",
+  refunded: "Refunded",
   cancelled: "Cancelled",
 };
 
@@ -17,9 +19,25 @@ export function DealsPanel(props: {
   paypalClientId: string | null;
   buyerEmail?: string | null;
   onChanged: () => void;
+  onError: (msg: string) => void;
 }) {
-  const { deals, wants, paypalClientId, buyerEmail, onChanged } = props;
+  const { deals, wants, paypalClientId, buyerEmail, onChanged, onError } = props;
   const [paying, setPaying] = useState<string | null>(null);
+  const [confirming, setConfirming] = useState<string | null>(null);
+  const [refunding, setRefunding] = useState(false);
+
+  const refund = async (dealId: string) => {
+    setRefunding(true);
+    try {
+      await api(`/api/deals/${dealId}/refund`, "POST");
+      setConfirming(null);
+      onChanged();
+    } catch (e) {
+      onError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setRefunding(false);
+    }
+  };
   const wantName = (id: string) => wants.find((w) => w.id === id)?.item ?? "Item";
 
   return (
@@ -49,7 +67,30 @@ export function DealsPanel(props: {
                 <div>PayPal payer-id <span className="num font-medium">{d.payerId ?? "n/a"}</span></div>
                 <div>Capture <span className="num font-medium">{d.captureId ?? "n/a"}</span></div>
                 <div className="text-ultra">Confirmation sent to the seller</div>
+                <div className="pt-2">
+                  {confirming === d.id ? (
+                    <span className="flex flex-wrap items-center gap-2">
+                      <span>Refund {usd(d.price)} to the buyer?</span>
+                      <button className="rounded-md bg-scam px-3 py-1.5 font-medium text-white disabled:opacity-50" disabled={refunding} onClick={() => void refund(d.id)}>
+                        {refunding ? "Refunding…" : "Yes, refund"}
+                      </button>
+                      <button className="rounded-md border border-line px-3 py-1.5 hover:border-ink" disabled={refunding} onClick={() => setConfirming(null)}>
+                        Keep
+                      </button>
+                    </span>
+                  ) : (
+                    <button className="rounded-md border border-line px-3 py-1.5 font-medium hover:border-ink" onClick={() => setConfirming(d.id)}>
+                      Refund {usd(d.price)}
+                    </button>
+                  )}
+                </div>
               </dl>
+            )}
+
+            {d.status === "refunded" && (
+              <p className="mt-3 border-t border-dashed border-line pt-3 text-sm">
+                Refunded in full through PayPal. The want is open again, so you can negotiate it again.
+              </p>
             )}
 
             {(d.status === "awaiting_payment" || d.status === "order_created") && (

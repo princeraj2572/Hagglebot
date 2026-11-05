@@ -12,7 +12,7 @@ export interface SellerContact {
   endpoint: string;
 }
 
-export type DealStatus = "awaiting_payment" | "order_created" | "paid" | "cancelled";
+export type DealStatus = "awaiting_payment" | "order_created" | "paid" | "refunded" | "cancelled";
 
 export interface Deal {
   id: string;

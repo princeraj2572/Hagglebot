@@ -1,4 +1,4 @@
-import type { OrdersController } from "@paypal/paypal-server-sdk";
+import type { OrdersController, PaymentsController } from "@paypal/paypal-server-sdk";
 import { describe, expect, it, vi } from "vitest";
 import { PaymentError } from "./payments";
 import { makeKit, seedDemo } from "./testkit";
@@ -16,15 +16,21 @@ function fakeOrders() {
   return { createOrder, captureOrder, controller: { createOrder, captureOrder } as unknown as OrdersController };
 }
 
+function fakeRefunds() {
+  const refundCapturedPayment = vi.fn().mockResolvedValue({ result: { id: "REF-1", status: "COMPLETED" } });
+  return { refundCapturedPayment, refundsApi: { refundCapturedPayment } as unknown as PaymentsController };
+}
+
 async function setup() {
   const f = fakeOrders();
-  const kit = makeKit(f.controller);
+  const r = fakeRefunds();
+  const kit = makeKit(f.controller, r.refundsApi);
   const want = seedDemo(kit.repo);
   kit.runner.start(want.id);
   await kit.runner.idle();
   const ferdiDeal = kit.repo.listDeals(want.id).find((d) => d.sellerName === "Fast Ferdi")!;
   const chenDeal = kit.repo.listDeals(want.id).find((d) => d.sellerName === "Chatty Chen")!;
-  return { ...kit, ...f, want, ferdiDeal, chenDeal };
+  return { ...kit, ...f, ...r, want, ferdiDeal, chenDeal };
 }
 
 describe("PaymentService", () => {
@@ -73,6 +79,56 @@ describe("PaymentService", () => {
     await expect(s.payments.captureForOrder("ORD-1")).rejects.toMatchObject({ code: "paypal" });
     expect(s.repo.getDeal(s.ferdiDeal.id)!.status).toBe("order_created");
     expect(s.repo.getWant(s.want.id)!.status).toBe("open");
+  });
+
+  it("refunds a paid deal in full, tells the seller and reopens the want", async () => {
+    const s = await setup();
+    await s.payments.createOrderForDeal(s.ferdiDeal.id);
+    await s.payments.captureForOrder("ORD-1");
+    const refunded = await s.payments.refundDeal(s.ferdiDeal.id);
+    expect(refunded.status).toBe("refunded");
+    expect(s.refundCapturedPayment).toHaveBeenCalledTimes(1);
+    expect(s.refundCapturedPayment.mock.calls[0]![0]).toMatchObject({ captureId: "CAP-1", paypalRequestId: `refund-${s.ferdiDeal.id}`, body: {} });
+    const last = s.repo.getThread(s.ferdiDeal.threadId)!.messages.at(-1)!;
+    expect(last.text).toContain("Refund issued");
+    expect(last.text).toContain("REF-1");
+    expect(s.repo.getWant(s.want.id)!.status).toBe("open");
+    // a refunded deal can be neither paid nor captured again
+    await expect(s.payments.createOrderForDeal(s.ferdiDeal.id)).rejects.toThrow(/already refunded/);
+    await expect(s.payments.captureForOrder("ORD-1")).rejects.toMatchObject({ code: "conflict" });
+  });
+
+  it("refund is idempotent and only works on paid deals", async () => {
+    const s = await setup();
+    await expect(s.payments.refundDeal(s.ferdiDeal.id)).rejects.toMatchObject({ code: "conflict" });
+    await expect(s.payments.refundDeal("nope")).rejects.toMatchObject({ code: "not_found" });
+    await s.payments.createOrderForDeal(s.ferdiDeal.id);
+    await s.payments.captureForOrder("ORD-1");
+    await s.payments.refundDeal(s.ferdiDeal.id);
+    await s.payments.refundDeal(s.ferdiDeal.id);
+    expect(s.refundCapturedPayment).toHaveBeenCalledTimes(1);
+  });
+
+  it("keeps the deal paid when PayPal does not complete the refund", async () => {
+    const s = await setup();
+    s.refundCapturedPayment.mockResolvedValueOnce({ result: { id: "REF-2", status: "FAILED" } });
+    await s.payments.createOrderForDeal(s.ferdiDeal.id);
+    await s.payments.captureForOrder("ORD-1");
+    await expect(s.payments.refundDeal(s.ferdiDeal.id)).rejects.toMatchObject({ code: "paypal" });
+    expect(s.repo.getDeal(s.ferdiDeal.id)!.status).toBe("paid");
+    expect(s.repo.getWant(s.want.id)!.status).toBe("purchased");
+  });
+
+  it("refund needs PayPal credentials", async () => {
+    const f = fakeOrders();
+    const kit = makeKit(f.controller, null);
+    const want = seedDemo(kit.repo);
+    kit.runner.start(want.id);
+    await kit.runner.idle();
+    const deal = kit.repo.listDeals(want.id).find((d) => d.sellerName === "Fast Ferdi")!;
+    await kit.payments.createOrderForDeal(deal.id);
+    await kit.payments.captureForOrder("ORD-1");
+    await expect(kit.payments.refundDeal(deal.id)).rejects.toMatchObject({ code: "not_configured" });
   });
 
   it("is disabled cleanly when PayPal is not configured", async () => {

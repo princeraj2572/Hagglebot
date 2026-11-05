@@ -2,7 +2,7 @@ import { createLLMFromEnv } from "../lib/llm";
 import type { LLM } from "../lib/llm/types";
 import { PERSONAS } from "../lib/sellers/personas";
 import { PersonaSeller } from "../lib/sellers/sellerAgent";
-import { createOrdersController } from "../lib/paypal/client";
+import { createOrdersController, createPaymentsController } from "../lib/paypal/client";
 import { loadPayPalConfig } from "../lib/paypal/config";
 import { openDb } from "./db";
 import { PaymentService } from "./payments";
@@ -47,6 +47,7 @@ export function buildServices(env: Record<string, string | undefined> = process.
     repo,
     runner,
     orders: paypal ? createOrdersController(paypal) : null,
+    paymentsApi: paypal ? createPaymentsController(paypal) : null,
     sellerEmail: paypal?.sellerEmail,
   });
 

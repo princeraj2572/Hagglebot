@@ -1,5 +1,5 @@
-import type { OrdersController } from "@paypal/paypal-server-sdk";
-import { captureOrder, createOrder, PayPalError } from "../lib/paypal/orders";
+import type { OrdersController, PaymentsController } from "@paypal/paypal-server-sdk";
+import { captureOrder, createOrder, PayPalError, refundCapture } from "../lib/paypal/orders";
 import type { Deal, Repo } from "./repo";
 import type { NegotiationRunner } from "./runner";
 
@@ -18,6 +18,8 @@ export interface PaymentDeps {
   runner: NegotiationRunner;
   /** null when PayPal sandbox credentials are not configured. */
   orders: OrdersController | null;
+  /** Used for refunds; null when PayPal sandbox credentials are not configured. */
+  paymentsApi?: PaymentsController | null;
   sellerEmail?: string | undefined;
   now?: () => number;
 }
@@ -39,7 +41,7 @@ export class PaymentService {
     const { repo } = this.d;
     const deal = repo.getDeal(dealId);
     if (!deal) throw new PaymentError("Deal not found", "not_found");
-    if (deal.status === "paid" || deal.status === "cancelled") {
+    if (deal.status === "paid" || deal.status === "refunded" || deal.status === "cancelled") {
       throw new PaymentError(`Deal is already ${deal.status}`, "conflict");
     }
     const want = repo.getWant(deal.wantId);
@@ -66,7 +68,7 @@ export class PaymentService {
     const deal = repo.getDealByOrder(orderId);
     if (!deal) throw new PaymentError("Unknown order", "not_found");
     if (deal.status === "paid") return deal; // idempotent
-    if (deal.status === "cancelled") throw new PaymentError("Deal was cancelled", "conflict");
+    if (deal.status === "cancelled" || deal.status === "refunded") throw new PaymentError(`Deal was ${deal.status}`, "conflict");
 
     let cap;
     try {
@@ -101,6 +103,43 @@ export class PaymentService {
         const od = repo.listDeals(want.id).find((x) => x.threadId === other.id);
         if (od && od.status !== "paid") repo.updateDeal(od.id, { status: "cancelled" });
       }
+    }
+    return repo.getDeal(deal.id)!;
+  }
+
+  /** Fully refund a paid deal, tell the seller, and reopen the want so it can be negotiated again. */
+  async refundDeal(dealId: string): Promise<Deal> {
+    const { repo } = this.d;
+    const deal = repo.getDeal(dealId);
+    if (!deal) throw new PaymentError("Deal not found", "not_found");
+    if (deal.status === "refunded") return deal; // idempotent
+    if (deal.status !== "paid" || !deal.captureId) throw new PaymentError("Only a paid deal can be refunded", "conflict");
+    const api = this.d.paymentsApi;
+    if (!api) {
+      throw new PaymentError("PayPal sandbox is not configured. Set PAYPAL_CLIENT_ID and PAYPAL_CLIENT_SECRET in .env.local.", "not_configured");
+    }
+
+    let refund;
+    try {
+      refund = await refundCapture(api, deal.captureId, `refund-${deal.id}`);
+    } catch (err) {
+      if (err instanceof PayPalError) throw new PaymentError(err.message, "paypal");
+      throw err;
+    }
+    repo.updateDeal(deal.id, { status: "refunded" });
+
+    const thread = repo.getThread(deal.threadId);
+    const want = repo.getWant(deal.wantId);
+    if (thread && want) {
+      repo.addMessage(thread.id, {
+        from: "buyer",
+        at: (this.d.now ?? Date.now)(),
+        price: null,
+        text:
+          `Refund issued: $${deal.price} returned via PayPal (capture ${deal.captureId}, refund ${refund.refundId ?? "n/a"}). ` +
+          `This message is from Hagglebot, an AI buyer agent acting for ${want.buyerName}.`,
+      });
+      repo.setWantStatus(want.id, "open");
     }
     return repo.getDeal(deal.id)!;
   }

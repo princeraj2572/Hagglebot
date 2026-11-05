@@ -8,6 +8,7 @@ import { GET as getState } from "@/app/api/state/route";
 import { POST as pause } from "@/app/api/threads/[id]/pause/route";
 import { POST as resume } from "@/app/api/threads/[id]/resume/route";
 import { POST as createOrder } from "@/app/api/deals/[id]/order/route";
+import { POST as refund } from "@/app/api/deals/[id]/refund/route";
 import { POST as capture } from "@/app/api/orders/[orderId]/capture/route";
 import { PERSONAS } from "@/lib/sellers/personas";
 import { PersonaSeller } from "@/lib/sellers/sellerAgent";
@@ -134,5 +135,13 @@ describe("API", () => {
     const s = await state();
     expect([s.wants.length, s.threads.length, s.deals.length]).toEqual([0, 0, 0]);
     expect((await deleteWant(del, ctx({ id: wantId }))).status).toBe(404);
+  });
+  it("refund route maps errors: unknown deal 404, unpaid deal 409", async () => {
+    expect((await refund(post("/api/deals/nope/refund"), ctx({ id: "nope" }))).status).toBe(404);
+    const { wantId } = await (await loadDemo(post("/api/demo"))).json();
+    await negotiate(post(`/api/wants/${wantId}/negotiate`), ctx({ id: wantId }));
+    await svc.runner.idle();
+    const deal = (await state()).deals[0]!;
+    expect((await refund(post(`/api/deals/${deal.id}/refund`), ctx({ id: deal.id }))).status).toBe(409);
   });
 });

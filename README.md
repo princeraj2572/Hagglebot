@@ -24,6 +24,8 @@ Built for the PayPal AI Hackathon (Agentic Commerce).
 5. **Pay**: for a closed deal, **Confirm and Pay** opens the PayPal sandbox checkout (Orders v2:
    create, approve in the popup, capture). On success Hagglebot messages the seller a confirmation
    containing the PayPal **payer-id** as proof of payment, and withdraws from the other sellers.
+6. **Refund**: a paid deal has a **Refund** button (with a confirm step) that fully refunds the capture through
+   the PayPal Payments API, tells the seller, and reopens the want so you can negotiate again.
 
 ### The simulated marketplace
 
@@ -54,7 +56,7 @@ there are no webhook signatures to verify.
   rate limits or outages it falls back to Groq, and if no LLM is reachable it uses a simpler
   template negotiator, so the app keeps working.
 - **Payments:** the amount always comes from the database, never from the browser; only orders the
-  app created can be captured; capture is idempotent; the PayPal environment is hard-coded to sandbox.
+  app created can be captured; capture and refund are idempotent (a refund needs a paid deal); the PayPal environment is hard-coded to sandbox.
 
 ## Tech
 

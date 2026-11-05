@@ -4,6 +4,7 @@ import {
   CheckoutPaymentIntent,
   OrderStatus,
   type OrdersController,
+  type PaymentsController,
 } from "@paypal/paypal-server-sdk";
 
 export interface CreateOrderParams {
@@ -131,6 +132,34 @@ export async function captureOrder(
     };
   } catch (err) {
     return wrap("capture order", err);
+  }
+}
+
+export interface RefundedPayment {
+  refundId: string | undefined;
+  status: string;
+}
+
+/** Payments v2: fully refund a captured payment. A fixed request id makes retries idempotent. */
+export async function refundCapture(
+  payments: PaymentsController,
+  captureId: string,
+  requestId: string,
+): Promise<RefundedPayment> {
+  try {
+    const { result } = await payments.refundCapturedPayment({
+      captureId,
+      paypalRequestId: requestId,
+      prefer: "return=representation",
+      body: {}, // empty body = full refund
+    });
+    const status = String(result.status ?? "UNKNOWN");
+    if (status !== "COMPLETED" && status !== "PENDING") {
+      throw new PayPalError(`Refund did not complete (status ${status})`);
+    }
+    return { refundId: result.id, status };
+  } catch (err) {
+    return wrap("refund", err);
   }
 }
 
