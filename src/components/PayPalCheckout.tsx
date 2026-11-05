@@ -80,10 +80,10 @@ export function PayPalCheckout({ dealId, clientId, onPaid }: { dealId: string; c
 
   return (
     <div className="mt-3">
-      {loading && <p className="text-xs text-slate-400">Loading PayPal sandbox checkout…</p>}
+      {loading && <p className="text-xs text-muted">Loading PayPal sandbox checkout…</p>}
       <div ref={box} />
       {error && (
-        <p role="alert" className="mt-2 text-xs text-rose-300">
+        <p role="alert" className="mt-2 text-xs text-scam">
           {error}
         </p>
       )}

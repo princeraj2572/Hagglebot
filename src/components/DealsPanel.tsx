@@ -24,30 +24,31 @@ export function DealsPanel(props: {
 
   return (
     <section aria-label="Deals and payments" className="space-y-4">
-      <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-400">Deals &amp; payments</h2>
-      <p className="rounded-md border border-navy-800 bg-navy-900 px-3 py-2 text-xs text-slate-400">
-        PayPal <strong className="text-slate-200">sandbox</strong> only. No real money moves.
-        {buyerEmail && <> Log in as the sandbox buyer <span className="font-mono text-slate-200">{buyerEmail}</span>.</>}
+      <h2 className="text-xl font-semibold">Deals</h2>
+      <p className="text-sm text-muted">
+        PayPal sandbox only. No real money moves.
+        {buyerEmail && <> Log in as the sandbox buyer <span className="font-medium text-ink">{buyerEmail}</span>.</>}
       </p>
-      {deals.length === 0 && <p className="text-sm text-slate-500">Deals appear here when a seller agrees to a price within budget.</p>}
+      {deals.length === 0 && <p className="text-sm text-muted">A deal shows up here when a seller agrees to a price within budget.</p>}
 
-      <ul className="space-y-3">
+      <ul className="space-y-4">
         {deals.map((d) => (
-          <li key={d.id} className={`rounded-lg border bg-navy-900 p-4 ${d.status === "paid" ? "border-accent" : "border-navy-800"}`} data-testid={`deal-${d.sellerName}`}>
-            <div className="flex items-start justify-between gap-2">
-              <div>
-                <p className="font-medium text-slate-100">{wantName(d.wantId)}</p>
-                <p className="text-xs text-slate-400">from {d.sellerName}</p>
-              </div>
-              <span className="text-lg font-semibold text-accent">{usd(d.price)}</span>
+          <li
+            key={d.id}
+            className="rounded-sm border border-dashed border-ink/60 bg-paper p-4"
+            data-testid={`deal-${d.sellerName}`}
+          >
+            <div className="flex items-baseline justify-between gap-2">
+              <p className="font-semibold">{wantName(d.wantId)}</p>
+              <span className="num text-2xl font-bold">{usd(d.price)}</span>
             </div>
-            <p className="mt-1 text-xs text-slate-400">{LABEL[d.status]}</p>
+            <p className="text-sm text-muted">from {d.sellerName} · {LABEL[d.status]}</p>
 
             {d.status === "paid" && (
-              <dl className="mt-2 space-y-0.5 text-xs text-slate-400">
-                <div>PayPal payer-id: <span className="font-mono text-slate-200">{d.payerId ?? "n/a"}</span></div>
-                <div>Capture: <span className="font-mono text-slate-200">{d.captureId ?? "n/a"}</span></div>
-                <div className="text-accent">Confirmation sent to the seller</div>
+              <dl className="mt-3 space-y-0.5 border-t border-dashed border-line pt-3 text-sm">
+                <div>PayPal payer-id <span className="num font-medium">{d.payerId ?? "n/a"}</span></div>
+                <div>Capture <span className="num font-medium">{d.captureId ?? "n/a"}</span></div>
+                <div className="text-ultra">Confirmation sent to the seller</div>
               </dl>
             )}
 
@@ -57,7 +58,7 @@ export function DealsPanel(props: {
                   <PayPalCheckout dealId={d.id} clientId={paypalClientId} onPaid={() => { setPaying(null); onChanged(); }} />
                 ) : (
                   <button
-                    className="w-full rounded-md bg-accent px-3 py-2 text-sm font-medium text-navy-950 transition hover:brightness-110 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent disabled:cursor-not-allowed disabled:opacity-50"
+                    className="w-full rounded-md bg-ultra px-3 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#2335b8] disabled:cursor-not-allowed disabled:opacity-50"
                     disabled={!paypalClientId}
                     onClick={() => setPaying(d.id)}
                   >
@@ -65,7 +66,7 @@ export function DealsPanel(props: {
                   </button>
                 )}
                 {!paypalClientId && (
-                  <p className="mt-2 text-xs text-slate-500">
+                  <p className="mt-2 text-sm text-muted">
                     PayPal is not configured. Add PAYPAL_CLIENT_ID and PAYPAL_CLIENT_SECRET to .env.local and restart.
                   </p>
                 )}

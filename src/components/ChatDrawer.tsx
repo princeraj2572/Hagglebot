@@ -9,6 +9,7 @@ export function ChatDrawer({ thread, onClose }: { thread: Thread; onClose: () =>
   const end = useRef<HTMLDivElement>(null);
   const closeBtn = useRef<HTMLButtonElement>(null);
   const count = thread.messages.length;
+  const scam = thread.reason === "scam_detected";
 
   useEffect(() => {
     end.current?.scrollIntoView({ behavior: "smooth", block: "end" });
@@ -22,49 +23,51 @@ export function ChatDrawer({ thread, onClose }: { thread: Thread; onClose: () =>
   }, [onClose]);
 
   return (
-    <div className="fixed inset-0 z-40 flex justify-end bg-black/60" onClick={onClose}>
+    <div className="fixed inset-0 z-40 flex justify-end bg-ink/50" onClick={onClose}>
       <aside
         role="dialog"
         aria-modal="true"
         aria-label={`Chat with ${thread.sellerName}`}
-        className="flex h-full w-full max-w-md flex-col border-l border-navy-800 bg-navy-900"
+        className="flex h-full w-full max-w-md flex-col border-l border-line bg-paper"
         onClick={(e) => e.stopPropagation()}
       >
-        <header className="flex items-center justify-between gap-2 border-b border-navy-800 p-4">
+        <header className="flex items-center justify-between gap-2 border-b border-line p-4">
           <div>
-            <h2 className="font-semibold text-slate-100">{thread.sellerName}</h2>
-            <div className="mt-1"><StatusChip status={thread.status} /></div>
+            <h2 className="text-lg font-semibold">{thread.sellerName}</h2>
+            <StatusChip status={thread.status} scam={scam} />
           </div>
-          <button ref={closeBtn} onClick={onClose} aria-label="Close chat"
-            className="rounded-md border border-navy-800 px-3 py-1.5 text-sm text-slate-300 hover:border-accent/60 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent">
+          <button
+            ref={closeBtn}
+            onClick={onClose}
+            aria-label="Close chat"
+            className="rounded-md border border-line px-3 py-1.5 text-sm hover:border-ink"
+          >
             Close
           </button>
         </header>
 
-        <div className="flex-1 space-y-3 overflow-y-auto p-4" aria-live="polite" data-testid="chat-log">
+        <div className="flex-1 space-y-4 overflow-y-auto p-4" aria-live="polite" data-testid="chat-log">
           {thread.messages.map((m, i) => (
-            <div key={i} className={`flex ${m.from === "buyer" ? "justify-end" : "justify-start"}`}>
-              <div className={`max-w-[85%] rounded-2xl px-3 py-2 text-sm ${
-                m.from === "buyer" ? "rounded-br-sm bg-accent/15 text-slate-100" : "rounded-bl-sm bg-navy-800 text-slate-200"
-              }`}>
-                <div className="mb-0.5 flex items-center justify-between gap-3 text-[10px] uppercase tracking-wide text-slate-500">
-                  <span>{m.from === "buyer" ? "Hagglebot (AI)" : thread.sellerName}</span>
-                  <span>{time(m.at)}</span>
-                </div>
-                <p className="whitespace-pre-wrap break-words">{m.text}</p>
-                {m.price !== null && <p className="mt-1 text-xs text-accent">{usd(m.price)}</p>}
+            <div key={i} className={m.from === "buyer" ? "pl-8" : "pr-8"}>
+              <div className={`flex items-baseline justify-between gap-3 text-xs ${m.from === "buyer" ? "text-ultra" : "text-muted"}`}>
+                <span className="font-medium">{m.from === "buyer" ? "Hagglebot (AI)" : thread.sellerName}</span>
+                <span className="num">{time(m.at)}</span>
               </div>
+              <p className={`whitespace-pre-wrap break-words border-l-2 pl-3 font-serif text-base leading-relaxed ${
+                m.from === "buyer" ? "border-ultra" : "border-tag"
+              }`}>
+                {m.text}
+              </p>
+              {m.price !== null && <p className="num mt-0.5 pl-3 text-sm font-semibold">{usd(m.price)}</p>}
             </div>
           ))}
           {thread.status === "negotiating" && (
-            <p className="text-xs text-slate-500" aria-label="Negotiation in progress">
-              <span className="animate-pulse">● ● ●</span>
-            </p>
+            <p className="text-sm text-muted motion-safe:animate-pulse">Waiting for the next message…</p>
           )}
           {thread.status === "walked_away" && thread.reason && (
-            <p className="text-center text-xs text-slate-400">{REASON_LABEL[thread.reason]}</p>
+            <p className={`text-sm font-medium ${scam ? "text-scam" : "text-muted"}`}>{REASON_LABEL[thread.reason]}</p>
           )}
-          {thread.status === "deal" && <p className="text-center text-xs text-accent">Deal at {usd(thread.dealPrice)}</p>}
+          {thread.status === "deal" && <p className="text-sm font-semibold">Deal at {usd(thread.dealPrice)}</p>}
           <div ref={end} />
         </div>
       </aside>

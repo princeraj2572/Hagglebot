@@ -2,6 +2,6 @@
 @tailwind components;
 @tailwind utilities;
 
-body { @apply bg-navy-950 text-slate-100 antialiased; }
-:focus-visible { outline: none; }
-input, textarea, select { color-scheme: dark; }
+body { @apply bg-chalk font-display text-ink antialiased; }
+:focus-visible { outline: 2px solid #2B3FD6; outline-offset: 2px; }
+.num { font-variant-numeric: tabular-nums; }
