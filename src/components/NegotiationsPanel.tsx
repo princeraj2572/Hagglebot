@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { Thread } from "@/lib/negotiation/types";
 import type { DashboardState } from "@/server/state";
 import { api } from "./api";
@@ -35,6 +35,23 @@ function lastMove(t: Thread): string | null {
   return prev !== null && price > prev ? `Hagglebot raised the offer to ${usd(price)} (from ${usd(prev)})` : `Hagglebot offers ${usd(price)}`;
 }
 
+/** The thread as it looked after its first n messages, for the replay. */
+function atStep(t: Thread, n: number): Thread {
+  const ms = t.messages.slice(0, n);
+  const lastOf = (from: "buyer" | "seller") => ms.filter((m) => m.from === from && m.price !== null).at(-1)?.price ?? null;
+  const done = n >= t.messages.length;
+  return {
+    ...t,
+    messages: ms,
+    lastAsk: lastOf("seller"),
+    lastOffer: lastOf("buyer"),
+    status: done ? t.status : "negotiating",
+    reason: done ? t.reason : null,
+    detail: done ? t.detail : null,
+    dealPrice: done ? t.dealPrice : null,
+  };
+}
+
 export function NegotiationsPanel(props: {
   want: Want | undefined;
   threads: Thread[];
@@ -44,6 +61,45 @@ export function NegotiationsPanel(props: {
 }) {
   const { want, threads, onOpen, onChanged, onError } = props;
   const [busy, setBusy] = useState(false);
+  // Negotiations that finished before this page opened replay once, so the haggling is visible.
+  const seen = useRef(new Set<string>());
+  const [step, setStep] = useState(0);
+  const [, rerender] = useState(0);
+  const wantId = want?.id;
+  const started = threads.length > 0;
+  const live = threads.some((t) => t.status === "negotiating");
+  const maxMsgs = Math.max(0, ...threads.map((t) => t.messages.length));
+  const replaying = !!wantId && started && !live && !seen.current.has(wantId);
+
+  useEffect(() => {
+    if (!wantId) return;
+    if (live) seen.current.add(wantId); // watched it happen live, no replay needed
+    if (!replaying) return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      seen.current.add(wantId);
+      rerender((n) => n + 1);
+      return;
+    }
+    let n = 0;
+    setStep(0);
+    const timer = setInterval(() => {
+      n += 1;
+      setStep(n);
+      if (n >= maxMsgs) {
+        clearInterval(timer);
+        seen.current.add(wantId);
+        rerender((k) => k + 1);
+      }
+    }, 500);
+    return () => clearInterval(timer);
+    // maxMsgs is read once per replay; it is stable for a finished negotiation.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [wantId, replaying, live]);
+
+  const skipReplay = () => {
+    if (wantId) seen.current.add(wantId);
+    rerender((n) => n + 1);
+  };
 
   const run = async (fn: () => Promise<unknown>) => {
     setBusy(true);
@@ -58,9 +114,9 @@ export function NegotiationsPanel(props: {
   };
 
   if (!want) return <p className="text-sm text-muted">Pick a want, or load the demo, to see sellers haggle.</p>;
-  const started = threads.length > 0;
-  const live = threads.some((t) => t.status === "negotiating");
   const axis = axisFor(want.maxPrice, threads);
+  const shown = replaying ? threads.map((t) => atStep(t, step)) : threads;
+  const best = threads.filter((t) => t.status === "deal" && t.dealPrice !== null).sort((a, b) => (a.dealPrice as number) - (b.dealPrice as number))[0];
 
   return (
     <section aria-label="Negotiations" className="space-y-4">
@@ -86,10 +142,20 @@ export function NegotiationsPanel(props: {
 
       {started && (
         <>
+          {!replaying && best && (
+            <p className="num border-l-4 border-ultra bg-paper px-3 py-2 text-base">
+              Best deal: <b>{best.sellerName}</b> at <b>{usd(best.dealPrice)}</b>, {usd(want.maxPrice - (best.dealPrice as number))} under budget.
+            </p>
+          )}
+          {replaying && (
+            <p className="text-sm text-muted">
+              Replaying the negotiation. <button className="text-ultra underline-offset-4 hover:underline" onClick={skipReplay}>Skip</button>
+            </p>
+          )}
           <Legend />
           <ul className="border-t border-line">
-            {threads.map((t) => (
-              <Lane key={t.id} t={t} budget={want.maxPrice} axis={axis} busy={busy} onOpen={onOpen} run={run} />
+            {shown.map((t) => (
+              <Lane key={t.id} t={t} budget={want.maxPrice} axis={axis} busy={busy} replay={replaying} onOpen={onOpen} run={run} />
             ))}
           </ul>
         </>
@@ -111,11 +177,12 @@ function Legend() {
   );
 }
 
-function Lane({ t, budget, axis, busy, onOpen, run }: {
+function Lane({ t, budget, axis, busy, replay, onOpen, run }: {
   t: Thread;
   budget: number;
   axis: ReturnType<typeof axisFor>;
   busy: boolean;
+  replay: boolean;
   onOpen: (id: string) => void;
   run: (fn: () => Promise<unknown>) => Promise<void>;
 }) {
@@ -215,7 +282,7 @@ function Lane({ t, budget, axis, busy, onOpen, run }: {
 
       <div className="-ml-3 mt-2 flex gap-1">
         <button className={link} onClick={() => onOpen(t.id)}>Open chat</button>
-        {t.status === "negotiating" && (
+        {t.status === "negotiating" && !replay && (
           <button className={`${btn} text-ink hover:text-scam`} disabled={busy} onClick={() => run(() => api(`/api/threads/${t.id}/pause`, "POST"))}>
             Pause
           </button>
