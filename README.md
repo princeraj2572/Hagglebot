@@ -63,8 +63,8 @@ there are no webhook signatures to verify.
 - Next.js 15 (App Router), TypeScript (strict), Tailwind CSS
 - PayPal Orders v2 via the official `@paypal/paypal-server-sdk` (**sandbox only**) and the PayPal JS SDK popup
 - SQLite via `better-sqlite3` for persistence
-- **AI: Gemini 2.0 Flash** (`@google/generative-ai`, free tier) as the primary model, with
-  **Groq** (`llama-3.3-70b-versatile`, OpenAI-compatible API) as an automatic fallback when Gemini is
+- **AI: Gemini Flash-Lite** (`@google/generative-ai`, free tier) as the primary model, with
+  **Groq** (`openai/gpt-oss-120b`, OpenAI-compatible API) as an automatic fallback when Gemini is
   rate-limited or down. *Why:* both have free tiers, Gemini Flash is fast and cheap for short chat
   turns, and Groq's separate quota keeps the demo running when Gemini throttles. With neither key set,
   the template negotiator is used.

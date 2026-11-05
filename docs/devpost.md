@@ -6,7 +6,7 @@
 
 **Agentic commerce, done honestly.** Hagglebot always introduces itself as an AI buyer agent and never impersonates you. The code, not the prompt, decides every price, so the budget can't be exceeded. The language model only phrases each move, and its output is checked: wrong prices, budget leaks and claims to be human are rejected. It walks away after repeated refusals, at the message limit, or on scam signals such as hidden fees and off-platform payment. In our demo, "Shady Sam" tries exactly that and is refused.
 
-**Tech.** Next.js 15, TypeScript, Tailwind, SQLite, PayPal Orders v2 (official server SDK plus the JS checkout), and Gemini 2.0 Flash with an automatic Groq fallback and a template negotiator if no model is reachable.
+**Tech.** Next.js 15, TypeScript, Tailwind, SQLite, PayPal Orders v2 (official server SDK plus the JS checkout), and Gemini Flash-Lite with an automatic Groq fallback and a template negotiator if no model is reachable.
 
 **Honest limits.** This is a demo: PayPal sandbox only (no real money), and the four sellers are simulated AI personas, not real listings. The scam detector is heuristic.
 

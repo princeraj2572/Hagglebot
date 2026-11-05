@@ -9,7 +9,7 @@ export { ResilientLLM } from "./resilient";
 /** Gemini first, Groq as fallback; with no keys the chain is empty (template mode). */
 export function createLLMFromEnv(env: Record<string, string | undefined> = process.env): LLM {
   const providers: LLM[] = [];
-  if (env.GEMINI_API_KEY?.trim()) providers.push(new GeminiLLM(env.GEMINI_API_KEY.trim()));
-  if (env.GROQ_API_KEY?.trim()) providers.push(new GroqLLM(env.GROQ_API_KEY.trim()));
+  if (env.GEMINI_API_KEY?.trim()) providers.push(new GeminiLLM(env.GEMINI_API_KEY.trim(), env.GEMINI_MODEL?.trim() || undefined));
+  if (env.GROQ_API_KEY?.trim()) providers.push(new GroqLLM(env.GROQ_API_KEY.trim(), env.GROQ_MODEL?.trim() || undefined));
   return new ResilientLLM(providers);
 }

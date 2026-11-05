@@ -1,6 +1,7 @@
 import { LLMTransientError, type LLM, type LLMRequest } from "./types";
 
-export const GROQ_MODEL = "llama-3.3-70b-versatile";
+/** Override with GROQ_MODEL if Groq retires this one. */
+export const GROQ_MODEL = "openai/gpt-oss-120b";
 
 /** Groq's OpenAI-compatible chat API, used as the fallback when Gemini is rate-limited. */
 export class GroqLLM implements LLM {
@@ -32,7 +33,12 @@ export class GroqLLM implements LLM {
       const ra = Number(res.headers.get("retry-after"));
       throw new LLMTransientError(`Groq HTTP ${res.status}`, this.name, Number.isFinite(ra) && ra > 0 ? ra * 1000 : undefined);
     }
-    if (!res.ok) throw new Error(`Groq HTTP ${res.status}: ${await res.text()}`);
+    if (!res.ok) {
+      // A 4xx (retired model, bad key) will not fix itself soon: skip Groq for a while and fall back.
+      const body = (await res.text()).slice(0, 160);
+      console.warn(`Groq "${this.model}" failed (HTTP ${res.status}), falling back: ${body}`);
+      throw new LLMTransientError(`Groq HTTP ${res.status}: ${body}`, this.name, 10 * 60_000);
+    }
     const data = (await res.json()) as { choices?: { message?: { content?: string } }[] };
     const text = data.choices?.[0]?.message?.content;
     if (!text) throw new LLMTransientError("Groq returned no content", this.name);
