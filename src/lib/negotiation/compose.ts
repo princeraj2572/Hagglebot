@@ -48,17 +48,24 @@ function describeMove(move: Move, want: Want, comparing: number, turn: number): 
   }
 }
 
-/** Honesty/safety gate on LLM output. Anything failing falls back to the template. */
-export function validateBuyerText(text: string, move: Move, thread: Thread): boolean {
-  if (!text || text.length > 700) return false;
-  if (HUMAN_CLAIM_RE.test(text) || LEAK_RE.test(text) || FABRICATION_RE.test(text)) return false;
+/**
+ * Honesty/safety gate on LLM output. Returns why a draft is unsafe, or null when it passes.
+ * Anything failing falls back to the template.
+ */
+export function checkBuyerText(text: string, move: Move, thread: Thread): string | null {
+  if (!text || text.length > 700) return "it was empty or too long";
+  if (HUMAN_CLAIM_RE.test(text)) return "it claimed to be human";
+  if (LEAK_RE.test(text)) return "it hinted at your budget";
+  if (FABRICATION_RE.test(text)) return "it made a market claim Hagglebot was never given";
   const amounts = extractAmounts(text);
   const price = "price" in move ? move.price : null;
   const allowed = new Set<number>([price ?? NaN, thread.lastAsk ?? NaN]);
-  if (!amounts.every((a) => allowed.has(a))) return false;
-  if (price !== null && !amounts.includes(price)) return false;
-  return true;
+  if (!amounts.every((a) => allowed.has(a))) return "it quoted a price it was not given";
+  if (price !== null && !amounts.includes(price)) return "it left out the price";
+  return null;
 }
+
+export const validateBuyerText = (text: string, move: Move, thread: Thread): boolean => checkBuyerText(text, move, thread) === null;
 
 export async function composeBuyerMessage(
   llm: LLM | null,
@@ -66,8 +73,9 @@ export async function composeBuyerMessage(
   want: Want,
   thread: Thread,
   opts: { comparing: number },
-): Promise<string> {
+): Promise<{ text: string; guard?: string }> {
   let body: string | null = null;
+  const notes: string[] = [];
   const turn = thread.messages.filter((m: Message) => m.from === "buyer").length;
   // "I'm comparing listings" is true but gets stale: say it once per conversation.
   const said = thread.messages.some((m: Message) => m.from === "buyer" && /\b(comparing|reviewing)\b[^.?!]*\blistings?\b/i.test(m.text));
@@ -83,12 +91,19 @@ export async function composeBuyerMessage(
         temperature: 0.8,
       });
       const cleaned = raw.trim().replace(/^["']|["']$/g, "").replace(/^(hi|hello|hey)\b[^.!?]*[.!?]\s*/i, "");
-      if (validateBuyerText(cleaned, move, thread)) body = cleaned;
+      const problem = checkBuyerText(cleaned, move, thread);
+      if (problem === null) body = cleaned;
+      else notes.push(`Draft rejected because ${problem}; sent safe wording instead.`);
     } catch (err) {
       if (!(err instanceof LLMUnavailableError)) throw err;
+      notes.push("No AI model was available, so it used plain template wording.");
     }
   }
   body ??= templateBody(move, want, { comparing, turn });
   // The opening line is fixed by policy: the AI disclosure is never left to the model.
-  return move.type === "opening" ? `${disclosure(want.buyerName)} ${body}` : body;
+  if (move.type === "opening") {
+    notes.unshift("Introduced itself as an AI agent. The code adds this line, so the model cannot leave it out.");
+    return { text: `${disclosure(want.buyerName)} ${body}`, guard: notes.join(" ") };
+  }
+  return notes.length > 0 ? { text: body, guard: notes.join(" ") } : { text: body };
 }

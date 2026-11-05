@@ -4,7 +4,7 @@ import { fmt } from "./money";
 import { detectScam } from "./scam";
 import { decide } from "./strategy";
 import { SCAM_WALK_MESSAGE } from "./templates";
-import type { Message, Seller, Thread, WalkReason, Want } from "./types";
+import { MAX_MESSAGES, MAX_REFUSALS, type Message, type Seller, type Thread, type WalkReason, type Want } from "./types";
 
 export interface EngineDeps {
   llm: LLM | null;
@@ -21,8 +21,8 @@ export function createThread(want: Want, seller: Pick<Seller, "id" | "name">, id
   };
 }
 
-function push(thread: Thread, deps: EngineDeps, from: Message["from"], text: string, price: number | null): void {
-  const message: Message = { from, text, at: (deps.now ?? Date.now)(), price };
+function push(thread: Thread, deps: EngineDeps, from: Message["from"], text: string, price: number | null, guard?: string): void {
+  const message: Message = { from, text, at: (deps.now ?? Date.now)(), price, ...(guard ? { guard } : {}) };
   thread.messages.push(message);
   deps.onMessage?.(thread, message);
 }
@@ -32,6 +32,16 @@ function walk(thread: Thread, reason: WalkReason, detail: string | null = null):
   thread.reason = reason;
   thread.detail = detail;
 }
+
+const join = (...parts: (string | undefined)[]): string | undefined => parts.filter(Boolean).join(" ") || undefined;
+
+const WALK_NOTE: Record<WalkReason, string> = {
+  too_many_refusals: `Walked away by rule: more than ${MAX_REFUSALS} refusals.`,
+  over_budget: "Walked away by rule: the price stayed above your budget.",
+  message_limit: `Walked away by rule: reached the ${MAX_MESSAGES}-message limit.`,
+  scam_detected: "Walked away by rule: scam signals.",
+  purchased_elsewhere: "Withdrew: bought from another seller.",
+};
 
 /**
  * Advance a thread by one buyer move (and the seller's reply, if the thread continues).
@@ -43,13 +53,15 @@ export async function step(thread: Thread, want: Want, seller: Seller, deps: Eng
   const move = decide(thread, want);
 
   if (move.type === "walk") {
-    push(thread, deps, "buyer", await composeBuyerMessage(deps.llm, move, want, thread, { comparing }), null);
+    const c = await composeBuyerMessage(deps.llm, move, want, thread, { comparing });
+    push(thread, deps, "buyer", c.text, null, join(c.guard, WALK_NOTE[move.reason]));
     walk(thread, move.reason);
     return thread;
   }
 
   if (move.type === "accept") {
-    push(thread, deps, "buyer", await composeBuyerMessage(deps.llm, move, want, thread, { comparing }), move.price);
+    const c = await composeBuyerMessage(deps.llm, move, want, thread, { comparing });
+    push(thread, deps, "buyer", c.text, move.price, join(c.guard, `Accepted ${fmt(move.price)} by rule: it is within your ${fmt(want.maxPrice)} budget.`));
     thread.status = "deal";
     thread.dealPrice = move.price;
     return thread;
@@ -57,14 +69,15 @@ export async function step(thread: Thread, want: Want, seller: Seller, deps: Eng
 
   // opening / counter: make the offer, then hear back.
   thread.lastOffer = move.price;
-  push(thread, deps, "buyer", await composeBuyerMessage(deps.llm, move, want, thread, { comparing }), move.price);
+  const offer = await composeBuyerMessage(deps.llm, move, want, thread, { comparing });
+  push(thread, deps, "buyer", offer.text, move.price, offer.guard);
   const reply = await seller.respond({ want, history: thread.messages, buyerOffer: move.price });
   push(thread, deps, "seller", reply.message, reply.price);
 
   const agreed = reply.action === "accept" ? reply.price : null;
   const scam = detectScam(reply.message, agreed);
   if (scam.isScam) {
-    push(thread, deps, "buyer", SCAM_WALK_MESSAGE, null);
+    push(thread, deps, "buyer", SCAM_WALK_MESSAGE, null, `Scam signals in the seller's message (${scam.signals.join("; ")}). Refused to pay outside PayPal and walked away.`);
     walk(thread, "scam_detected", scam.signals.join("; "));
     return thread;
   }
@@ -77,7 +90,8 @@ export async function step(thread: Thread, want: Want, seller: Seller, deps: Eng
       return thread;
     }
     thread.lastAsk = price;
-    push(thread, deps, "buyer", await composeBuyerMessage(deps.llm, { type: "accept", price }, want, thread, { comparing }), price);
+    const c = await composeBuyerMessage(deps.llm, { type: "accept", price }, want, thread, { comparing });
+    push(thread, deps, "buyer", c.text, price, join(c.guard, `Accepted ${fmt(price)} by rule: it is within your ${fmt(want.maxPrice)} budget.`));
     thread.status = "deal";
     thread.dealPrice = price;
     return thread;

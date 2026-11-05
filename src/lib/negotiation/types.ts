@@ -14,6 +14,8 @@ export interface Message {
   at: number;
   /** The price this message puts on the table, if any. */
   price: number | null;
+  /** A guardrail that shaped this message (shown to the user, never sent to the seller). */
+  guard?: string;
 }
 
 export type SellerAction = "counter" | "accept" | "refuse";
