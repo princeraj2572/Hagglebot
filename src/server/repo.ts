@@ -1,6 +1,6 @@
 import type Database from "better-sqlite3";
 import { randomUUID } from "node:crypto";
-import type { Message, Thread, ThreadStatus, WalkReason, Want } from "../lib/negotiation/types";
+import type { Message, NegotiationStyle, Thread, ThreadStatus, WalkReason, Want } from "../lib/negotiation/types";
 
 export interface SellerContact {
   id: string;
@@ -43,8 +43,8 @@ export class Repo {
   createWant(w: Omit<Want, "id">): WantRecord {
     const rec = { ...w, id: id() };
     this.db
-      .prepare("INSERT INTO wants (id,item,max_price,notes,buyer_name,status,created_at) VALUES (?,?,?,?,?, 'open', ?)")
-      .run(rec.id, rec.item, rec.maxPrice, rec.notes, rec.buyerName, this.now());
+      .prepare("INSERT INTO wants (id,item,max_price,notes,buyer_name,status,created_at,style) VALUES (?,?,?,?,?, 'open', ?, ?)")
+      .run(rec.id, rec.item, rec.maxPrice, rec.notes, rec.buyerName, this.now(), rec.style ?? "balanced");
     return this.getWant(rec.id)!;
   }
 
@@ -52,6 +52,7 @@ export class Repo {
     return {
       id: r.id as string, item: r.item as string, maxPrice: r.max_price as number, notes: r.notes as string,
       buyerName: r.buyer_name as string, status: r.status as WantStatus, createdAt: r.created_at as number,
+      style: ((r.style as NegotiationStyle | null) ?? "balanced"),
     };
   }
   getWant(wantId: string): WantRecord | undefined {

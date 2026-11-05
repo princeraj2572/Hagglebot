@@ -1,3 +1,4 @@
+import { NEGOTIATION_STYLES, type NegotiationStyle } from "../lib/negotiation/types";
 import { PERSONAS } from "../lib/sellers/personas";
 
 export class ValidationError extends Error {
@@ -21,6 +22,7 @@ export interface WantInput {
   maxPrice: number;
   notes: string;
   buyerName: string;
+  style?: NegotiationStyle;
 }
 
 export function parseWantInput(body: unknown): WantInput {
@@ -35,7 +37,11 @@ export function parseWantInput(body: unknown): WantInput {
   }
   if (notes.length > 500) throw new ValidationError("Notes are limited to 500 characters");
   if (!buyerName || buyerName.length > 60) throw new ValidationError("Your name is required (max 60 characters)");
-  return { item, maxPrice, notes, buyerName };
+  const style = clean(b.style);
+  if (style && !(NEGOTIATION_STYLES as string[]).includes(style)) {
+    throw new ValidationError(`Style must be one of: ${NEGOTIATION_STYLES.join(", ")}`);
+  }
+  return { item, maxPrice, notes, buyerName, ...(style ? { style: style as NegotiationStyle } : {}) };
 }
 
 export interface SellerInput {

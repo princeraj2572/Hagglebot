@@ -10,7 +10,8 @@ CREATE TABLE IF NOT EXISTS wants (
   notes TEXT NOT NULL DEFAULT '',
   buyer_name TEXT NOT NULL,
   status TEXT NOT NULL DEFAULT 'open',
-  created_at INTEGER NOT NULL
+  created_at INTEGER NOT NULL,
+  style TEXT NOT NULL DEFAULT 'balanced'
 );
 CREATE TABLE IF NOT EXISTS sellers (
   id TEXT PRIMARY KEY,
@@ -71,5 +72,7 @@ export function openDb(path: string): Database.Database {
   // Databases created before guardrail notes existed need the column added.
   const columns = db.prepare("PRAGMA table_info(messages)").all() as { name: string }[];
   if (!columns.some((c) => c.name === "guard")) db.exec("ALTER TABLE messages ADD COLUMN guard TEXT");
+  const wantColumns = db.prepare("PRAGMA table_info(wants)").all() as { name: string }[];
+  if (!wantColumns.some((c) => c.name === "style")) db.exec("ALTER TABLE wants ADD COLUMN style TEXT NOT NULL DEFAULT 'balanced'");
   return db;
 }

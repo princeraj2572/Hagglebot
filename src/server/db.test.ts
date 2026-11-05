@@ -18,17 +18,28 @@ describe("messages.guard", () => {
         CREATE TABLE threads (id TEXT PRIMARY KEY);
         CREATE TABLE messages (id INTEGER PRIMARY KEY AUTOINCREMENT, thread_id TEXT NOT NULL, sender TEXT NOT NULL, text TEXT NOT NULL, price INTEGER, at INTEGER NOT NULL);
         INSERT INTO messages (thread_id, sender, text, price, at) VALUES ('t', 'buyer', 'old message', 100, 1);
+        INSERT INTO wants (id, item, max_price, notes, buyer_name, status, created_at) VALUES ('w1', 'Old want', 100, '', 'Alex', 'open', 1);
       `);
       old.close();
 
       const db = openDb(file);
       const cols = (db.prepare("PRAGMA table_info(messages)").all() as { name: string }[]).map((c) => c.name);
       expect(cols).toContain("guard");
+      const wantCols = (db.prepare("PRAGMA table_info(wants)").all() as { name: string }[]).map((c) => c.name);
+      expect(wantCols).toContain("style");
+      expect(new Repo(db).listWants()[0]!.style).toBe("balanced"); // an older want keeps the original behaviour
       expect((db.prepare("SELECT text, guard FROM messages").get() as { text: string; guard: string | null })).toEqual({ text: "old message", guard: null });
       db.close();
     } finally {
       rmSync(dir, { recursive: true, force: true });
     }
+  });
+
+  it("stores a chosen negotiation style and defaults to balanced", () => {
+    const repo = new Repo(openDb(":memory:"));
+    const base = { item: "Thing", maxPrice: 100, notes: "", buyerName: "Alex" };
+    expect(repo.createWant({ ...base, style: "quick" }).style).toBe("quick");
+    expect(repo.createWant(base).style).toBe("balanced");
   });
 
   it("round-trips a note through the repository and leaves it off messages that have none", () => {

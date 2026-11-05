@@ -34,3 +34,14 @@ describe("parseSellerInput", () => {
     expect(() => parseSellerInput({ persona: "mallory" })).toThrow(ValidationError);
   });
 });
+
+describe("parseWantInput style", () => {
+  const base = { item: "Headphones", maxPrice: 250, notes: "", buyerName: "Alex" };
+  it("accepts a known style and leaves it off when not given", () => {
+    expect(parseWantInput({ ...base, style: "patient" })).toMatchObject({ style: "patient" });
+    expect("style" in parseWantInput(base)).toBe(false);
+  });
+  it("rejects an unknown style", () => {
+    expect(() => parseWantInput({ ...base, style: "reckless" })).toThrow(ValidationError);
+  });
+});
