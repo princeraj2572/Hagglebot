@@ -41,7 +41,8 @@ CREATE TABLE IF NOT EXISTS messages (
   sender TEXT NOT NULL CHECK (sender IN ('buyer','seller')),
   text TEXT NOT NULL,
   price INTEGER,
-  at INTEGER NOT NULL
+  at INTEGER NOT NULL,
+  guard TEXT
 );
 CREATE INDEX IF NOT EXISTS messages_thread ON messages(thread_id, id);
 CREATE TABLE IF NOT EXISTS deals (
@@ -67,5 +68,8 @@ export function openDb(path: string): Database.Database {
   db.pragma("journal_mode = WAL");
   db.pragma("foreign_keys = ON");
   db.exec(SCHEMA);
+  // Databases created before guardrail notes existed need the column added.
+  const columns = db.prepare("PRAGMA table_info(messages)").all() as { name: string }[];
+  if (!columns.some((c) => c.name === "guard")) db.exec("ALTER TABLE messages ADD COLUMN guard TEXT");
   return db;
 }

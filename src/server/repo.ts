@@ -101,13 +101,14 @@ export class Repo {
 
   addMessage(threadId: string, m: Message): void {
     this.db
-      .prepare("INSERT INTO messages (thread_id,sender,text,price,at) VALUES (?,?,?,?,?)")
-      .run(threadId, m.from, m.text, m.price, m.at);
+      .prepare("INSERT INTO messages (thread_id,sender,text,price,at,guard) VALUES (?,?,?,?,?,?)")
+      .run(threadId, m.from, m.text, m.price, m.at, m.guard ?? null);
   }
 
   private messagesOf(threadId: string): Message[] {
     return (this.db.prepare("SELECT * FROM messages WHERE thread_id = ? ORDER BY id").all(threadId) as Row[]).map((r) => ({
       from: r.sender as Message["from"], text: r.text as string, at: r.at as number, price: r.price as number | null,
+      ...(r.guard ? { guard: r.guard as string } : {}),
     }));
   }
 
