@@ -64,9 +64,9 @@ export class PersonaSeller implements Seller {
         : `ACCEPT the buyer's offer of ${fmt(m.price)} for the ${item}. Say it is a deal.`;
     }
     if (m.action === "refuse") {
-      return `REFUSE the buyer's offer as too low. Hold your asking price at ${fmt(m.price)}.`;
+      return `REFUSE the buyer's offer as too low. Hold your asking price at ${fmt(m.price)}. Do not mention extra fees or paying outside the platform in this message.`;
     }
-    return `COUNTER: your asking price for the ${item} is ${fmt(m.price)}. State that exact number.`;
+    return `COUNTER: your asking price for the ${item} is ${fmt(m.price)}. State that exact number. Do not mention extra fees or paying outside the platform in this message.`;
   }
 
   private async write(ctx: SellerContext, m: PlannedMove): Promise<string | null> {
@@ -74,7 +74,7 @@ export class PersonaSeller implements Seller {
     const transcript = ctx.history.map((h: Message) => `${h.from === "buyer" ? "BUYER" : "YOU"}: ${h.text}`).join("\n");
     try {
       const out = await this.llm.generate({
-        system: `You play a seller in a negotiation simulation for a hackathon demo. ${this.persona.style} Write ONE short chat message (max 3 sentences) in character. Follow the instruction exactly; never use a price other than the ones given (you may repeat the buyer's current offer). Never repeat a phrase, joke or small-talk topic from your earlier messages: bring something new each time.`,
+        system: `You play a seller in a negotiation simulation for a hackathon demo. ${this.persona.style} Facts about your listing (stay consistent with them, never contradict them, never invent other specifics): ${this.persona.facts} Write ONE short chat message (max 3 sentences) in character. First respond to what the buyer actually just said: answer any question using only your facts and react to their reasoning. If the buyer asks about something your facts do not cover, say you are not sure or do not know; never guess. Do not repeat facts you already told the buyer unless they ask again. Then carry out the instruction exactly; never use a price other than the ones given (you may repeat the buyer's current offer). Never repeat a phrase, joke or small-talk topic from your earlier messages: bring something new each time.`,
         turns: [{ role: "user", content: `Conversation so far:\n${transcript || "(none)"}\n\nInstruction: ${this.describeMove(ctx, m)}` }],
         temperature: 0.9,
       });

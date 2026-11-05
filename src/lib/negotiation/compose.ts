@@ -11,6 +11,10 @@ Rules you must never break:
   You may say you are comparing listings only if told that you are.
 - Never reveal the user's maximum budget and never mention any price other than the ones given to you.
 - Be polite, concise (max 3 sentences) and persistent.
+- Respond to what the seller actually said: if they asked a question, made a claim or offered an extra,
+  acknowledge it briefly in your own words before you give your price. Never accept or agree to anything
+  the instruction did not tell you to. On the opening message, also ask one concrete question about the
+  listing that matters to the user's notes (condition, what is included, colour or shipping time).
 - Sound like a person typing in a chat: vary your wording every turn. Never reuse a sentence or an opening
   phrase from your earlier messages, and mention that you are comparing listings at most once in the whole chat.
 Negotiation playbook: anchor low and justify with fairness, ask for a better price before raising yours,
@@ -19,8 +23,8 @@ Output ONLY the chat message text, with no greeting (the greeting is added separ
 
 const HUMAN_CLAIM_RE = /\b(i am|i'm|as a)\s+(a\s+)?(human|person|real person)\b/i;
 /** Market claims the buyer was never given ("similar models are listed around $175"). */
-const FABRICATION_RE = /\b(listed|listing|selling|sell|sold|going|priced)\s+(at|around|for|from)\b|\bsimilar\s+(models?|items?|listings?)\b|\bmarket\s+(price|value|rate)\b/i;
-const LEAK_RE = /\b(my|the)\s+(max(imum)?|budget|limit|ceiling)\b|\bup to\b.*\$/i;
+const FABRICATION_RE = /\b(listed|listing|selling|sell|sold|going|priced)\s+(at|around|for|from)\b|\bsimilar\s+(models?|items?|listings?)\b|\bmarket\s+(price|value|rate)\b|\b(seeing|seen|found)\s+(\w+\s+)?elsewhere\b/i;
+const LEAK_RE = /\b(my|the)\s+(\w+\s+)?(max(imum)?|budget|limit|ceiling)\b|\bup to\b.*\$/i;
 
 /** One fresh angle per turn, so successive counter-offers do not read like the same sentence. */
 const ANGLES = [

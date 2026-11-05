@@ -21,6 +21,7 @@ describe("validateBuyerText", () => {
   it("rejects prices it was not given and budget leaks", () => {
     expect(validateBuyerText("How about $150?", counter, thread)).toBe(false);
     expect(validateBuyerText("My budget is tight, but $190 could work.", counter, thread)).toBe(false);
+    expect(validateBuyerText("$190 is my absolute limit based on what I'm seeing elsewhere.", counter, thread)).toBe(false);
   });
 });
 
