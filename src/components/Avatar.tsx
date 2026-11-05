@@ -6,14 +6,17 @@ const TAGLINE: Record<string, string> = {
   "Shady Sam": "Watch the fees",
 };
 
-export const tagline = (name: string): string => TAGLINE[name] ?? "Simulated seller";
+/** "Shady Sam 2" is the second Shady Sam: look up the personality by the name without the number. */
+const baseName = (name: string): string => name.replace(/\s+\d+$/, "");
+
+export const tagline = (name: string): string => TAGLINE[baseName(name)] ?? "Simulated seller";
 
 const SIZE = { sm: "h-5 w-5 text-[10px]", md: "h-8 w-8 text-sm", lg: "h-11 w-11 text-lg" } as const;
 
 export function Avatar({ name, size = "md" }: { name: string; size?: keyof typeof SIZE }) {
   const bot = name === "Hagglebot";
   // Two letters of the persona name ("Fe", "Fa", "Ch", "Sa") so sellers sharing an initial stay distinct.
-  const word = name.trim().split(/\s+/).at(-1) ?? "?";
+  const word = baseName(name.trim()).split(/\s+/).at(-1) ?? "?";
   const letter = word.charAt(0).toUpperCase() + word.slice(1, 2).toLowerCase();
   return (
     <span

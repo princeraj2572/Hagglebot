@@ -57,4 +57,11 @@ describe("messages.guard", () => {
     expect(first!.guard).toBe("Introduced itself as an AI agent.");
     expect("guard" in second!).toBe(false);
   });
+
+  it("numbers a seller added twice so the inbox can tell them apart", () => {
+    const repo = new Repo(openDb(":memory:"));
+    const want = repo.createWant({ item: "Thing", maxPrice: 100, notes: "", buyerName: "Alex" });
+    const add = (name: string) => repo.addSeller({ wantId: want.id, name, persona: "sam", endpoint: "mock://sam" }).name;
+    expect([add("Shady Sam"), add("Shady Sam"), add("Shady Sam"), add("Fast Ferdi")]).toEqual(["Shady Sam", "Shady Sam 2", "Shady Sam 3", "Fast Ferdi"]);
+  });
 });

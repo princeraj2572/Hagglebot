@@ -71,7 +71,11 @@ export class Repo {
 
   // ---- sellers ----
   addSeller(s: Omit<SellerContact, "id">): SellerContact {
-    const rec = { ...s, id: id() };
+    // Two sellers with the same name would be indistinguishable in the inbox, so number the later ones.
+    const taken = new Set(this.listSellers(s.wantId).map((x) => x.name));
+    let name = s.name;
+    for (let n = 2; taken.has(name); n++) name = `${s.name} ${n}`;
+    const rec = { ...s, name, id: id() };
     this.db
       .prepare("INSERT INTO sellers (id,want_id,name,persona,endpoint,created_at) VALUES (?,?,?,?,?,?)")
       .run(rec.id, rec.wantId, rec.name, rec.persona, rec.endpoint, this.now());
