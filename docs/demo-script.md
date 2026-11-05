@@ -6,7 +6,7 @@ Record at 1080p. Run with `HAGGLEBOT_STEP_DELAY_MS=1500` so threads visibly prog
 | Time | Show | Say |
 |---|---|---|
 | 0:00 | Empty dashboard, sandbox badge | "Hagglebot is an AI buyer agent. You give it a wishlist and a budget, and it haggles for you, then pays through PayPal. This is sandbox only." |
-| 0:15 | Add the want (or **Load demo scenario**): Sony WH-1000XM5, max $250, "prefer black, must ship this week" | "I want these headphones for at most $250. The budget is never shown to sellers." |
+| 0:15 | Add the want (or **Load demo scenario**): Wireless noise-cancelling headphones, max $250, "prefer black, must ship this week" | "I want these headphones for at most $250. The budget is never shown to sellers." |
 | 0:35 | Press **Negotiate**: four threads go live | "Four simulated sellers, each with a different personality and cost basis. Hagglebot talks to all of them in parallel." |
 | 0:55 | Open **Shady Sam's** chat | "Note the first message: it says it's an AI agent. Now Sam agrees to $220, then adds a processing fee and asks to pay outside PayPal." Show the refusal and the red "scam detected" status. |
 | 1:25 | Click **Pause** on one thread, then **Resume** | "Every negotiation has a killswitch." |

@@ -69,7 +69,7 @@ export function WantsPanel(props: {
         <h3 className="text-sm font-semibold">New want</h3>
         <label className="block text-xs text-muted">
           Item
-          <input className={`${input} mt-1`} required maxLength={120} value={form.item} placeholder="e.g. Sony WH-1000XM5"
+          <input className={`${input} mt-1`} required maxLength={120} value={form.item} placeholder="e.g. Wireless noise-cancelling headphones"
             onChange={(e) => setForm({ ...form, item: e.target.value })} />
         </label>
         <div className="grid grid-cols-2 gap-3">
