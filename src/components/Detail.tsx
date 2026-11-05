@@ -20,6 +20,7 @@ export function Detail(props: {
 }) {
   const { t, budget, axis, busy, replay, run, onBack } = props;
   const scam = t.reason === "scam_detected";
+  const guards = t.messages.filter((m) => m.guard).length;
   const saved = t.status === "deal" && t.dealPrice !== null ? budget - t.dealPrice : 0;
   const edge = scam ? "border-l-scam" : t.status === "deal" ? "border-l-ink" : t.status === "negotiating" ? "border-l-ultra" : t.status === "paused" ? "border-l-tag" : "border-l-muted";
 
@@ -34,7 +35,15 @@ export function Detail(props: {
           <Avatar name={t.sellerName} size="lg" />
           <div className="min-w-0">
             <h3 className="truncate text-lg font-semibold leading-tight" title={t.sellerName}>{t.sellerName}</h3>
-            <p className="text-sm text-muted">{tagline(t.sellerName)}</p>
+            <p className="text-sm text-muted">
+              {tagline(t.sellerName)}
+              {guards > 0 && (
+                <span title="Safety checks Hagglebot applied in this conversation, shown under its messages">
+                  {" · "}
+                  {guards} guardrail {guards === 1 ? "note" : "notes"}
+                </span>
+              )}
+            </p>
           </div>
         </div>
         <div className="flex flex-wrap items-center gap-3">

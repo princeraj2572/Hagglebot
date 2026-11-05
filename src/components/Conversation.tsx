@@ -4,6 +4,15 @@ import type { Thread } from "@/lib/negotiation/types";
 import { Avatar } from "./Avatar";
 import { time, usd } from "./format";
 
+function Shield() {
+  return (
+    <svg aria-hidden viewBox="0 0 16 16" className="mt-0.5 h-3.5 w-3.5 shrink-0" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M8 1.5 2.5 3.5v4.2c0 3 2.3 5.4 5.5 6.8 3.2-1.4 5.5-3.8 5.5-6.8V3.5L8 1.5Z" />
+      <path d="m5.6 8 1.7 1.7L10.5 6.4" />
+    </svg>
+  );
+}
+
 /** The actual chat between Hagglebot and one seller. Hagglebot speaks on the right, the seller on the left. */
 export function Conversation({ t }: { t: Thread }) {
   const box = useRef<HTMLDivElement>(null);
@@ -54,6 +63,17 @@ export function Conversation({ t }: { t: Thread }) {
                     <b className={`num ml-2 whitespace-nowrap rounded px-1.5 py-0.5 font-display text-sm ${buyer ? "bg-ultra/10 text-ultra" : "bg-tag/30"}`}>{usd(m.price)}</b>
                   )}
                 </p>
+                {m.guard && (
+                  <p
+                    className={`mt-1 flex items-start gap-1.5 rounded-md px-2.5 py-1.5 text-[13px] leading-snug ${
+                      m.guard.startsWith("Scam") ? "bg-scam/10 text-scam" : "bg-ink/5 text-ink/80"
+                    }`}
+                    data-testid="guardrail"
+                  >
+                    <Shield />
+                    <span><b className="font-semibold">Guardrail.</b> {m.guard}</span>
+                  </p>
+                )}
               </div>
             </li>
           );
