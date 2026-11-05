@@ -1,6 +1,6 @@
 import type { WalkReason } from "@/lib/negotiation/types";
 
-export const usd = (n: number | null | undefined): string => (n === null || n === undefined ? "–" : `$${n}`);
+export const usd = (n: number | null | undefined): string => (n === null || n === undefined ? "–" : `$${n.toLocaleString("en-US")}`);
 
 export const REASON_LABEL: Record<WalkReason, string> = {
   too_many_refusals: "Walked away: the seller kept refusing",

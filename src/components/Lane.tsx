@@ -61,7 +61,7 @@ export function Lane({ t, budget, axis }: { t: Thread; budget: number; axis: Axi
   return (
     <div>
       <div
-        className="relative h-28"
+        className="relative mx-7 h-28"
         role="img"
         aria-label={`Ask ${usd(t.lastAsk)}, offer ${usd(offerNow)}, budget ${usd(budget)}`}
       >
@@ -101,10 +101,11 @@ export function Lane({ t, budget, axis }: { t: Thread; budget: number; axis: Axi
         {scam && <span aria-hidden className="absolute right-0 top-1/2 -translate-y-1/2 text-xl font-bold text-scam">×</span>}
       </div>
 
-      <div className="num relative flex justify-between text-[13px] text-muted" aria-hidden>
-        <span>{usd(axis.lo)}</span>
+      {/* mx-7 keeps price labels near either end inside the card; an end label hides when the budget label would sit on it */}
+      <div className="num relative mx-7 mt-1 flex justify-between text-[13px] text-muted" aria-hidden>
+        <span className={axis.pct(budget) < 18 ? "invisible" : ""}>{usd(axis.lo)}</span>
         <span className={`absolute -translate-x-1/2 whitespace-nowrap font-medium text-ink transition-[left] ${EASE}`} style={{ left: axis.pos(budget) }}>Budget {usd(budget)}</span>
-        <span>{usd(axis.hi)}</span>
+        <span className={axis.pct(budget) > 82 ? "invisible" : ""}>{usd(axis.hi)}</span>
       </div>
 
       <p className="num mt-2 text-sm">
