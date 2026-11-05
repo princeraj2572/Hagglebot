@@ -2,8 +2,10 @@
 import { useState } from "react";
 import type { Deal, WantRecord } from "@/server/repo";
 import { api } from "./api";
+import { Avatar } from "./Avatar";
 import { usd } from "./format";
 import { PayPalCheckout } from "./PayPalCheckout";
+import { btn } from "./ui";
 
 const LABEL: Record<Deal["status"], string> = {
   awaiting_payment: "Ready to pay",
@@ -39,47 +41,72 @@ export function DealsPanel(props: {
     }
   };
   const wantName = (id: string) => wants.find((w) => w.id === id)?.item ?? "Item";
+  const open = deals.filter((d) => d.status !== "cancelled" && d.status !== "refunded");
+  const cheapest = open.length > 1 ? Math.min(...open.map((d) => d.price)) : null;
 
   return (
     <section aria-label="Deals and payments" className="space-y-4">
-      <h2 className="text-xl font-semibold">Deals</h2>
-      <p className="text-sm text-muted">
-        PayPal sandbox only. No real money moves.
-        {buyerEmail && <> Log in as the sandbox buyer <span className="font-medium text-ink">{buyerEmail}</span>.</>}
+      <p className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted">
+        <span className="inline-flex items-center gap-2 rounded-full border border-line px-3 py-1 text-[13px]">
+          <span aria-hidden className="h-2 w-2 rounded-full bg-ink/40" />
+          PayPal sandbox only. No real money moves.
+        </span>
+        {buyerEmail && (
+          <span className="min-w-0 break-all">
+            Sandbox buyer: <span className="font-medium text-ink">{buyerEmail}</span>
+          </span>
+        )}
       </p>
-      {deals.length === 0 && <p className="text-sm text-muted">A deal shows up here when a seller agrees to a price within budget.</p>}
 
-      <ul className="space-y-4">
+      {deals.length === 0 && (
+        <div className="max-w-sm rounded-sm border border-dashed border-line bg-paper/60 p-5 text-sm text-muted">
+          <p className="font-semibold text-ink">Your receipt appears here</p>
+          <p className="mt-1">When a seller agrees to a price within budget, the deal shows up with a Confirm and Pay button.</p>
+        </div>
+      )}
+
+      <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 2xl:grid-cols-3">
         {deals.map((d) => (
           <li
             key={d.id}
-            className="rounded-sm border border-dashed border-ink/60 bg-paper p-4"
+            className="min-w-0 rounded-sm border border-dashed border-ink/60 bg-paper p-4"
             data-testid={`deal-${d.sellerName}`}
           >
-            <div className="flex items-baseline justify-between gap-2">
-              <p className="font-semibold">{wantName(d.wantId)}</p>
-              <span className="num text-2xl font-bold">{usd(d.price)}</span>
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex min-w-0 items-center gap-2.5">
+                <Avatar name={d.sellerName} />
+                <div className="min-w-0">
+                  <p className="break-words font-semibold leading-tight">{d.sellerName}</p>
+                  <p className="break-words text-sm text-muted">{wantName(d.wantId)}</p>
+                </div>
+              </div>
+              <span className="num shrink-0 text-2xl font-bold">{usd(d.price)}</span>
             </div>
-            <p className="text-sm text-muted">from {d.sellerName} · {LABEL[d.status]}</p>
+            <p className="mt-2 flex flex-wrap items-center gap-2 text-sm text-muted">
+              {LABEL[d.status]}
+              {cheapest !== null && d.price === cheapest && d.status !== "cancelled" && d.status !== "refunded" && (
+                <span className="rounded-full bg-tag px-2 py-0.5 text-[13px] font-semibold text-ink">Best price</span>
+              )}
+            </p>
 
             {d.status === "paid" && (
               <dl className="mt-3 space-y-0.5 border-t border-dashed border-line pt-3 text-sm">
-                <div>PayPal payer-id <span className="num font-medium">{d.payerId ?? "n/a"}</span></div>
-                <div>Capture <span className="num font-medium">{d.captureId ?? "n/a"}</span></div>
+                <div className="break-words">PayPal payer-id <span className="num break-all font-medium">{d.payerId ?? "n/a"}</span></div>
+                <div className="break-words">Capture <span className="num break-all font-medium">{d.captureId ?? "n/a"}</span></div>
                 <div className="text-ultra">Confirmation sent to the seller</div>
                 <div className="pt-2">
                   {confirming === d.id ? (
                     <span className="flex flex-wrap items-center gap-2">
                       <span>Refund {usd(d.price)} to the buyer?</span>
-                      <button className="rounded-md bg-scam px-3 py-1.5 font-medium text-white disabled:opacity-50" disabled={refunding} onClick={() => void refund(d.id)}>
+                      <button className={`${btn} bg-scam text-white`} disabled={refunding} onClick={() => void refund(d.id)}>
                         {refunding ? "Refunding…" : "Yes, refund"}
                       </button>
-                      <button className="rounded-md border border-line px-3 py-1.5 hover:border-ink" disabled={refunding} onClick={() => setConfirming(null)}>
+                      <button className={`${btn} border border-line [@media(hover:hover)]:hover:border-ink`} disabled={refunding} onClick={() => setConfirming(null)}>
                         Keep
                       </button>
                     </span>
                   ) : (
-                    <button className="rounded-md border border-line px-3 py-1.5 font-medium hover:border-ink" onClick={() => setConfirming(d.id)}>
+                    <button className={`${btn} border border-line [@media(hover:hover)]:hover:border-ink`} onClick={() => setConfirming(d.id)}>
                       Refund {usd(d.price)}
                     </button>
                   )}
@@ -99,7 +126,7 @@ export function DealsPanel(props: {
                   <PayPalCheckout dealId={d.id} clientId={paypalClientId} onPaid={() => { setPaying(null); onChanged(); }} />
                 ) : (
                   <button
-                    className="w-full rounded-md bg-ultra px-3 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#2335b8] disabled:cursor-not-allowed disabled:opacity-50"
+                    className={`${btn} w-full bg-ultra py-2.5 font-semibold text-white [@media(hover:hover)]:hover:bg-[#2335b8]`}
                     disabled={!paypalClientId}
                     onClick={() => setPaying(d.id)}
                   >
