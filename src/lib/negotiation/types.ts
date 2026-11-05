@@ -1,3 +1,7 @@
+/** How hard to haggle. Only tunes pacing; the budget ceiling and the message limit never change. */
+export type NegotiationStyle = "patient" | "balanced" | "quick";
+export const NEGOTIATION_STYLES: NegotiationStyle[] = ["patient", "balanced", "quick"];
+
 export interface Want {
   id: string;
   item: string;
@@ -6,6 +10,8 @@ export interface Want {
   notes: string;
   /** Name used in the mandatory AI-disclosure opening line. */
   buyerName: string;
+  /** Defaults to "balanced". */
+  style?: NegotiationStyle;
 }
 
 export interface Message {

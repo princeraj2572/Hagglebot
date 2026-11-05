@@ -2,9 +2,9 @@ import type { LLM } from "../llm/types";
 import { composeBuyerMessage } from "./compose";
 import { fmt } from "./money";
 import { detectScam } from "./scam";
-import { decide } from "./strategy";
+import { decide, rulesFor, STYLE_INFO } from "./strategy";
 import { SCAM_WALK_MESSAGE } from "./templates";
-import { MAX_MESSAGES, MAX_REFUSALS, type Message, type Seller, type Thread, type WalkReason, type Want } from "./types";
+import { MAX_MESSAGES, type Message, type Seller, type Thread, type WalkReason, type Want } from "./types";
 
 export interface EngineDeps {
   llm: LLM | null;
@@ -35,13 +35,27 @@ function walk(thread: Thread, reason: WalkReason, detail: string | null = null):
 
 const join = (...parts: (string | undefined)[]): string | undefined => parts.filter(Boolean).join(" ") || undefined;
 
-const WALK_NOTE: Record<WalkReason, string> = {
-  too_many_refusals: `Walked away by rule: more than ${MAX_REFUSALS} refusals.`,
-  over_budget: "Walked away by rule: the price stayed above your budget.",
-  message_limit: `Walked away by rule: reached the ${MAX_MESSAGES}-message limit.`,
-  scam_detected: "Walked away by rule: scam signals.",
-  purchased_elsewhere: "Withdrew: bought from another seller.",
-};
+function walkNote(reason: WalkReason, want: Want): string {
+  switch (reason) {
+    case "too_many_refusals":
+      return `Walked away by rule: more than ${rulesFor(want).maxRefusals} refusals.`;
+    case "over_budget":
+      return "Walked away by rule: the price stayed above your budget.";
+    case "message_limit":
+      return `Walked away by rule: reached the ${MAX_MESSAGES}-message limit.`;
+    case "scam_detected":
+      return "Walked away by rule: scam signals.";
+    case "purchased_elsewhere":
+      return "Withdrew: bought from another seller.";
+  }
+}
+
+/** Shown on the opening message so the user can see their haggling style being followed. */
+function styleNote(want: Want, opening: number): string {
+  const style = want.style ?? "balanced";
+  const r = rulesFor(want);
+  return `${STYLE_INFO[style].label} style: opens at ${fmt(opening)}, rises to your budget in ${r.rises} steps, walks away after more than ${r.maxRefusals} refusals.`;
+}
 
 /**
  * Advance a thread by one buyer move (and the seller's reply, if the thread continues).
@@ -54,7 +68,7 @@ export async function step(thread: Thread, want: Want, seller: Seller, deps: Eng
 
   if (move.type === "walk") {
     const c = await composeBuyerMessage(deps.llm, move, want, thread, { comparing });
-    push(thread, deps, "buyer", c.text, null, join(c.guard, WALK_NOTE[move.reason]));
+    push(thread, deps, "buyer", c.text, null, join(c.guard, walkNote(move.reason, want)));
     walk(thread, move.reason);
     return thread;
   }
@@ -70,7 +84,7 @@ export async function step(thread: Thread, want: Want, seller: Seller, deps: Eng
   // opening / counter: make the offer, then hear back.
   thread.lastOffer = move.price;
   const offer = await composeBuyerMessage(deps.llm, move, want, thread, { comparing });
-  push(thread, deps, "buyer", offer.text, move.price, offer.guard);
+  push(thread, deps, "buyer", offer.text, move.price, move.type === "opening" ? join(offer.guard, styleNote(want, move.price)) : offer.guard);
   const reply = await seller.respond({ want, history: thread.messages, buyerOffer: move.price });
   push(thread, deps, "seller", reply.message, reply.price);
 
