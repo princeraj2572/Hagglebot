@@ -7,7 +7,7 @@ const LABEL: Record<ThreadStatus, string> = {
   paused: "Paused",
 };
 const DOT: Record<ThreadStatus, string> = {
-  negotiating: "bg-ultra motion-safe:animate-pulse",
+  negotiating: "bg-ultra",
   deal: "bg-ink",
   walked_away: "bg-muted",
   paused: "bg-tag",
