@@ -17,6 +17,12 @@ describe("validateBuyerText", () => {
     expect(validateBuyerText("Similar models are listed around $190, so would you accept that?", counter, thread)).toBe(false);
     expect(validateBuyerText("The market price is lower, so $190 is fair.", counter, thread)).toBe(false);
     expect(validateBuyerText("Considering current market values, I can offer $190.", counter, thread)).toBe(false);
+    expect(validateBuyerText("Given current market trends, I can offer $190.", counter, thread)).toBe(false);
+    expect(validateBuyerText("That is above the going rate, so I can offer $190.", counter, thread)).toBe(false);
+  });
+
+  it("still allows ordinary talk that merely contains related words", () => {
+    expect(validateBuyerText("I saw it on the marketplace. Could you do $190?", counter, thread)).toBe(true);
   });
 
   it("rejects prices it was not given and budget leaks", () => {
