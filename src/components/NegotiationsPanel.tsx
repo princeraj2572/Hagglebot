@@ -8,6 +8,7 @@ import { Detail } from "./Detail";
 import { usd } from "./format";
 import { Inbox } from "./Inbox";
 import { axisFor } from "./Lane";
+import { primary } from "./ui";
 import { openingOffer, STYLE_INFO } from "@/lib/negotiation/strategy";
 
 type Want = DashboardState["wants"][number];
@@ -48,11 +49,13 @@ export function NegotiationsPanel(props: {
   paypalClientId: string | null;
   buyerEmail: string | null;
   busy: boolean;
+  canNegotiate: boolean;
+  onNegotiate: () => void;
   run: (fn: () => Promise<unknown>) => Promise<void>;
   onChanged: () => void;
   onError: (msg: string) => void;
 }) {
-  const { want, threads, deals, wants, paypalClientId, buyerEmail, busy, run, onChanged, onError } = props;
+  const { want, threads, deals, wants, paypalClientId, buyerEmail, busy, canNegotiate, onNegotiate, run, onChanged, onError } = props;
 
   // Negotiations that finished before this page opened replay once, so the haggling is visible.
   const seen = useRef(new Set<string>());
@@ -144,12 +147,17 @@ export function NegotiationsPanel(props: {
 
   return (
     <section aria-label="Negotiation" className="min-w-0 space-y-5">
-      <div className="min-w-0">
-        <h2 className="break-words text-2xl font-bold tracking-tight">{want.item}</h2>
-        {want.notes && <p className="mt-1 break-words text-sm text-muted">{want.notes}</p>}
-        <p className="mt-1 text-sm text-muted" title={STYLE_INFO[want.style ?? "balanced"].description}>
-          {STYLE_INFO[want.style ?? "balanced"].label} style · opens at {usd(openingOffer(want))}
-        </p>
+      <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-3">
+        <div className="min-w-0 flex-1 basis-60">
+          <h2 className="break-words text-2xl font-bold tracking-tight">{want.item}</h2>
+          {want.notes && <p className="mt-1 break-words text-sm text-muted">{want.notes}</p>}
+          <p className="mt-1 text-sm text-muted" title={STYLE_INFO[want.style ?? "balanced"].description}>
+            {STYLE_INFO[want.style ?? "balanced"].label} style · opens at {usd(openingOffer(want))}
+          </p>
+        </div>
+        <button className={`${primary} shrink-0`} disabled={!canNegotiate || busy} onClick={onNegotiate}>
+          {started ? "Restart" : "Negotiate"}
+        </button>
       </div>
 
       {!started ? (

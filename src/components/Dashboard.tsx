@@ -83,10 +83,6 @@ export function Dashboard() {
         llmMode={state?.config.llmMode}
         live={liveCount}
         total={threads.length}
-        started={started}
-        busy={busy}
-        canNegotiate={!!selected && selected.status === "open" && selected.sellers.length > 0 && liveCount === 0}
-        onNegotiate={() => selected && run(() => api(`/api/wants/${selected.id}/negotiate${started ? "?restart=1" : ""}`, "POST"))}
       />
 
       <div className="mx-auto max-w-[96rem] px-4 py-5">
@@ -130,6 +126,8 @@ export function Dashboard() {
                 paypalClientId={state.config.paypalClientId}
                 buyerEmail={state.config.paypalBuyerEmail}
                 busy={busy}
+                canNegotiate={!!selected && selected.status === "open" && selected.sellers.length > 0 && liveCount === 0}
+                onNegotiate={() => selected && run(() => api(`/api/wants/${selected.id}/negotiate${started ? "?restart=1" : ""}`, "POST"))}
                 run={run}
                 onChanged={refresh}
                 onError={setError}

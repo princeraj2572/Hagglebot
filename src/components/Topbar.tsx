@@ -1,18 +1,13 @@
 import { Avatar } from "./Avatar";
-import { primary } from "./ui";
 
-/** The app bar: where you are, whether anything is live, and the one action that matters. */
+/** The app bar: where you are, whether anything is live, and and the mode. */
 export function Topbar(props: {
   wantItem: string | undefined;
   llmMode: "llm" | "template" | undefined;
   live: number;
   total: number;
-  started: boolean;
-  busy: boolean;
-  canNegotiate: boolean;
-  onNegotiate: () => void;
 }) {
-  const { wantItem, llmMode, live, total, started, busy, canNegotiate, onNegotiate } = props;
+  const { wantItem, llmMode, live, total } = props;
   return (
     <header className="sticky top-0 z-30 border-b border-line bg-paper/90 backdrop-blur">
       <div className="mx-auto flex h-14 max-w-[96rem] items-center gap-4 px-4">
@@ -45,11 +40,6 @@ export function Topbar(props: {
             <span aria-hidden className="h-2 w-2 rounded-full bg-ink/40" />
             Sandbox only · Simulated sellers · {llmMode === "llm" ? "AI-written messages" : "template negotiator"}
           </span>
-          {wantItem && (
-            <button className={primary} disabled={!canNegotiate || busy} onClick={onNegotiate}>
-              {started ? "Restart" : "Negotiate"}
-            </button>
-          )}
         </div>
       </div>
     </header>
