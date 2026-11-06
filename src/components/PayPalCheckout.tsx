@@ -28,7 +28,7 @@ function loadSdk(clientId: string): Promise<PayPalNamespace> {
   if (window.paypal) return Promise.resolve(window.paypal);
   sdkPromise ??= new Promise((resolve, reject) => {
     const s = document.createElement("script");
-    s.src = `https://www.paypal.com/sdk/js?client-id=${encodeURIComponent(clientId)}&currency=USD&intent=capture`;
+    s.src = `https://www.paypal.com/sdk/js?client-id=${encodeURIComponent(clientId)}&currency=USD&intent=capture&disable-funding=card`;
     s.onload = () => (window.paypal ? resolve(window.paypal) : reject(new Error("PayPal SDK did not initialise")));
     s.onerror = () => {
       sdkPromise = null;
