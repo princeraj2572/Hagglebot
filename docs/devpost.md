@@ -6,8 +6,12 @@
 
 **Agentic commerce, done honestly.** Hagglebot always introduces itself as an AI buyer agent and never impersonates you. The code, not the prompt, decides every price, so the budget can't be exceeded. The language model only phrases each move, and its output is checked: wrong prices, budget leaks and claims to be human are rejected. It walks away after repeated refusals, at the message limit, or on scam signals such as hidden fees and off-platform payment. In our demo, "Shady Sam" tries exactly that and is refused. Every one of these decisions shows up as a **guardrail note** under the message it shaped, so you can see why the agent did what it did, not just that it did it.
 
+**Why it matters.** Haggling is a tax on people who dislike it, and on anyone without the time. An agent that negotiates for you only works if you can trust it with two things: your budget and your money. So the product is not "an AI that talks to sellers", it is the trust layer around it: a hard budget ceiling the model cannot override, a disclosure that it is an AI, scam walk-aways, a full explanation of every decision, and payment through a checkout you approve yourself. As agents start to buy on our behalf, that is the part every one of them will need, and here it is built, tested and visible.
+
+**Where it goes next.** The seller side is a one-method `Seller` interface (`respond(context)`), and today it is backed by simulated personas so the demo is repeatable and safe. A real marketplace would be one more adapter behind that same interface: Hagglebot would read a listing, talk to the seller through the marketplace's own messaging, and the rest (strategy, guardrails, PayPal checkout, refund) stays unchanged. The same engine could also help sellers answer lowball offers consistently. We have not built either yet.
+
 **Tech.** Next.js 15, TypeScript, Tailwind, SQLite, PayPal Orders v2 (official server SDK plus the JS checkout), and Gemini Flash-Lite with an automatic Groq fallback and a template negotiator if no model is reachable.
 
-**Honest limits.** This is a demo: PayPal sandbox only (no real money), and the four sellers are simulated AI personas, not real listings. The scam detector is heuristic.
+**Honest limits.** This is a demo: PayPal sandbox only (no real money), and the sellers (four in the demo, fourteen to choose from) are simulated AI personas, not real listings. There is no marketplace integration yet. The scam detector is heuristic.
 
 **Try it.** MIT licensed; clone, add sandbox credentials, run `pnpm dev`, and press "Load demo scenario".
