@@ -9,6 +9,11 @@ const TAGLINE: Record<string, string> = {
   "Sketchy Sasha": "Only good today",
   "Lazy Leo": "Whatever works",
   "Polite Priya": "Small careful steps",
+  "Grumpy Gus": "Short on patience",
+  "Collector Clara": "Proud of condition",
+  "Wholesale Wei": "Bulk and quick",
+  "Cash-Only Carl": "Prefers transfers",
+  "Neighbor Nina": "Friendly local",
 };
 
 /** "Shady Sam 2" is the second Shady Sam: look up the personality by the name without the number. */
