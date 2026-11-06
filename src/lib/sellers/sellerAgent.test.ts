@@ -22,7 +22,7 @@ describe("PersonaSeller pricing", () => {
     for (const p of PERSONAS) {
       const m = new PersonaSeller(p, null).plan(399);
       expect(m.action).toBe("accept");
-      expect(m.fee > 0).toBe(p.id === "sam");
+      expect(m.fee > 0).toBe(p.hiddenFeeRate > 0);
     }
   });
 

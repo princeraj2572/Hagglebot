@@ -1,5 +1,5 @@
 import { DEMO_WANT } from "../lib/demo";
-import { PERSONAS } from "../lib/sellers/personas";
+import { DEMO_PERSONAS } from "../lib/sellers/personas";
 import type { Thread } from "../lib/negotiation/types";
 import type { Deal, SellerContact, WantRecord } from "./repo";
 import type { Services } from "./services";
@@ -28,6 +28,6 @@ export function loadDemo(s: Services): { wantId: string; created: boolean } {
   if (existing) return { wantId: existing.id, created: false };
   const { id: _id, ...input } = DEMO_WANT;
   const want = repo.createWant(input);
-  for (const p of PERSONAS) repo.addSeller({ wantId: want.id, name: p.name, persona: p.id, endpoint: `mock://${p.id}` });
+  for (const p of DEMO_PERSONAS) repo.addSeller({ wantId: want.id, name: p.name, persona: p.id, endpoint: `mock://${p.id}` });
   return { wantId: want.id, created: true };
 }

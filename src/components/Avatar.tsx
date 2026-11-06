@@ -4,6 +4,11 @@ const TAGLINE: Record<string, string> = {
   "Firm Fatima": "Won't budge",
   "Chatty Chen": "Loves to talk",
   "Shady Sam": "Watch the fees",
+  "Bargain Bea": "Fair back-and-forth",
+  "Techy Tomas": "Knows the specs",
+  "Sketchy Sasha": "Only good today",
+  "Lazy Leo": "Whatever works",
+  "Polite Priya": "Small careful steps",
 };
 
 /** "Shady Sam 2" is the second Shady Sam: look up the personality by the name without the number. */
