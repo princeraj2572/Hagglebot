@@ -42,6 +42,10 @@ function loadSdk(clientId: string): Promise<PayPalNamespace> {
 /** Orders v2 in the browser: create (our API) -> buyer approves in PayPal's popup -> capture (our API). */
 export function PayPalCheckout({ dealId, clientId, onPaid }: { dealId: string; clientId: string; onPaid: () => void }) {
   const box = useRef<HTMLDivElement>(null);
+  // The parent passes a new onPaid every render (the page polls every second). Keeping it in a ref stops the
+  // effect below from tearing down PayPal's popup mid-login.
+  const paid = useRef(onPaid);
+  paid.current = onPaid;
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -57,7 +61,7 @@ export function PayPalCheckout({ dealId, clientId, onPaid }: { dealId: string; c
           onApprove: async (data) => {
             try {
               await api(`/api/orders/${data.orderID}/capture`, "POST");
-              onPaid();
+              paid.current();
             } catch (e) {
               setError(e instanceof Error ? e.message : String(e));
             }
@@ -76,7 +80,7 @@ export function PayPalCheckout({ dealId, clientId, onPaid }: { dealId: string; c
       cancelled = true;
       void buttons?.close().catch(() => undefined);
     };
-  }, [dealId, clientId, onPaid]);
+  }, [dealId, clientId]);
 
   return (
     <div className="mt-3">
