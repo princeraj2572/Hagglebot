@@ -5,6 +5,7 @@ import { listingFromEndpoint } from "@/lib/sellers/listing";
 import type { DashboardState } from "@/server/state";
 import { api } from "./api";
 import { DataGrid, type ColDef } from "./DataGrid";
+import { flyToWant } from "./flyToWant";
 import { usd } from "./format";
 import { btn, ghost, input, primary } from "./ui";
 
@@ -115,17 +116,30 @@ export function MarketplaceView(props: {
   const open = want?.status === "open";
   const budget = want?.maxPrice ?? 0;
 
-  const negotiate = (l: Listing) =>
-    run(async () => {
+  /** Where the product was on screen when it was clicked, so it can fly from there once the request has worked. */
+  const origin = (el: HTMLElement) => {
+    const host = el.closest("li, .ag-row");
+    return { rect: (host ?? el).getBoundingClientRect(), src: host?.querySelector("img")?.getAttribute("src") ?? null };
+  };
+
+  const negotiate = (l: Listing, el: HTMLElement) => {
+    const from = origin(el);
+    return run(async () => {
       await api(`/api/wants/${want!.id}/listings`, "POST", { listing: l });
+      flyToWant(from.rect, from.src, "+1 seller");
       const n = (want?.sellers.length ?? 0) + 1;
       setNotice(`Added ${l.retailer} to "${want!.item}". It now has ${n} seller${n === 1 ? "" : "s"}, ready to negotiate.`);
     });
-  const buy = (l: Listing) =>
-    run(async () => {
+  };
+  const buy = (l: Listing, el: HTMLElement) => {
+    const from = origin(el);
+    return run(async () => {
       await api(`/api/wants/${want!.id}/buy`, "POST", { listing: l });
+      const ms = flyToWant(from.rect, from.src, "Deal ready"); // let the flight land before the page changes
+      if (ms > 0) await new Promise((r) => setTimeout(r, ms));
       onBought();
     });
+  };
   const similar = (l: Listing) => {
     const q = similarQuery(l.title);
     setQuery(q);
@@ -143,7 +157,7 @@ export function MarketplaceView(props: {
       <button
         className={`${btn} ${layout === "card" ? "whitespace-nowrap px-2 text-[13px]" : "py-1"} ${isAdded ? "bg-mist text-muted" : "bg-ultra text-white [@media(hover:hover)]:hover:bg-[#2335b8]"}`}
         disabled={!want || !canAdd || full || isAdded}
-        onClick={() => void negotiate(l)}
+        onClick={(e) => void negotiate(l, e.currentTarget)}
       >
         {isAdded ? "Added ✓" : "Negotiate this"}
       </button>
@@ -153,7 +167,7 @@ export function MarketplaceView(props: {
         className={`${ghost} ${layout === "card" ? "px-2 text-[13px]" : "py-1"}`}
         disabled={!want || !open || overBudget}
         title={overBudget ? `Above your ${usd(budget)} budget` : "Skip the haggling and pay the listed price through PayPal"}
-        onClick={() => void buy(l)}
+        onClick={(e) => void buy(l, e.currentTarget)}
       >
         Buy at {usd(l.price)}
       </button>
