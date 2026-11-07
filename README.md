@@ -2,6 +2,8 @@
 
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
+**Live demo:** <https://hagglebot-eanj.onrender.com> (PayPal sandbox only; the free host sleeps when idle, so the first load can take about a minute; add `?demo=1` for an instant canned run).
+
 **An AI buyer agent that negotiates with sellers over chat and closes the deal through PayPal.**
 You set a wishlist and a budget; Hagglebot haggles with every seller in parallel, walks away from
 bad deals and scams, and hands you a "Confirm and Pay" button when it lands a price under budget.

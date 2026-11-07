@@ -20,4 +20,4 @@
 
 **Honest limits.** This is a demo: PayPal sandbox only (no real money), and the sellers (four in the demo, fourteen to choose from) are simulated AI personas, not real listings. Real listings come from Channel3 search only: no retailer is contacted and nothing is bought from one. The scam detector is heuristic.
 
-**Try it.** MIT licensed; clone, add sandbox credentials, run `pnpm dev`, and press "Load demo scenario".
+**Try it.** Live demo: https://hagglebot-eanj.onrender.com (PayPal sandbox only; the free host sleeps when idle, so the first load can take about a minute; add `?demo=1` for an instant canned run). MIT licensed; clone, add sandbox credentials, run `pnpm dev`, and press "Load demo scenario".
