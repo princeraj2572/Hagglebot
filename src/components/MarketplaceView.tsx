@@ -291,7 +291,13 @@ export function MarketplaceView(props: {
             ? "Select or add a want first to buy or negotiate a product."
             : !open
               ? "This want is already purchased."
-              : `For: ${want.item} (budget ${usd(budget)})`}
+              : `For: ${want.item} (budget ${usd(budget)})${
+                  !canAdd
+                    ? " · A negotiation is running. Wait for it to finish to add more sellers."
+                    : full
+                      ? " · This want already has 8 sellers. Remove one in Manage to add another."
+                      : ""
+                }`}
           {results && !loading ? ` · ${results.length} products` : ""}
         </p>
         <div className="flex flex-wrap items-center gap-2">
@@ -338,6 +344,11 @@ export function MarketplaceView(props: {
                 <p className="mt-auto flex flex-wrap items-baseline gap-x-2 pt-2">
                   <span className="num text-2xl font-bold tracking-tight">{usd(l.price)}</span>
                   {l.condition && <span className="rounded-full bg-mist px-2 py-0.5 text-[12px] font-medium text-muted">{l.condition}</span>}
+                  {want && l.price > budget && (
+                    <span className="rounded-full bg-tag/30 px-2 py-0.5 text-[12px] font-medium" title="Above your budget: Buy is off, but Hagglebot can still try to negotiate it down.">
+                      over budget
+                    </span>
+                  )}
                 </p>
                 {actions(l, "card")}
               </div>

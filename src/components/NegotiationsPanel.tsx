@@ -38,6 +38,9 @@ function atStep(t: Thread, n: number): Thread {
   };
 }
 
+/** Wants whose finished negotiation has already been replayed in this browser session (survives switching pages). */
+const replayed = new Set<string>();
+
 export function NegotiationsPanel(props: {
   want: Want | undefined;
   threads: Thread[];
@@ -69,7 +72,7 @@ export function NegotiationsPanel(props: {
   const { want, threads, deals, wants, bundle, bundles, listings, paypalClientId, buyerEmail, busy, demo, restart, focus, onFocusDone, onLoadDemo, canNegotiate, onNegotiate, run, onChanged, onError } = props;
 
   // Negotiations that finished before this page opened replay once, so the haggling is visible.
-  const seen = useRef(new Set<string>());
+  const seen = useRef(replayed);
   const [step, setStep] = useState(0);
   const [, rerender] = useState(0);
   const [view, setView] = useState<View>("conversations");
@@ -197,6 +200,7 @@ export function NegotiationsPanel(props: {
       : walked > 0
         ? "No seller has reached a price inside your budget yet."
         : "";
+  const pending = started && liveCount === 0 ? want.sellers.filter((s) => !threads.some((t) => t.sellerId === s.id)) : [];
   const meta = [
     `${STYLE_INFO[want.style ?? "balanced"].label} style`,
     `opens at ${usd(openingOffer(want))}`,
@@ -258,6 +262,20 @@ export function NegotiationsPanel(props: {
         </div>
       ) : (
         <>
+          {pending.length > 0 && (
+            <div role="status" className="flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-ultra/10 px-4 py-3">
+              <p className="min-w-0 flex-1 text-sm leading-snug">
+                <b className="font-semibold">
+                  {pending.length} new seller{pending.length === 1 ? "" : "s"} added
+                </b>
+                : {pending.map((s) => s.name).join(", ")}. They have not been talked to yet. Press Negotiate to start; the existing conversations stay as they are.
+              </p>
+              <button className={`${primary} shrink-0 rounded-full`} disabled={!canNegotiate || busy} onClick={onNegotiate}>
+                Negotiate with {pending.length === 1 ? "it" : `${pending.length} new`}
+              </button>
+            </div>
+          )}
+
           <section aria-label="Scoreboard" className="rounded-3xl bg-ink p-5 text-white sm:p-7">
             <div className="flex flex-wrap items-end justify-between gap-x-10 gap-y-6">
               <div className="min-w-0">
