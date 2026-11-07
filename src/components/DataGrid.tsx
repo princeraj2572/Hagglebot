@@ -7,16 +7,16 @@ ModuleRegistry.registerModules([AllCommunityModule]);
 /** AG Grid dressed in Hagglebot's own tokens, so a table looks like the rest of the app. */
 const theme = themeQuartz.withParams({
   accentColor: "#2B3FD6",
-  backgroundColor: "#F8F9FB",
-  foregroundColor: "#12161C",
-  borderColor: "#CFD6DE",
-  headerBackgroundColor: "#EEF1F4",
-  headerTextColor: "#566070",
+  backgroundColor: "#FFFFFF",
+  foregroundColor: "#0E1424",
+  borderColor: "#DCE1EB",
+  headerBackgroundColor: "#E8ECF4",
+  headerTextColor: "#586174",
   headerFontWeight: 600,
   fontFamily: "inherit",
   fontSize: 14,
-  wrapperBorderRadius: 6,
-  rowHoverColor: "#EEF1F4",
+  wrapperBorderRadius: 12,
+  rowHoverColor: "#F1F3F8",
 });
 
 export type { ColDef };

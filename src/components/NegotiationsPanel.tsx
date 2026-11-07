@@ -128,7 +128,7 @@ export function NegotiationsPanel(props: {
   if (!want) {
     return (
       <section aria-label="Welcome" className="overflow-hidden rounded-3xl bg-ink p-7 text-white sm:p-10">
-        <h2 className="max-w-2xl text-4xl font-bold leading-[1.05] tracking-tight sm:text-5xl">An AI agent that haggles for you.</h2>
+        <h2 className="max-w-3xl text-balance text-4xl font-bold leading-[1.05] tracking-tight sm:text-6xl">An AI agent that haggles for you.</h2>
         <p className="mt-4 max-w-xl text-lg leading-relaxed text-white/75">
           Tell it what you want and the most you will pay. It talks to every seller at once, never goes over your budget and walks away from scams.
         </p>

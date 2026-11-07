@@ -16,7 +16,7 @@ export function Topbar(props: {
   const { llmMode, live, total, marketplace, page, onPage, demo } = props;
   return (
     <header className="sticky top-0 z-30 bg-chalk/85 backdrop-blur">
-      <div className="mx-auto flex h-16 max-w-[96rem] items-center gap-2 px-4 sm:gap-4 sm:px-6">
+      <div className="mx-auto flex h-16 max-w-[96rem] items-center gap-2 px-3 sm:gap-4 sm:px-6">
         <span className="flex shrink-0 items-center gap-2.5 text-lg font-bold tracking-tight">
           <Avatar name="Hagglebot" />
           <span className="sr-only sm:not-sr-only">Hagglebot</span>
@@ -29,7 +29,7 @@ export function Topbar(props: {
                 key={p}
                 aria-current={page === p ? "page" : undefined}
                 onClick={() => onPage(p)}
-                className={`rounded-full px-3.5 py-1.5 text-sm font-semibold transition-[background-color,color,box-shadow] duration-150 ${
+                className={`rounded-full px-2.5 py-1.5 text-sm font-semibold transition-[background-color,color,box-shadow] sm:px-3.5 duration-150 ${
                   page === p ? "bg-paper text-ink shadow-sm" : "text-muted [@media(hover:hover)]:hover:text-ink"
                 }`}
               >
@@ -49,7 +49,7 @@ export function Topbar(props: {
             </span>
           )}
           {demo ? (
-            <span className="inline-flex items-center rounded-full bg-tag px-3 py-1 text-[13px] font-semibold" data-testid="mode-badge" role="status">
+            <span className="inline-flex items-center rounded-full bg-tag px-2.5 py-1 text-[13px] font-semibold sm:px-3" data-testid="mode-badge" role="status">
               Demo mode<span className="hidden sm:inline"> · canned negotiation and payment, no PayPal</span>
             </span>
           ) : (

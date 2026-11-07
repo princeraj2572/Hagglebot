@@ -128,7 +128,7 @@ export function MarketplaceView(props: {
     const overBudget = !!want && l.price > budget;
     const negotiateBtn = (
       <button
-        className={`${btn} ${layout === "card" ? "flex-1" : "py-1"} ${isAdded ? "border border-line text-muted" : "bg-ultra text-white [@media(hover:hover)]:hover:bg-[#2335b8]"}`}
+        className={`${btn} ${layout === "card" ? "whitespace-nowrap px-2 text-[13px]" : "py-1"} ${isAdded ? "bg-mist text-muted" : "bg-ultra text-white [@media(hover:hover)]:hover:bg-[#2335b8]"}`}
         disabled={!want || !canAdd || full || isAdded}
         onClick={() => void negotiate(l)}
       >
@@ -137,7 +137,7 @@ export function MarketplaceView(props: {
     );
     const buyBtn = (
       <button
-        className={`${ghost} ${layout === "card" ? "w-full" : "py-1"}`}
+        className={`${ghost} ${layout === "card" ? "px-2 text-[13px]" : "py-1"}`}
         disabled={!want || !open || overBudget}
         title={overBudget ? `Above your ${usd(budget)} budget` : "Skip the haggling and pay the listed price through PayPal"}
         onClick={() => void buy(l)}
@@ -146,7 +146,7 @@ export function MarketplaceView(props: {
       </button>
     );
     const viewLink = href && (
-      <a href={href} target="_blank" rel="noopener noreferrer" className={layout === "card" ? `${ghost} text-center` : "text-sm font-medium text-ultra underline-offset-4 hover:underline"}>
+      <a href={href} target="_blank" rel="noopener noreferrer" className="text-[13px] font-semibold text-ultra underline-offset-4 hover:underline">
         View
       </a>
     );
@@ -159,13 +159,15 @@ export function MarketplaceView(props: {
       </button>
     );
     return layout === "card" ? (
-      <div className="mt-2 flex flex-col gap-2">
-        <div className="flex gap-2">
+      <div className="mt-3 space-y-2.5">
+        <div className="grid grid-cols-2 gap-2">
           {negotiateBtn}
-          {viewLink}
+          {buyBtn}
         </div>
-        {buyBtn}
-        {similarBtn}
+        <div className="flex items-center justify-between gap-3">
+          {viewLink}
+          {similarBtn}
+        </div>
       </div>
     ) : (
       <span className="flex items-center gap-3">
@@ -203,14 +205,14 @@ export function MarketplaceView(props: {
   ];
 
   const chip = (active: boolean) =>
-    `shrink-0 rounded-full border px-3 py-1 text-sm transition-colors duration-150 ${
-      active ? "border-ultra bg-ultra/10 font-medium text-ultra" : "border-line [@media(hover:hover)]:hover:border-ink/40"
+    `shrink-0 rounded-full px-3.5 py-1.5 text-sm font-semibold transition-colors duration-150 ${
+      active ? "bg-ink text-white" : "bg-paper text-ink [@media(hover:hover)]:hover:bg-mist"
     }`;
 
   return (
     <section aria-label="Marketplace" className="min-w-0 space-y-4">
       <div>
-        <h2 className="text-2xl font-bold tracking-tight">Marketplace</h2>
+        <h2 className="text-3xl font-bold leading-[1.1] tracking-tight sm:text-4xl">Marketplace</h2>
         <p className="mt-1 text-sm text-muted">
           Real products and prices from Channel3. Stores rarely haggle, so you can buy at the listed price, or have Hagglebot negotiate (simulated; no store is
           contacted). Used and refurbished listings are the most negotiable.
@@ -236,7 +238,7 @@ export function MarketplaceView(props: {
         <button className={primary} type="submit" disabled={loading}>Search</button>
       </form>
 
-      <div role="group" aria-label="Categories" className="flex flex-wrap gap-2">
+      <div role="group" aria-label="Categories" className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 [scrollbar-width:thin] sm:mx-0 sm:px-0">
         <button className={chip(category === null)} aria-pressed={category === null} onClick={() => { setCategory(null); void search(query, null, condition); }}>
           All categories
         </button>
@@ -287,8 +289,8 @@ export function MarketplaceView(props: {
         {(results ?? []).map((l) => {
           const img = webUrl(l.image);
           return (
-            <li key={l.url} className="flex min-w-0 flex-col overflow-hidden rounded-md border border-line bg-paper">
-              <div className="flex h-36 items-center justify-center bg-chalk">
+            <li key={l.url} className="flex min-w-0 flex-col overflow-hidden rounded-2xl bg-paper">
+              <div className="flex h-40 items-center justify-center bg-mist">
                 {img ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img src={img} alt="" loading="lazy" referrerPolicy="no-referrer" className="h-full w-full object-contain" />
@@ -300,8 +302,8 @@ export function MarketplaceView(props: {
                 <span className="break-all text-[13px] font-medium text-muted">{l.retailer}</span>
                 <h3 className="line-clamp-2 break-words text-sm font-semibold leading-snug" title={l.title}>{l.title}</h3>
                 <p className="mt-auto flex flex-wrap items-baseline gap-x-2 pt-2">
-                  <span className="num text-xl font-bold">{usd(l.price)}</span>
-                  {l.condition && <span className="rounded-full border border-line px-2 py-0.5 text-[12px] text-muted">{l.condition}</span>}
+                  <span className="num text-2xl font-bold tracking-tight">{usd(l.price)}</span>
+                  {l.condition && <span className="rounded-full bg-mist px-2 py-0.5 text-[12px] font-medium text-muted">{l.condition}</span>}
                 </p>
                 {actions(l, "card")}
               </div>
