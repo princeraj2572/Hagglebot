@@ -133,6 +133,9 @@ Then **Find real listings** appears on a selected want: it searches Channel3 for
 retailer offers (store, price, condition) as sellers. Each is played by a simulated agent that opens at the real
 price. No retailer is contacted and nothing is bought from one.
 
+The **Marketplace** page (top bar) lets you browse everything Channel3 has: search, or pick any of its 16 top-level
+categories, and press **Negotiate this** on the products you want Hagglebot to haggle for.
+
 ## Run
 
 ```bash
