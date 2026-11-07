@@ -2,6 +2,7 @@
 @tailwind components;
 @tailwind utilities;
 
-body { @apply bg-chalk font-display text-ink antialiased; }
-:focus-visible { outline: 2px solid #2B3FD6; outline-offset: 2px; }
-.num { font-variant-numeric: tabular-nums; }
+body { @apply bg-chalk font-display text-ink antialiased; font-feature-settings: "ss01", "cv11"; }
+:focus-visible { outline: 2px solid #3B4CDD; outline-offset: 2px; }
+/* Every price and count is set in the mono face, tabular: the numbers are the product. */
+.num { font-family: var(--font-mono), ui-monospace, monospace; font-variant-numeric: tabular-nums; letter-spacing: -0.02em; }

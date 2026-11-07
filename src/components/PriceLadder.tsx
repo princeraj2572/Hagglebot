@@ -44,7 +44,7 @@ export function PriceLadder({ threads, budget, axis, onOpen }: { threads: Thread
             <li key={t.id}>
               <button
                 onClick={() => onOpen(t.id)}
-                className={`grid w-full ${cols} items-center gap-3 rounded-xl px-2 py-1.5 text-left transition-colors duration-150 [@media(hover:hover)]:hover:bg-mist`}
+                className={`grid w-full ${cols} items-center gap-3 rounded-lg px-2 py-1.5 text-left transition-colors duration-150 [@media(hover:hover)]:hover:bg-mist`}
               >
                 <span className="flex min-w-0 items-center gap-2">
                   <span className="inline-flex shrink-0 rounded-full bg-paper"><Avatar name={t.sellerName} size="sm" /></span>

@@ -24,7 +24,7 @@ export function Detail(props: {
   const saved = t.status === "deal" && t.dealPrice !== null ? budget - t.dealPrice : 0;
 
   return (
-    <article className="rounded-3xl bg-paper p-5 shadow-lift sm:p-7" data-testid={`thread-${t.sellerName}`}>
+    <article className="rounded-xl bg-paper p-5 shadow-lift sm:p-7" data-testid={`thread-${t.sellerName}`}>
       <button className="mb-3 rounded-md py-1 text-sm font-medium text-ultra underline-offset-4 hover:underline xl:hidden" onClick={onBack}>
         Back to all sellers
       </button>
@@ -46,15 +46,7 @@ export function Detail(props: {
           </div>
         </div>
         <div className="flex flex-wrap items-center gap-3">
-          {saved > 0 && (
-            <span
-              className="num relative origin-left bg-tag py-0.5 pl-5 pr-2.5 text-sm font-bold text-ink [clip-path:polygon(12px_0,100%_0,100%_100%,12px_100%,0_50%)] motion-safe:animate-tag-in"
-              style={{ animationDelay: "400ms" }}
-            >
-              <i aria-hidden className="absolute left-2.5 top-1/2 h-1.5 w-1.5 -translate-y-1/2 rounded-full bg-paper" />
-              {usd(saved)} under budget
-            </span>
-          )}
+          {saved > 0 && <span className="num rounded-md bg-mist px-2 py-0.5 text-sm text-ink">{usd(saved)} under budget</span>}
           <StatusChip status={t.status} scam={scam} />
           {t.messages.length > 0 && (
             <a className="text-sm font-medium text-ultra underline-offset-4 hover:underline" href={`/api/threads/${t.id}/transcript`} download>
@@ -81,7 +73,7 @@ export function Detail(props: {
           </p>
           <span className="flex gap-2">
             <button
-              className={`${btn} bg-ultra text-white [@media(hover:hover)]:hover:bg-[#2335b8]`}
+              className={`${btn} bg-ultra text-white [@media(hover:hover)]:hover:bg-[#3040C6]`}
               disabled={busy}
               onClick={() => run(() => api(`/api/threads/${t.id}/approve`, "POST"))}
             >

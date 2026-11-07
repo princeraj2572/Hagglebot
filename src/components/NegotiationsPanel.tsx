@@ -200,15 +200,15 @@ export function NegotiationsPanel(props: {
         </div>
         <div className="flex shrink-0 flex-wrap items-center gap-2">
           {onFindProducts && (
-            <button className={`${ghost} rounded-full px-5 py-2.5 text-base`} onClick={onFindProducts}>
+            <button className={`${ghost} rounded-md px-5 py-2.5 text-base`} onClick={onFindProducts}>
               Find products
             </button>
           )}
-          <button className={`${ghost} rounded-full px-5 py-2.5 text-base`} onClick={() => setManageOpen(true)}>
+          <button className={`${ghost} rounded-md px-5 py-2.5 text-base`} onClick={() => setManageOpen(true)}>
             Manage
           </button>
           <button
-            className={`${primary} rounded-full px-6 py-2.5 text-base`}
+            className={`${primary} rounded-md px-6 py-2.5 text-base`}
             disabled={!canNegotiate || busy}
             onClick={onNegotiate}
           >
@@ -218,7 +218,7 @@ export function NegotiationsPanel(props: {
       </div>
 
       {autoStatus && (
-        <div role="status" className="flex items-center gap-3 rounded-2xl bg-ultra px-4 py-3 text-white">
+        <div role="status" className="flex items-center gap-3 rounded-xl bg-ultra px-4 py-3 text-white">
           <span aria-hidden className="inline-flex gap-1">
             {[0, 150, 300].map((delay) => (
               <i key={delay} className="h-2 w-2 rounded-full bg-white motion-safe:animate-typing" style={{ animationDelay: `${delay}ms` }} />
@@ -236,7 +236,7 @@ export function NegotiationsPanel(props: {
               <ListingsPanel sellers={want.sellers} threads={[]} />
             </div>
           )}
-          <div className="rounded-2xl bg-paper p-6">
+          <div className="rounded-xl bg-paper p-6">
             <h3 className="text-lg font-semibold">Ready to negotiate</h3>
             <p className="mt-1 max-w-2xl text-muted">
               {want.sellers.length === 0
@@ -265,7 +265,7 @@ export function NegotiationsPanel(props: {
       ) : (
         <>
           {pending.length > 0 && (
-            <div role="status" className="flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-ultra/10 px-4 py-3">
+            <div role="status" className="flex flex-wrap items-center justify-between gap-3 rounded-xl bg-ultra/10 px-4 py-3">
               <p className="min-w-0 flex-1 text-sm leading-snug">
                 <b className="font-semibold">
                   {pending.length} new seller{pending.length === 1 ? "" : "s"} added
@@ -278,59 +278,31 @@ export function NegotiationsPanel(props: {
             </div>
           )}
 
-          <section aria-label="Scoreboard" className="relative isolate overflow-hidden rounded-[28px] border border-line bg-paper p-5 text-ink sm:p-8">
-            {/* A price ruler along the top edge and a soft glow: the scoreboard is a scale you read prices on. */}
-            <div
-              aria-hidden
-              className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-24 opacity-60"
-              style={{
-                backgroundImage:
-                  "repeating-linear-gradient(90deg, rgba(14,20,36,.20) 0 1px, transparent 1px 48px), repeating-linear-gradient(90deg, rgba(14,20,36,.10) 0 1px, transparent 1px 12px)",
-                backgroundSize: "100% 14px, 100% 7px",
-                backgroundRepeat: "no-repeat",
-                maskImage: "linear-gradient(90deg, transparent, #000 25%, #000 75%, transparent)",
-                WebkitMaskImage: "linear-gradient(90deg, transparent, #000 25%, #000 75%, transparent)",
-              }}
-            />
-            <div aria-hidden className="pointer-events-none absolute -right-24 -top-32 -z-10 h-80 w-80 rounded-full bg-ultra/10 blur-3xl" />
-            <div className="flex flex-wrap items-end justify-between gap-x-10 gap-y-6">
+          <section aria-label="Scoreboard" className="rounded-xl border border-line bg-paper p-5 sm:p-6">
+            <div className="flex flex-wrap items-end justify-between gap-x-10 gap-y-4">
               <div className="min-w-0">
-                <p className="mt-3 text-sm font-medium text-muted">{savings ? "Best deal" : liveCount > 0 ? "Haggling now" : "Result"}</p>
-                <p className="num mt-1 text-5xl font-bold leading-none tracking-tight sm:text-7xl">
+                <p className="text-sm text-muted">{savings ? "Best deal" : liveCount > 0 ? "Haggling now" : "Result"}</p>
+                <p className="num mt-1 text-5xl font-semibold leading-none sm:text-6xl">
                   {savings ? usd(savings.best.price) : liveCount > 0 ? `${liveCount} of ${shown.length}` : "No deal"}
                 </p>
-                {sentence && <p className="mt-4 max-w-xl text-base leading-relaxed text-ink/80">{sentence}</p>}
+                {sentence && <p className="mt-3 max-w-xl text-[15px] leading-relaxed text-muted">{sentence}</p>}
               </div>
-              <dl className="flex flex-wrap gap-x-8 gap-y-4">
-                <div>
-                  <dt className="text-sm text-muted">Your budget</dt>
-                  <dd className="num text-2xl font-bold">{usd(budget)}</dd>
-                  <dd className="text-[13px] text-muted">{budget < want.maxPrice ? `limited by the ${bundle?.name} bundle` : "never shown to sellers"}</dd>
-                </div>
-                <div>
-                  <dt className="text-sm text-muted">{liveCount > 0 ? "Talking now" : "Sellers"}</dt>
-                  <dd className="num text-2xl font-bold">{liveCount > 0 ? `${liveCount} of ${shown.length}` : String(Math.max(shown.length, want.sellers.length))}</dd>
-                  <dd className="text-[13px] text-muted">{liveCount > 0 ? "conversations live" : `${walked} walked away`}</dd>
-                </div>
-                <div>
-                  <dt className="text-sm text-muted">Deals ready</dt>
-                  <dd className="num text-2xl font-bold">{dealThreads.length}</dd>
-                  <dd className="text-[13px] text-muted">
-                    {dealThreads.length > 0 ? (
-                      <>
-                        {paid > 0 ? `${paid} paid · ` : ""}
-                        <button className="font-semibold text-ultra underline-offset-4 hover:underline" onClick={() => setView("deals")}>
-                          Review and pay
-                        </button>
-                      </>
-                    ) : (
-                      "waiting for a price"
-                    )}
-                  </dd>
-                </div>
-              </dl>
+              <p className="flex flex-wrap items-center gap-x-5 gap-y-1 text-sm text-muted">
+                <span>
+                  Budget <span className="num text-ink">{usd(budget)}</span>
+                  {budget < want.maxPrice ? ` (limited by the ${bundle?.name} bundle)` : ""}
+                </span>
+                <span>
+                  {liveCount > 0 ? <><span className="num text-ink">{liveCount}</span> live</> : <><span className="num text-ink">{walked}</span> walked away</>}
+                </span>
+                {dealThreads.length > 0 && (
+                  <button className="font-medium text-ultra underline-offset-4 hover:underline" onClick={() => setView("deals")}>
+                    {paid > 0 ? `${paid} paid · ` : ""}{dealThreads.length} {dealThreads.length === 1 ? "deal" : "deals"} ready to pay
+                  </button>
+                )}
+              </p>
             </div>
-            <div className="mt-6 border-t border-line pt-5">
+            <div className="mt-5 border-t border-line pt-4">
               <PriceLadder
                 threads={shown}
                 budget={budget}
@@ -345,7 +317,7 @@ export function NegotiationsPanel(props: {
             {replaying && (
               <p className="mt-5 text-sm text-muted">
                 Replaying the negotiation.{" "}
-                <button className="rounded-full bg-mist px-3 py-0.5 font-semibold text-ink [@media(hover:hover)]:hover:bg-[#DCE2EF]" onClick={skipReplay}>Skip</button>
+                <button className="rounded-full bg-mist px-3 py-0.5 font-semibold text-ink [@media(hover:hover)]:hover:bg-[#E4E5E9]" onClick={skipReplay}>Skip</button>
               </p>
             )}
           </section>
@@ -365,7 +337,7 @@ export function NegotiationsPanel(props: {
                 role="tab"
                 aria-selected={view === id}
                 onClick={() => setView(id)}
-                className={`rounded-full px-4 py-1.5 text-sm font-semibold transition-colors duration-150 ${
+                className={`rounded-md px-4 py-1.5 text-sm font-semibold transition-colors duration-150 ${
                   view === id ? "bg-ink text-white" : "bg-mist text-muted [@media(hover:hover)]:hover:text-ink"
                 }`}
               >

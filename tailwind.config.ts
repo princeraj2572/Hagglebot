@@ -5,19 +5,19 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        chalk: "#F1F3F8", // the canvas behind everything
+        chalk: "#F7F7F8", // the canvas behind everything
         paper: "#FFFFFF", // working surfaces
-        mist: "#E8ECF4", // quiet tonal fills (rails, table headers, inactive controls)
-        ink: "#0E1424",
-        muted: "#586174",
-        line: "#DCE1EB",
-        ultra: "#2B3FD6", // Hagglebot: our offers and the pay action
+        mist: "#EEEFF2", // quiet tonal fills (rails, table headers, inactive controls)
+        ink: "#0D0F14",
+        muted: "#62666F",
+        line: "#E4E5E9",
+        ultra: "#3B4CDD", // Hagglebot: our offers and the pay action
         tag: "#F2B31B", // seller asks (price-tag yellow); fill only, never text
         scam: "#C8283C", // scams only
       },
       boxShadow: {
         // One lifted surface per screen (the conversation); everything else sits flat.
-        lift: "0 1px 2px rgba(14,20,36,0.05), 0 18px 40px -24px rgba(14,20,36,0.28)",
+        lift: "0 1px 2px rgba(13,15,20,0.04), 0 10px 28px -18px rgba(13,15,20,0.16)",
       },
       keyframes: {
         "ping-once": { "0%": { transform: "scale(1)", opacity: "0.8" }, "100%": { transform: "scale(2.8)", opacity: "0" } },
@@ -47,7 +47,8 @@ const config: Config = {
       },
       fontFamily: {
         display: ["var(--font-display)", "system-ui", "sans-serif"],
-        serif: ["var(--font-serif)", "Georgia", "serif"],
+        serif: ["var(--font-display)", "system-ui", "sans-serif"],
+        mono: ["var(--font-mono)", "ui-monospace", "monospace"],
       },
     },
   },

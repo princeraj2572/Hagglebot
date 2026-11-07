@@ -34,7 +34,7 @@ export function ListingsPanel({ sellers, threads }: { sellers: Seller[]; threads
           const href = webUrl(l.url);
           const img = webUrl(l.image);
           return (
-            <li key={seller.id} className="flex min-w-0 flex-col overflow-hidden rounded-2xl bg-paper">
+            <li key={seller.id} className="flex min-w-0 flex-col overflow-hidden rounded-xl bg-paper">
               <div className="flex h-40 items-center justify-center bg-mist">
                 {img ? (
                   // eslint-disable-next-line @next/next/no-img-element
@@ -52,7 +52,7 @@ export function ListingsPanel({ sellers, threads }: { sellers: Seller[]; threads
                 </p>
                 {deal && <p className="text-[13px] font-medium text-ultra">Hagglebot agreed {usd(deal.dealPrice)}</p>}
                 {href && (
-                  <a href={href} target="_blank" rel="noopener noreferrer" className={`${btn} mt-2 bg-mist text-center [@media(hover:hover)]:hover:bg-[#DCE2EF]`}>
+                  <a href={href} target="_blank" rel="noopener noreferrer" className={`${btn} mt-2 bg-mist text-center [@media(hover:hover)]:hover:bg-[#E4E5E9]`}>
                     View at {l.retailer}
                   </a>
                 )}

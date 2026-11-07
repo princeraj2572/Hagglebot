@@ -30,7 +30,7 @@ export function ManagePanel(props: {
         {w.sellers.length === 0 && <p className="text-sm text-muted">No sellers yet. Add one below, then press Negotiate.</p>}
         <ul className="space-y-1">
           {w.sellers.map((s) => (
-            <li key={s.id} className="flex items-center gap-3 rounded-xl bg-mist px-3 py-2.5 text-sm">
+            <li key={s.id} className="flex items-center gap-3 rounded-lg bg-mist px-3 py-2.5 text-sm">
               <Avatar name={s.name} />
               <span className="min-w-0 flex-1">
                 <span className="block break-words font-semibold leading-tight">{s.name}</span>
@@ -60,7 +60,7 @@ export function ManagePanel(props: {
         </div>
 
         {listings && (
-          <div className="rounded-xl bg-mist p-3">
+          <div className="rounded-lg bg-mist p-3">
             <button className={`${ghost} w-full bg-paper`} disabled={busy} onClick={() => run(() => api(`/api/wants/${w.id}/listings`, "POST"))}>
               Find real listings
             </button>
@@ -90,7 +90,7 @@ export function ManagePanel(props: {
 
       <section aria-label="Delete" className="border-t border-line pt-5">
         <button
-          className="rounded-xl px-3 py-2 text-sm font-semibold text-scam transition-colors [@media(hover:hover)]:hover:bg-scam/10"
+          className="rounded-lg px-3 py-2 text-sm font-semibold text-scam transition-colors [@media(hover:hover)]:hover:bg-scam/10"
           disabled={busy}
           onClick={async () => {
             if (!confirm(`Delete "${w.item}" and its negotiations?`)) return;

@@ -66,7 +66,7 @@ export function DealsPanel(props: {
       </p>
 
       {deals.length === 0 && (
-        <div className="max-w-sm rounded-2xl bg-paper p-5 text-sm text-muted">
+        <div className="max-w-sm rounded-xl bg-paper p-5 text-sm text-muted">
           <p className="font-semibold text-ink">Your receipt appears here</p>
           <p className="mt-1">When a seller agrees to a price within budget, the deal shows up with a Confirm and Pay button.</p>
         </div>
@@ -76,7 +76,7 @@ export function DealsPanel(props: {
         {deals.map((d) => (
           <li
             key={d.id}
-            className={`min-w-0 rounded-2xl bg-paper p-5 shadow-lift ${d.status === "paid" ? "ring-1 ring-ultra/40" : ""}`}
+            className={`min-w-0 rounded-xl bg-paper p-5 shadow-lift ${d.status === "paid" ? "ring-1 ring-ultra/40" : ""}`}
             data-testid={`deal-${d.sellerName}`}
           >
             <div className="flex items-start justify-between gap-3">
@@ -114,12 +114,12 @@ export function DealsPanel(props: {
                       <button className={`${btn} bg-scam text-white`} disabled={refunding} onClick={() => void refund(d.id)}>
                         {refunding ? `Waiting for ${d.sellerName}…` : "Yes, request refund"}
                       </button>
-                      <button className={`${btn} bg-mist [@media(hover:hover)]:hover:bg-[#DCE2EF]`} disabled={refunding} onClick={() => setConfirming(null)}>
+                      <button className={`${btn} bg-mist [@media(hover:hover)]:hover:bg-[#E4E5E9]`} disabled={refunding} onClick={() => setConfirming(null)}>
                         Keep
                       </button>
                     </span>
                   ) : (
-                    <button className={`${btn} bg-mist [@media(hover:hover)]:hover:bg-[#DCE2EF]`} onClick={() => setConfirming(d.id)}>
+                    <button className={`${btn} bg-mist [@media(hover:hover)]:hover:bg-[#E4E5E9]`} onClick={() => setConfirming(d.id)}>
                       Request refund of {usd(d.price)}
                     </button>
                   )}
@@ -137,7 +137,7 @@ export function DealsPanel(props: {
             {(d.status === "awaiting_payment" || d.status === "order_created") && (
               <div className="mt-3">
                 <button
-                  className={`${btn} w-full bg-ultra py-2.5 font-semibold text-white [@media(hover:hover)]:hover:bg-[#2335b8]`}
+                  className={`${btn} w-full bg-ultra py-2.5 font-semibold text-white [@media(hover:hover)]:hover:bg-[#3040C6]`}
                   disabled={paying !== null}
                   onClick={() => void pay(d.id)}
                 >

@@ -27,16 +27,16 @@ export function Landing({ onStart }: { onStart?: ((preset?: Preset) => void) | u
   const [tour, setTour] = useState<number | null>(null);
   return (
     <div className="space-y-6">
-      <section aria-label="Welcome" className="rounded-[28px] border border-line bg-paper p-7 text-ink sm:p-9">
+      <section aria-label="Welcome" className="rounded-xl border border-line bg-paper p-7 text-ink sm:p-9">
         <h2 className="text-balance text-3xl font-bold tracking-tight sm:text-4xl">What do you want to buy?</h2>
         <p className="mt-3 max-w-lg leading-relaxed text-muted">Add a want and Hagglebot finds sellers, negotiates and pays. Everything is simulated.</p>
         <div className="mt-6 flex flex-wrap items-center gap-3">
           {onStart && (
-            <button className="rounded-full bg-ultra px-6 py-3 font-semibold text-white transition-transform duration-150 active:scale-[0.97] [@media(hover:hover)]:hover:bg-[#2335b8]" onClick={() => onStart()}>
+            <button className="rounded-full bg-ultra px-6 py-3 font-semibold text-white transition-transform duration-150 active:scale-[0.97] [@media(hover:hover)]:hover:bg-[#3040C6]" onClick={() => onStart()}>
               Add your first want
             </button>
           )}
-          <button className="rounded-full bg-mist px-6 py-3 font-semibold text-ink transition-transform duration-150 active:scale-[0.97] [@media(hover:hover)]:hover:bg-[#DCE2EF]" onClick={() => setTour(0)}>
+          <button className="rounded-full bg-mist px-6 py-3 font-semibold text-ink transition-transform duration-150 active:scale-[0.97] [@media(hover:hover)]:hover:bg-[#E4E5E9]" onClick={() => setTour(0)}>
             Take the 1-minute tour
           </button>
         </div>
@@ -51,7 +51,7 @@ export function Landing({ onStart }: { onStart?: ((preset?: Preset) => void) | u
               <button
                 onClick={() => onStart?.(u.preset)}
                 disabled={!onStart}
-                className="flex h-full w-full flex-col rounded-2xl bg-paper p-5 text-left shadow-lift transition-[transform,box-shadow] duration-150 active:scale-[0.98] [@media(hover:hover)]:hover:-translate-y-0.5"
+                className="flex h-full w-full flex-col rounded-xl bg-paper p-5 text-left shadow-lift transition-[transform,box-shadow] duration-150 active:scale-[0.98] [@media(hover:hover)]:hover:-translate-y-0.5"
               >
                 <span className="w-fit rounded-full bg-mist px-2.5 py-0.5 text-[12px] font-semibold text-muted">{u.tag}</span>
                 <span className="mt-3 font-semibold leading-snug">{u.title}</span>
@@ -79,7 +79,7 @@ export function Landing({ onStart }: { onStart?: ((preset?: Preset) => void) | u
               <p className="mt-2 leading-relaxed text-muted">{STEPS[tour]!.text}</p>
             </div>
             <div className="flex items-center justify-between gap-2">
-              <button className="rounded-full px-4 py-2 text-sm font-semibold text-muted disabled:opacity-40" disabled={tour === 0} onClick={() => setTour(tour - 1)}>
+              <button className="rounded-md px-4 py-2 text-sm font-semibold text-muted disabled:opacity-40" disabled={tour === 0} onClick={() => setTour(tour - 1)}>
                 Back
               </button>
               {tour < STEPS.length - 1 ? (

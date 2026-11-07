@@ -20,13 +20,13 @@ export function Topbar(props: {
         </span>
 
         {marketplace && (
-          <nav aria-label="Pages" className="flex items-center gap-0.5 rounded-full bg-mist p-1">
+          <nav aria-label="Pages" className="flex items-center gap-0.5 rounded-lg bg-mist p-1">
             {(["negotiate", "marketplace"] as const).map((p) => (
               <button
                 key={p}
                 aria-current={page === p ? "page" : undefined}
                 onClick={() => onPage(p)}
-                className={`rounded-full px-2.5 py-1.5 text-sm font-semibold transition-[background-color,color,box-shadow] sm:px-3.5 duration-150 ${
+                className={`rounded-md px-2.5 py-1.5 text-sm font-semibold transition-[background-color,color,box-shadow] sm:px-3.5 duration-150 ${
                   page === p ? "bg-paper text-ink shadow-sm" : "text-muted [@media(hover:hover)]:hover:text-ink"
                 }`}
               >
@@ -38,7 +38,7 @@ export function Topbar(props: {
 
         <div className="ml-auto flex shrink-0 items-center gap-2 whitespace-nowrap sm:gap-3">
           {live > 0 && (
-            <span className="num inline-flex items-center gap-1.5 rounded-full bg-ultra px-3 py-1 text-sm font-semibold text-white" role="status">
+            <span className="num inline-flex items-center gap-1.5 rounded-md bg-ultra px-2.5 py-1 text-sm font-medium text-white" role="status">
               <span aria-hidden className="h-2 w-2 rounded-full bg-white motion-safe:animate-pulse" />
               <span className="hidden sm:inline">Live:</span>
               {live} of {total}
@@ -46,7 +46,7 @@ export function Topbar(props: {
             </span>
           )}
             <span
-              className="hidden items-center gap-2 rounded-full bg-mist px-3 py-1 text-[13px] font-medium text-muted sm:inline-flex"
+              className="hidden items-center gap-2 rounded-md bg-mist px-2.5 py-1 text-[13px] font-medium text-muted sm:inline-flex"
               data-testid="mode-badge"
               title="Sellers, negotiation and payments are simulated. No real money moves."
             >

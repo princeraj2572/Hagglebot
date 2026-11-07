@@ -155,7 +155,7 @@ export function MarketplaceView(props: {
     const overBudget = !!want && l.price > budget;
     const negotiateBtn = (
       <button
-        className={`${btn} ${layout === "card" ? "whitespace-nowrap px-2 text-[13px]" : "py-1"} ${isAdded ? "bg-mist text-muted" : "bg-ultra text-white [@media(hover:hover)]:hover:bg-[#2335b8]"}`}
+        className={`${btn} ${layout === "card" ? "whitespace-nowrap px-2 text-[13px]" : "py-1"} ${isAdded ? "bg-mist text-muted" : "bg-ultra text-white [@media(hover:hover)]:hover:bg-[#3040C6]"}`}
         disabled={!want || !canAdd || full || isAdded}
         onClick={(e) => void negotiate(l, e.currentTarget)}
       >
@@ -232,7 +232,7 @@ export function MarketplaceView(props: {
   ];
 
   const chip = (active: boolean) =>
-    `shrink-0 rounded-full px-3.5 py-1.5 text-sm font-semibold transition-colors duration-150 ${
+    `shrink-0 rounded-md px-3.5 py-1.5 text-sm font-semibold transition-colors duration-150 ${
       active ? "bg-ink text-white" : "bg-paper text-ink [@media(hover:hover)]:hover:bg-mist"
     }`;
 
@@ -329,10 +329,10 @@ export function MarketplaceView(props: {
         {(results ?? []).map((l) => {
           const img = webUrl(l.image);
           return (
-            <li key={l.url} className="flex min-w-0 flex-col overflow-hidden rounded-2xl border border-line bg-paper">
+            <li key={l.url} className="flex min-w-0 flex-col overflow-hidden rounded-xl border border-line bg-paper">
               <div className="relative flex h-44 items-center justify-center border-b border-line bg-paper p-3">
                 <span
-                  className={`absolute left-2.5 top-2.5 rounded-full px-2.5 py-1 text-[12px] font-bold capitalize shadow-sm ${
+                  className={`absolute left-2.5 top-2.5 rounded-md px-2.5 py-1 text-[12px] font-bold capitalize shadow-sm ${
                     !l.condition ? "bg-paper/85 text-muted" : l.condition === "new" ? "bg-paper text-ink" : "bg-tag text-ink"
                   }`}
                   title={l.condition ? `Condition: ${l.condition}` : "The store did not say whether this is new or used"}
@@ -375,7 +375,7 @@ export function MarketplaceView(props: {
       {notice && (
         <div
           role="status"
-          className="fixed inset-x-3 bottom-4 z-40 mx-auto flex max-w-xl flex-wrap items-center justify-between gap-3 rounded-2xl bg-ink px-4 py-3 text-white shadow-lift motion-safe:animate-sheet-in"
+          className="fixed inset-x-3 bottom-4 z-40 mx-auto flex max-w-xl flex-wrap items-center justify-between gap-3 rounded-xl bg-ink px-4 py-3 text-white shadow-lift motion-safe:animate-sheet-in"
         >
           <p className="min-w-0 flex-1 text-sm leading-snug">{notice}</p>
           <span className="flex shrink-0 items-center gap-2">

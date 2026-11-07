@@ -70,7 +70,7 @@ export function Modal({ open, onClose, title, side = "center", children }: {
         className={`relative flex max-h-[92vh] w-full flex-col overflow-hidden bg-paper shadow-lift outline-none ${
           drawer
             ? "h-full max-h-none max-w-md rounded-none sm:rounded-l-3xl motion-safe:animate-drawer-in"
-            : "rounded-t-3xl sm:max-w-xl sm:rounded-3xl motion-safe:animate-sheet-in"
+            : "rounded-t-3xl sm:max-w-xl sm:rounded-xl motion-safe:animate-sheet-in"
         }`}
       >
         <div className="flex items-start justify-between gap-4 px-5 pb-2 pt-5 sm:px-7 sm:pt-6">

@@ -62,13 +62,13 @@ export function Conversation({ t }: { t: Thread }) {
                     <span className="num shrink-0">{time(m.at)}</span>
                   </div>
                   <p
-                    className={`mt-1 whitespace-pre-wrap break-words px-4 py-2.5 font-serif text-[15px] leading-relaxed ${
-                      buyer ? "rounded-2xl rounded-tr-md bg-ultra text-white" : "rounded-2xl rounded-tl-md bg-mist"
+                    className={`mt-1 whitespace-pre-wrap break-words px-4 py-2.5 text-[15px] leading-relaxed ${
+                      buyer ? "rounded-xl rounded-tr-md bg-ultra text-white" : "rounded-xl rounded-tl-md bg-mist"
                     }`}
                   >
                     {m.text}
                     {m.price !== null && (
-                      <b className={`num ml-2 whitespace-nowrap rounded-full px-2 py-0.5 font-display text-sm ${buyer ? "bg-white/20" : "bg-tag"}`}>{usd(m.price)}</b>
+                      <b className={`num ml-2 whitespace-nowrap rounded-md px-2 py-0.5 font-display text-sm ${buyer ? "bg-white/20" : "bg-tag"}`}>{usd(m.price)}</b>
                     )}
                   </p>
                 </div>

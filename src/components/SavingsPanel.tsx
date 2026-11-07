@@ -53,7 +53,7 @@ export function SavingsPanel({ threads, budget }: { threads: Thread[]; budget: n
         <span aria-hidden className={`text-muted transition-transform duration-150 ${open ? "rotate-180" : ""}`}>▾</span>
       </button>
       {open && (
-        <div className="mt-3 rounded-2xl bg-paper p-3 sm:p-4">
+        <div className="mt-3 rounded-xl bg-paper p-3 sm:p-4">
           <DataGrid<DealRow> rows={rows} columns={columns} label="Closed deals compared" />
         </div>
       )}

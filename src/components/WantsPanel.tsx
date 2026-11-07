@@ -98,7 +98,7 @@ export function WantsPanel(props: {
               <button
                 onClick={() => onSelect(w.id)}
                 aria-pressed={selected}
-                className={`relative flex w-full items-start gap-3 rounded-2xl px-4 py-3 text-left transition-[background-color,box-shadow] duration-150 ${
+                className={`relative flex w-full items-start gap-3 rounded-xl px-4 py-3 text-left transition-[background-color,box-shadow] duration-150 ${
                   selected
                     ? "bg-paper shadow-lift before:absolute before:bottom-3 before:left-0 before:top-3 before:w-1 before:rounded-full before:bg-ultra"
                     : "[@media(hover:hover)]:hover:bg-paper/60"
@@ -133,7 +133,7 @@ export function WantsPanel(props: {
             {bundles.map((b) => {
               const pct = Math.min(100, Math.round((b.spent / b.total) * 100));
               return (
-                <li key={b.id} className="rounded-xl bg-paper px-3 py-2.5 text-sm">
+                <li key={b.id} className="rounded-lg bg-paper px-3 py-2.5 text-sm">
                   <div className="flex items-start justify-between gap-2">
                     <span className="min-w-0 break-words font-semibold leading-tight">{b.name}</span>
                     <button
@@ -200,12 +200,12 @@ export function WantsPanel(props: {
               {NEGOTIATION_STYLES.map((s) => (
                 <label
                   key={s}
-                  className={`flex cursor-pointer flex-col gap-1 rounded-xl border-2 px-3 py-2.5 text-sm transition-colors duration-150 ${
-                    form.style === s ? "border-ultra bg-ultra/5" : "border-transparent bg-mist [@media(hover:hover)]:hover:bg-[#DCE2EF]"
+                  className={`flex cursor-pointer flex-col gap-1 rounded-lg border-2 px-3 py-2.5 text-sm transition-colors duration-150 ${
+                    form.style === s ? "border-ultra bg-ultra/5" : "border-transparent bg-mist [@media(hover:hover)]:hover:bg-[#E4E5E9]"
                   }`}
                 >
                   <span className="flex items-center gap-2">
-                    <input type="radio" name="style" value={s} checked={form.style === s} onChange={() => setForm({ ...form, style: s })} className="accent-[#2B3FD6]" />
+                    <input type="radio" name="style" value={s} checked={form.style === s} onChange={() => setForm({ ...form, style: s })} className="accent-[#3B4CDD]" />
                     <b className="font-semibold">{STYLE_INFO[s].label}</b>
                   </span>
                   <span className="text-[13px] leading-snug text-muted">{STYLE_INFO[s].description}</span>
@@ -214,8 +214,8 @@ export function WantsPanel(props: {
             </div>
           </fieldset>
 
-          <label className="flex cursor-pointer items-start gap-3 rounded-xl bg-ultra/10 px-3 py-3 text-sm">
-            <input type="checkbox" checked={autopilot} onChange={(e) => setAutopilot(e.target.checked)} className="mt-1 accent-[#2B3FD6]" />
+          <label className="flex cursor-pointer items-start gap-3 rounded-lg bg-ultra/10 px-3 py-3 text-sm">
+            <input type="checkbox" checked={autopilot} onChange={(e) => setAutopilot(e.target.checked)} className="mt-1 accent-[#3B4CDD]" />
             <span>
               <span className="font-semibold">Find sellers and negotiate for me</span>
               <span className="block text-[13px] text-muted">
@@ -224,8 +224,8 @@ export function WantsPanel(props: {
             </span>
           </label>
 
-          <label className="flex cursor-pointer items-start gap-3 rounded-xl bg-mist px-3 py-3 text-sm">
-            <input type="checkbox" checked={form.requireApproval} onChange={(e) => setForm({ ...form, requireApproval: e.target.checked })} className="mt-1 accent-[#2B3FD6]" />
+          <label className="flex cursor-pointer items-start gap-3 rounded-lg bg-mist px-3 py-3 text-sm">
+            <input type="checkbox" checked={form.requireApproval} onChange={(e) => setForm({ ...form, requireApproval: e.target.checked })} className="mt-1 accent-[#3B4CDD]" />
             <span>
               <span className="font-medium">Ask me before accepting a price</span>
               <span className="block text-[13px] text-muted">Hagglebot stops at an in-budget price and waits for your OK.</span>

@@ -119,13 +119,6 @@ export function Lane({ t, budget, axis }: { t: Thread; budget: number; axis: Axi
         )}
         {t.status === "paused" && t.detail && <span className="text-muted"> · {t.detail}</span>}
       </p>
-
-      <p className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-[13px] text-muted">
-        <span className="inline-flex items-center gap-1.5"><i className="h-2.5 w-2.5 rounded-full bg-tag" /> Their ask</span>
-        <span className="inline-flex items-center gap-1.5"><i className="h-2.5 w-2.5 rounded-full bg-ultra" /> Our offer</span>
-        <span className="inline-flex items-center gap-1.5"><i className="h-3 w-0.5 bg-ink" /> Budget</span>
-        <span className="inline-flex items-center gap-1.5"><i className="h-1.5 w-4 rounded-full bg-ink/15" /> Gap</span>
-      </p>
     </div>
   );
 }
