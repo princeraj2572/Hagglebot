@@ -14,11 +14,12 @@ type Want = DashboardState["wants"][number];
 export function WantsPanel(props: {
   wants: Want[];
   selectedId: string | null;
+  listings: boolean;
   onSelect: (id: string) => void;
   onChanged: () => void;
   onError: (msg: string) => void;
 }) {
-  const { wants, selectedId, onSelect, onChanged, onError } = props;
+  const { wants, selectedId, listings, onSelect, onChanged, onError } = props;
   const [form, setForm] = useState<{ item: string; maxPrice: string; notes: string; buyerName: string; style: NegotiationStyle }>({
     item: "", maxPrice: "", notes: "", buyerName: "", style: "balanced",
   });
@@ -112,7 +113,7 @@ export function WantsPanel(props: {
       <ul className="space-y-2">
         {wants.map((w) => (
           <li key={w.id}>
-            <WantCard want={w} selected={w.id === selectedId} onSelect={() => onSelect(w.id)} run={run} />
+            <WantCard want={w} selected={w.id === selectedId} listings={listings} onSelect={() => onSelect(w.id)} run={run} />
           </li>
         ))}
       </ul>
@@ -133,8 +134,8 @@ export function WantsPanel(props: {
   );
 }
 
-function WantCard({ want: w, selected, onSelect, run }: {
-  want: Want; selected: boolean; onSelect: () => void; run: (fn: () => Promise<unknown>) => Promise<void>;
+function WantCard({ want: w, selected, listings, onSelect, run }: {
+  want: Want; selected: boolean; listings: boolean; onSelect: () => void; run: (fn: () => Promise<unknown>) => Promise<void>;
 }) {
   const [persona, setPersona] = useState(PERSONAS[0]?.id ?? "ferdi");
   return (
@@ -179,6 +180,14 @@ function WantCard({ want: w, selected, onSelect, run }: {
               Add seller
             </button>
           </div>
+          {listings && (
+            <div>
+              <button className={`${ghost} w-full`} onClick={() => run(() => api(`/api/wants/${w.id}/listings`, "POST"))}>
+                Find real listings
+              </button>
+              <p className="mt-1 text-[13px] text-muted">Real stores and prices from Channel3. The haggling is simulated.</p>
+            </div>
+          )}
           <button className="rounded py-1 text-sm text-muted [@media(hover:hover)]:hover:text-scam"
             onClick={() => { if (confirm(`Delete "${w.item}" and its negotiations?`)) void run(() => api(`/api/wants/${w.id}`, "DELETE")); }}>
             Delete want

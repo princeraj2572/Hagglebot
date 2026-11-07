@@ -1,0 +1,40 @@
+import type { Listing } from "../channel3/search";
+import { PERSONAS, type Persona } from "./personas";
+
+/**
+ * A real retailer listing played by a simulated agent: the price, retailer and condition are real,
+ * the haggling is not (no retailer is ever contacted). Real stores only ever get an honest
+ * personality: the scammy personas stay on made-up sellers.
+ */
+const HONEST = PERSONAS.filter((p) => p.hiddenFeeRate === 0);
+
+export const LISTING_PREFIX = "listing:";
+
+export function personaIdForListing(index: number): string {
+  return HONEST[index % HONEST.length]!.id;
+}
+
+/** Scales a persona to the listing's real price; all of a persona's pricing rules are ratios of its list price. */
+export function listingPersona(base: Persona, l: Listing): Persona {
+  const ratio = l.price / base.listPrice;
+  return {
+    ...base,
+    name: l.retailer,
+    listPrice: l.price,
+    costBasis: base.costBasis * ratio,
+    facts: `This is a real listing: "${l.title}", sold by ${l.retailer}. Condition: ${l.condition ?? "not stated"}. In stock. Listed at $${l.price}. You know nothing else about it; if asked about anything else, say you are not sure.`,
+  };
+}
+
+export const encodeListing = (personaId: string, l: Listing): string => LISTING_PREFIX + encodeURIComponent(JSON.stringify({ p: personaId, l }));
+
+/** Reads a stored listing endpoint back into a persona; throws on anything malformed. */
+export function personaFromEndpoint(endpoint: string): Persona {
+  const raw = JSON.parse(decodeURIComponent(endpoint.slice(LISTING_PREFIX.length))) as { p?: string; l?: Listing };
+  const base = PERSONAS.find((p) => p.id === raw.p);
+  const l = raw.l;
+  if (!base || !l || typeof l.price !== "number" || !(l.price > 0) || typeof l.retailer !== "string" || typeof l.title !== "string") {
+    throw new Error("Malformed listing seller");
+  }
+  return listingPersona(base, l);
+}

@@ -1,6 +1,8 @@
 import { createLLMFromEnv } from "../lib/llm";
 import type { LLM } from "../lib/llm/types";
 import { PERSONAS } from "../lib/sellers/personas";
+import { searchListings, type Listing } from "../lib/channel3/search";
+import { LISTING_PREFIX, personaFromEndpoint } from "../lib/sellers/listing";
 import { PersonaSeller } from "../lib/sellers/sellerAgent";
 import { createOrdersController, createPaymentsController } from "../lib/paypal/client";
 import { loadPayPalConfig } from "../lib/paypal/config";
@@ -13,8 +15,10 @@ export interface Services {
   repo: Repo;
   runner: NegotiationRunner;
   payments: PaymentService;
+  /** Real retailer listings from Channel3; null until CHANNEL3_API_KEY is set. */
+  findListings: ((query: string) => Promise<Listing[]>) | null;
   /** Safe to expose to the browser: the sandbox client id is public by design. */
-  publicConfig: { paypalClientId: string | null; paypalBuyerEmail: string | null; llmMode: "llm" | "template" };
+  publicConfig: { paypalClientId: string | null; paypalBuyerEmail: string | null; llmMode: "llm" | "template"; listings: boolean };
 }
 
 export function buildServices(env: Record<string, string | undefined> = process.env): Services {
@@ -36,6 +40,7 @@ export function buildServices(env: Record<string, string | undefined> = process.
     stepDelayMs: Number.isFinite(delay) && delay >= 0 ? Math.min(delay, 30_000) : 1200,
     log: (m, e) => console.error(m, e),
     sellerFor: (contact, initialAsk) => {
+      if (contact.endpoint.startsWith(LISTING_PREFIX)) return new PersonaSeller(personaFromEndpoint(contact.endpoint), llm, initialAsk);
       const persona = PERSONAS.find((p) => p.id === contact.persona);
       if (!persona) throw new Error(`Unknown seller persona "${contact.persona}"`);
       return new PersonaSeller(persona, llm, initialAsk);
@@ -51,7 +56,10 @@ export function buildServices(env: Record<string, string | undefined> = process.
     sellerEmail: paypal?.sellerEmail,
   });
 
-  return { repo, runner, payments, publicConfig: { paypalClientId: paypal?.clientId ?? null, paypalBuyerEmail: paypal?.buyerEmail ?? null, llmMode: haveLlm ? "llm" : "template" } };
+  const c3 = env.CHANNEL3_API_KEY?.trim();
+  const findListings = c3 ? (q: string) => searchListings(q, c3) : null;
+
+  return { repo, runner, payments, findListings, publicConfig: { paypalClientId: paypal?.clientId ?? null, paypalBuyerEmail: paypal?.buyerEmail ?? null, llmMode: haveLlm ? "llm" : "template", listings: findListings !== null } };
 }
 
 const g = globalThis as unknown as { __hagglebot?: Services };

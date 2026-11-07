@@ -112,6 +112,7 @@ export function Dashboard() {
               <WantsPanel
                 wants={wants}
                 selectedId={selected?.id ?? null}
+                listings={state.config.listings}
                 onSelect={(id) => { setSelectedWant(id); setTab("negotiation"); }}
                 onChanged={refresh}
                 onError={setError}

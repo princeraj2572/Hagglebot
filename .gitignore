@@ -13,3 +13,8 @@ next-env.d.ts
 .DS_Store
 data/
 .playwright-mcp/
+
+# agent skill installs (tooling, not part of the app)
+.agents/
+.claude/
+skills-lock.json

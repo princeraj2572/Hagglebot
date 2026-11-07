@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { POST as createWant } from "@/app/api/wants/route";
 import { DELETE as deleteWant } from "@/app/api/wants/[id]/route";
 import { POST as addSeller } from "@/app/api/wants/[id]/sellers/route";
+import { POST as addListings } from "@/app/api/wants/[id]/listings/route";
 import { POST as negotiate } from "@/app/api/wants/[id]/negotiate/route";
 import { POST as loadDemo } from "@/app/api/demo/route";
 import { GET as getState } from "@/app/api/state/route";
@@ -46,7 +47,7 @@ describe("API", () => {
     await svc.runner.idle();
 
     const s = await state();
-    expect(s.config).toEqual({ paypalClientId: null, paypalBuyerEmail: null, llmMode: "template" });
+    expect(s.config).toEqual({ paypalClientId: null, paypalBuyerEmail: null, llmMode: "template", listings: false });
     expect(s.wants[0]!.sellers).toHaveLength(4);
     expect(s.threads.map((t) => [t.sellerName, t.status]).sort()).toEqual([
       ["Chatty Chen", "deal"], ["Fast Ferdi", "deal"], ["Firm Fatima", "walked_away"], ["Shady Sam", "walked_away"],
@@ -143,5 +144,32 @@ describe("API", () => {
     await svc.runner.idle();
     const deal = (await state()).deals[0]!;
     expect((await refund(post(`/api/deals/${deal.id}/refund`), ctx({ id: deal.id }))).status).toBe(409);
+  });
+
+  describe("real listings", () => {
+    const wantBody = { item: "Headphones", maxPrice: 250, notes: "", buyerName: "Alex" };
+    const L = (retailer: string, price: number) => ({ title: "Sony WH", retailer, price, condition: "new", url: `https://${retailer}/p` });
+
+    it("explains how to enable it when there is no Channel3 key", async () => {
+      const w = await (await createWant(post("/api/wants", wantBody))).json();
+      const res = await addListings(post(`/api/wants/${w.id}/listings`), ctx({ id: w.id }));
+      expect(res.status).toBe(400);
+      expect((await res.json()).error).toContain("CHANNEL3_API_KEY");
+    });
+
+    it("adds real retailers near the budget as sellers, skipping far-off prices and repeats", async () => {
+      svc.findListings = async () => [L("bestbuy.com", 240), L("luxury.com", 900), L("target.com", 199), L("bestbuy.com", 210)];
+      const w = await (await createWant(post("/api/wants", wantBody))).json();
+      const res = await addListings(post(`/api/wants/${w.id}/listings`), ctx({ id: w.id }));
+      expect(res.status).toBe(201);
+      expect((await res.json()).map((s: { name: string }) => s.name)).toEqual(["bestbuy.com", "target.com"]);
+      expect((await state()).wants[0]!.sellers).toHaveLength(2);
+    });
+
+    it("says so when nothing is near the budget", async () => {
+      svc.findListings = async () => [L("luxury.com", 900)];
+      const w = await (await createWant(post("/api/wants", wantBody))).json();
+      expect((await addListings(post(`/api/wants/${w.id}/listings`), ctx({ id: w.id }))).status).toBe(409);
+    });
   });
 });
