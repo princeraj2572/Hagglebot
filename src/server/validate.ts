@@ -1,4 +1,5 @@
 import { NEGOTIATION_STYLES, type NegotiationStyle } from "../lib/negotiation/types";
+import type { Listing } from "../lib/channel3/search";
 import { PERSONAS } from "../lib/sellers/personas";
 
 export class ValidationError extends Error {
@@ -57,4 +58,29 @@ export function parseSellerInput(body: unknown): SellerInput {
   const name = clean(b.name) || found.name;
   if (name.length > 60) throw new ValidationError("Seller name is limited to 60 characters");
   return { name, persona };
+}
+
+const webUrl = (v: unknown, max = 500, httpsOnly = false): string | null => {
+  const u = clean(v);
+  if (!u || u.length > max) return null;
+  try {
+    const p = new URL(u).protocol;
+    return p === "https:" || (!httpsOnly && p === "http:") ? u : null;
+  } catch {
+    return null;
+  }
+};
+
+/** A listing picked in the marketplace comes from the browser, so every field is checked before it becomes a seller. */
+export function parseListingInput(body: unknown): Listing {
+  const b = obj(body);
+  const title = clean(b.title).slice(0, 120);
+  const retailer = clean(b.retailer);
+  const url = webUrl(b.url);
+  const price = typeof b.price === "number" ? b.price : NaN;
+  if (!title || !/^[a-z0-9][a-z0-9.-]{2,59}$/i.test(retailer) || !url || !Number.isInteger(price) || price < 1 || price > 1_000_000) {
+    throw new ValidationError("That listing is not valid");
+  }
+  const condition = clean(b.condition).slice(0, 20);
+  return { title, retailer, price, url, condition: condition || null, image: webUrl(b.image, 500, true) };
 }

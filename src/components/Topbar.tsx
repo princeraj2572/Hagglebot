@@ -6,8 +6,12 @@ export function Topbar(props: {
   llmMode: "llm" | "template" | undefined;
   live: number;
   total: number;
+  /** Show the page switch only when the marketplace is available (needs a Channel3 key). */
+  marketplace: boolean;
+  page: "negotiate" | "marketplace";
+  onPage: (p: "negotiate" | "marketplace") => void;
 }) {
-  const { wantItem, llmMode, live, total } = props;
+  const { wantItem, llmMode, live, total, marketplace, page, onPage } = props;
   return (
     <header className="sticky top-0 z-30 border-b border-line bg-paper/90 backdrop-blur">
       <div className="mx-auto flex h-14 max-w-[96rem] items-center gap-4 px-4">
@@ -16,7 +20,24 @@ export function Topbar(props: {
           Hagglebot
         </span>
 
-        {wantItem && (
+        {marketplace && (
+          <nav aria-label="Pages" className="flex items-center gap-1">
+            {(["negotiate", "marketplace"] as const).map((p) => (
+              <button
+                key={p}
+                aria-current={page === p ? "page" : undefined}
+                onClick={() => onPage(p)}
+                className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors duration-150 ${
+                  page === p ? "bg-ultra/10 text-ultra" : "text-muted [@media(hover:hover)]:hover:text-ink"
+                }`}
+              >
+                {p === "negotiate" ? "Negotiate" : "Marketplace"}
+              </button>
+            ))}
+          </nav>
+        )}
+
+        {wantItem && page === "negotiate" && (
           <nav aria-label="Breadcrumb" className="hidden min-w-0 items-center gap-2 text-sm text-muted md:flex">
             <span>Wants</span>
             <span aria-hidden>/</span>

@@ -1,4 +1,5 @@
 import { handle } from "@/server/http";
+import { ValidationError, parseListingInput } from "@/server/validate";
 import { RunnerError } from "@/server/runner";
 import { getServices } from "@/server/services";
 import { encodeListing, personaIdForListing } from "@/lib/sellers/listing";
@@ -21,6 +22,20 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
       if (repo.listThreads(id).length > 0) throw new RunnerError("Negotiations already started for this want", "conflict");
       const room = MAX_SELLERS - repo.listSellers(id).length;
       if (room <= 0) throw new RunnerError(`At most ${MAX_SELLERS} sellers per want`, "conflict");
+
+      // A listing picked in the marketplace: add exactly that one.
+      const text = (await req.text()).slice(0, 8192);
+      if (text.trim()) {
+        let body: { listing?: unknown };
+        try {
+          body = JSON.parse(text) as { listing?: unknown };
+        } catch {
+          throw new ValidationError("Invalid JSON");
+        }
+        const l = parseListingInput(body?.listing);
+        const persona = personaIdForListing(repo.listSellers(id).length);
+        return [repo.addSeller({ wantId: id, name: l.retailer, persona, endpoint: encodeListing(persona, l) })];
+      }
 
       // Keep listings a negotiation could plausibly close: not far above the budget, not a different kind of product.
       const found = (await findListings(want.item)).filter((l) => l.price <= want.maxPrice * 1.5 && l.price >= want.maxPrice * 0.4);

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { ValidationError, parseSellerInput, parseWantInput } from "./validate";
+import { ValidationError, parseListingInput, parseSellerInput, parseWantInput } from "./validate";
 
 const ok = { item: "  Headphones ", maxPrice: 250, notes: "black", buyerName: "Alex" };
 
@@ -43,5 +43,29 @@ describe("parseWantInput style", () => {
   });
   it("rejects an unknown style", () => {
     expect(() => parseWantInput({ ...base, style: "reckless" })).toThrow(ValidationError);
+  });
+});
+
+describe("parseListingInput", () => {
+  const ok = { title: "Sony WH-1000XM6", retailer: "bestbuy.com", price: 240, url: "https://bestbuy.com/p", condition: "new", image: "https://cdn.trychannel3.com/i.png" };
+
+  it("accepts a listing as the marketplace sends it", () => {
+    expect(parseListingInput(ok)).toEqual(ok);
+  });
+
+  it("drops an image that is not https, and an empty condition", () => {
+    expect(parseListingInput({ ...ok, image: "http://x.com/i.png", condition: "" })).toMatchObject({ image: null, condition: null });
+  });
+
+  it.each([
+    ["a script link", { url: "javascript:alert(1)" }],
+    ["a non-web link", { url: "file:///etc/passwd" }],
+    ["a fractional price", { price: 9.5 }],
+    ["a zero price", { price: 0 }],
+    ["a price that is a string", { price: "240" }],
+    ["a retailer with spaces", { retailer: "best buy" }],
+    ["an empty title", { title: " " }],
+  ])("rejects %s", (_n, patch) => {
+    expect(() => parseListingInput({ ...ok, ...patch })).toThrow(ValidationError);
   });
 });

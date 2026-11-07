@@ -31,22 +31,18 @@ const mainImage = (images: RawImage[] | undefined): string | null => {
   return typeof u === "string" ? u : null;
 };
 
-/**
- * Searches Channel3 and returns, per product, its cheapest in-stock USD offer (relevance order kept).
- * Search only: Channel3 returns listings and prices; nothing is bought or sent to a retailer.
- */
-export async function searchListings(
-  query: string,
-  apiKey: string,
-  opts: { limit?: number; fetchImpl?: typeof fetch } = {},
-): Promise<Listing[]> {
-  const f = opts.fetchImpl ?? fetch;
+export interface Category {
+  slug: string;
+  title: string;
+}
+
+async function call(path: string, apiKey: string, f: typeof fetch, init: { method: "GET" | "POST"; body?: unknown }): Promise<unknown> {
   let res: Response;
   try {
-    res = await f(URL_SEARCH, {
-      method: "POST",
+    res = await f(`https://api.trychannel3.com${path}`, {
+      method: init.method,
       headers: { "x-api-key": apiKey, "content-type": "application/json" },
-      body: JSON.stringify({ query, limit: opts.limit ?? 20, filters: { availability: ["InStock"] } }),
+      ...(init.body === undefined ? {} : { body: JSON.stringify(init.body) }),
       signal: AbortSignal.timeout(15_000),
     });
   } catch {
@@ -54,9 +50,12 @@ export async function searchListings(
   }
   if (res.status === 401 || res.status === 403) throw new Channel3Error("Channel3 rejected the API key. Check CHANNEL3_API_KEY.");
   if (res.status === 402 || res.status === 429) throw new Channel3Error("Channel3 credits or rate limit used up. Try again later.");
-  if (!res.ok) throw new Channel3Error(`Channel3 search failed (HTTP ${res.status}).`);
+  if (!res.ok) throw new Channel3Error(`Channel3 request failed (HTTP ${res.status}).`);
+  return res.json().catch(() => ({}));
+}
 
-  const data = (await res.json().catch(() => ({}))) as { products?: RawProduct[] };
+/** Per product: its cheapest in-stock USD offer (relevance order kept). */
+function toListings(data: { products?: RawProduct[] }): Listing[] {
   const out: Listing[] = [];
   for (const p of data.products ?? []) {
     const offers = (p.offers ?? [])
@@ -74,4 +73,29 @@ export async function searchListings(
     });
   }
   return out;
+}
+
+/**
+ * Searches Channel3, or, with no query, lists one category (its browse endpoint needs a filter).
+ * Search only: Channel3 returns listings and prices; nothing is bought or sent to a retailer.
+ */
+export async function searchListings(
+  query: string,
+  apiKey: string,
+  opts: { limit?: number; category?: string | undefined; fetchImpl?: typeof fetch } = {},
+): Promise<Listing[]> {
+  const f = opts.fetchImpl ?? fetch;
+  const filters = { availability: ["InStock"], ...(opts.category ? { category_ids: [opts.category] } : {}) };
+  const limit = opts.limit ?? 20;
+  if (!query && !opts.category) return [];
+  const data = query
+    ? await call("/v1/search", apiKey, f, { method: "POST", body: { query, limit, filters } })
+    : await call("/v1/browse", apiKey, f, { method: "POST", body: { limit, filters } });
+  return toListings(data as { products?: RawProduct[] });
+}
+
+/** The top-level product categories (slug is what search and browse filter on). */
+export async function listCategories(apiKey: string, fetchImpl: typeof fetch = fetch): Promise<Category[]> {
+  const data = (await call("/v1/categories?roots_only=true&page_size=100", apiKey, fetchImpl, { method: "GET" })) as { items?: { slug?: unknown; title?: unknown }[] };
+  return (data.items ?? []).flatMap((c) => (typeof c.slug === "string" && typeof c.title === "string" ? [{ slug: c.slug, title: c.title }] : []));
 }

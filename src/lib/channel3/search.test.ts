@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { searchListings } from "./search";
+import { listCategories, searchListings } from "./search";
 
 const offer = (domain: string, price: number, extra: Record<string, unknown> = {}) => ({
   url: `https://${domain}/p`, domain, price: { price, currency: "USD" }, availability: "InStock", ...extra,
@@ -34,5 +34,33 @@ describe("searchListings", () => {
     await searchListings("shoes", "secret-key", { fetchImpl: f });
     expect((seen!.headers as Record<string, string>)["x-api-key"]).toBe("secret-key");
     expect(String(seen!.body)).not.toContain("secret-key");
+  });
+
+  it("browses a category when there is no query, and filters a search by category", async () => {
+    const calls: { url: string; body: Record<string, unknown> }[] = [];
+    const f = (async (u: string, init?: RequestInit) => {
+      calls.push({ url: String(u), body: JSON.parse(String(init?.body ?? "{}")) });
+      return new Response("{}", { status: 200 });
+    }) as unknown as typeof fetch;
+    await searchListings("", "k", { category: "electronics", fetchImpl: f });
+    await searchListings("shoes", "k", { category: "apparel-accessories", fetchImpl: f });
+    expect(calls[0]!.url).toContain("/v1/browse");
+    expect(calls[0]!.body.filters).toMatchObject({ category_ids: ["electronics"] });
+    expect(calls[1]!.url).toContain("/v1/search");
+    expect(calls[1]!.body).toMatchObject({ query: "shoes", filters: { category_ids: ["apparel-accessories"] } });
+  });
+
+  it("returns nothing for an empty query with no category, without calling Channel3", async () => {
+    const f = (async () => {
+      throw new Error("should not be called");
+    }) as unknown as typeof fetch;
+    expect(await searchListings("", "k", { fetchImpl: f })).toEqual([]);
+  });
+});
+
+describe("listCategories", () => {
+  it("returns slug and title for each top-level category and skips malformed ones", async () => {
+    const f = fake(200, { items: [{ slug: "electronics", title: "Electronics" }, { slug: 5 }, { title: "x" }] });
+    expect(await listCategories("k", f)).toEqual([{ slug: "electronics", title: "Electronics" }]);
   });
 });

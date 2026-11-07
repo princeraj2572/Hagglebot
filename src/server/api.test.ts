@@ -3,6 +3,8 @@ import { POST as createWant } from "@/app/api/wants/route";
 import { DELETE as deleteWant } from "@/app/api/wants/[id]/route";
 import { POST as addSeller } from "@/app/api/wants/[id]/sellers/route";
 import { POST as addListings } from "@/app/api/wants/[id]/listings/route";
+import { GET as getCategories } from "@/app/api/marketplace/categories/route";
+import { POST as marketSearch } from "@/app/api/marketplace/search/route";
 import { POST as negotiate } from "@/app/api/wants/[id]/negotiate/route";
 import { POST as loadDemo } from "@/app/api/demo/route";
 import { GET as getState } from "@/app/api/state/route";
@@ -170,6 +172,42 @@ describe("API", () => {
       svc.findListings = async () => [L("luxury.com", 900)];
       const w = await (await createWant(post("/api/wants", wantBody))).json();
       expect((await addListings(post(`/api/wants/${w.id}/listings`), ctx({ id: w.id }))).status).toBe(409);
+    });
+  });
+
+  describe("marketplace", () => {
+    const wantBody = { item: "Headphones", maxPrice: 250, notes: "", buyerName: "Alex" };
+    const L = { title: "Sony WH", retailer: "bestbuy.com", price: 240, condition: "new", url: "https://bestbuy.com/p", image: "https://cdn.trychannel3.com/i.png" };
+
+    it("needs a Channel3 key for categories and search", async () => {
+      expect((await getCategories(new Request(url("/api/marketplace/categories")))).status).toBe(400);
+      expect((await marketSearch(post("/api/marketplace/search", { query: "x" }))).status).toBe(400);
+    });
+
+    it("lists categories and searches by text and category", async () => {
+      svc.categories = async () => [{ slug: "electronics", title: "Electronics" }];
+      const seen: unknown[] = [];
+      svc.findListings = async (q, c) => (seen.push([q, c]), [L]);
+      expect(await (await getCategories(new Request(url("/api/marketplace/categories")))).json()).toEqual([{ slug: "electronics", title: "Electronics" }]);
+      expect((await (await marketSearch(post("/api/marketplace/search", { query: "tv", category: "electronics" }))).json())).toEqual([L]);
+      await marketSearch(post("/api/marketplace/search", { category: "Not A Slug!" }).clone());
+      expect(seen[0]).toEqual(["tv", "electronics"]);
+    });
+
+    it("asks for a search or a category", async () => {
+      svc.findListings = async () => [];
+      expect((await marketSearch(post("/api/marketplace/search", {}))).status).toBe(400);
+    });
+
+    it("adds the one picked listing as a seller, and rejects an invalid one", async () => {
+      svc.findListings = async () => [];
+      const w = await (await createWant(post("/api/wants", wantBody))).json();
+      const ok = await addListings(post(`/api/wants/${w.id}/listings`, { listing: L }), ctx({ id: w.id }));
+      expect(ok.status).toBe(201);
+      expect((await ok.json()).map((s: { name: string }) => s.name)).toEqual(["bestbuy.com"]);
+      const bad = await addListings(post(`/api/wants/${w.id}/listings`, { listing: { ...L, url: "javascript:alert(1)" } }), ctx({ id: w.id }));
+      expect(bad.status).toBe(400);
+      expect((await state()).wants[0]!.sellers).toHaveLength(1);
     });
   });
 });

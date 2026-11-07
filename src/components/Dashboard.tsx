@@ -2,6 +2,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { DashboardState } from "@/server/state";
 import { api } from "./api";
+import { MarketplaceView } from "./MarketplaceView";
 import { NegotiationsPanel } from "./NegotiationsPanel";
 import { Topbar } from "./Topbar";
 import { WantsPanel } from "./WantsPanel";
@@ -16,6 +17,7 @@ export function Dashboard() {
   const [state, setState] = useState<DashboardState | null>(null);
   const [selectedWant, setSelectedWant] = useState<string | null>(null);
   const [tab, setTab] = useState<Tab>("negotiation");
+  const [page, setPage] = useState<"negotiate" | "marketplace">("negotiate");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const live = useRef(false);
@@ -83,6 +85,9 @@ export function Dashboard() {
         llmMode={state?.config.llmMode}
         live={liveCount}
         total={threads.length}
+        marketplace={state?.config.listings ?? false}
+        page={page}
+        onPage={setPage}
       />
 
       <div className="mx-auto max-w-[96rem] px-4 py-5">
@@ -119,20 +124,24 @@ export function Dashboard() {
               />
             </aside>
             <main className={`min-w-0 ${tab === "negotiation" ? "" : "hidden lg:block"}`}>
-              <NegotiationsPanel
-                want={selected}
-                threads={threads}
-                deals={deals}
-                wants={wants}
-                paypalClientId={state.config.paypalClientId}
-                buyerEmail={state.config.paypalBuyerEmail}
-                busy={busy}
-                canNegotiate={!!selected && selected.status === "open" && selected.sellers.length > 0 && liveCount === 0}
-                onNegotiate={() => selected && run(() => api(`/api/wants/${selected.id}/negotiate${started ? "?restart=1" : ""}`, "POST"))}
-                run={run}
-                onChanged={refresh}
-                onError={setError}
-              />
+              {page === "marketplace" ? (
+                <MarketplaceView key={selected?.id ?? "none"} want={selected} canAdd={!started} run={run} onError={setError} />
+              ) : (
+                <NegotiationsPanel
+                  want={selected}
+                  threads={threads}
+                  deals={deals}
+                  wants={wants}
+                  paypalClientId={state.config.paypalClientId}
+                  buyerEmail={state.config.paypalBuyerEmail}
+                  busy={busy}
+                  canNegotiate={!!selected && selected.status === "open" && selected.sellers.length > 0 && liveCount === 0}
+                  onNegotiate={() => selected && run(() => api(`/api/wants/${selected.id}/negotiate${started ? "?restart=1" : ""}`, "POST"))}
+                  run={run}
+                  onChanged={refresh}
+                  onError={setError}
+                />
+              )}
             </main>
           </div>
         )}
