@@ -51,7 +51,7 @@ export function SavingsPanel({ threads, budget }: { threads: Thread[]; budget: n
           </>
         ) : (
           <>
-            <span className="break-all">{best.seller}</span> agreed at its first price
+            <span className="break-all">{best.seller}</span> {best.direct ? "was bought at its listed price" : "agreed at its first price"}
           </>
         )}
         , and <span className="num text-ultra">{usd(best.underBudget)}</span> under your {usd(budget)} budget.

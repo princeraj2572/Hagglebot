@@ -201,7 +201,7 @@ export function NegotiationsPanel(props: {
             <Stat label="Your budget" value={usd(budget)} note={budget < want.maxPrice ? `limited by the ${bundle?.name} bundle` : "never shown to sellers"} />
             <Stat
               label={liveCount > 0 ? "Talking now" : "Sellers"}
-              value={liveCount > 0 ? `${liveCount} of ${shown.length}` : String(shown.length)}
+              value={liveCount > 0 ? `${liveCount} of ${shown.length}` : String(Math.max(shown.length, want.sellers.length))}
               note={liveCount > 0 ? "conversations live" : `${walked} walked away`}
             />
             <Stat

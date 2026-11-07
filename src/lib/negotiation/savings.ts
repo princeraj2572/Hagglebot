@@ -12,6 +12,8 @@ export interface DealRow {
   savedPct: number;
   /** budget - price. The negotiation never closes above budget, so this is 0 or more. */
   underBudget: number;
+  /** Bought at the listed price by the user's choice, with no negotiation. */
+  direct: boolean;
 }
 
 export interface Savings {
@@ -34,6 +36,7 @@ export function dealSavings(threads: Thread[], budget: number): Savings | null {
       saved,
       savedPct: firstAsk > 0 ? Math.round((saved / firstAsk) * 100) : 0,
       underBudget: Math.max(0, budget - t.dealPrice),
+      direct: t.messages.some((m) => m.guard?.startsWith("Bought at the listed price")),
     });
   }
   rows.sort((a, b) => a.price - b.price);

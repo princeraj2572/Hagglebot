@@ -20,8 +20,13 @@ describe("dealSavings", () => {
     const out = dealSavings([a, b, thread({ status: "walked_away", dealPrice: null })], 250)!;
     expect(out.rows.map((r) => r.seller)).toEqual(["B", "A"]);
     expect(out.best.seller).toBe("B");
-    expect(out.rows[1]).toEqual({ seller: "A", firstAsk: 240, price: 205, saved: 35, savedPct: 15, underBudget: 45 });
+    expect(out.rows[1]).toEqual({ seller: "A", firstAsk: 240, price: 205, saved: 35, savedPct: 15, underBudget: 45, direct: false });
     expect(out.best).toMatchObject({ saved: 0, savedPct: 0, underBudget: 75 });
+  });
+
+  it("marks a purchase made at the listed price, without negotiating", () => {
+    const direct = thread({ dealPrice: 120, messages: [msg("seller", 120), { ...msg("buyer", 120), guard: "Bought at the listed price by your choice." }] });
+    expect(dealSavings([direct], 300)!.best.direct).toBe(true);
   });
 
   it("never reports a negative saving and copes with a missing ask", () => {
