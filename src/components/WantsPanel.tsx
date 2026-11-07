@@ -35,8 +35,11 @@ export function WantsPanel(props: {
   onSelect: (id: string) => void;
   onChanged: () => void;
   onError: (msg: string) => void;
+  /** Find sellers for a new want and negotiate, without further clicks. */
+  onAutopilot?: (wantId: string) => void;
 }) {
-  const { wants, bundles, threads, deals, selectedId, onSelect, onChanged, onError } = props;
+  const { wants, bundles, threads, deals, selectedId, onSelect, onChanged, onError, onAutopilot } = props;
+  const [autopilot, setAutopilot] = useState(true);
   const [form, setForm] = useState<{ item: string; maxPrice: string; notes: string; buyerName: string; style: NegotiationStyle; requireApproval: boolean }>({
     item: "", maxPrice: "", notes: "", buyerName: "", style: "balanced", requireApproval: false,
   });
@@ -164,6 +167,7 @@ export function WantsPanel(props: {
               setForm({ ...form, item: "", maxPrice: "", notes: "" });
               setDialog(null);
               onSelect(w.id);
+              if (autopilot) onAutopilot?.(w.id);
             });
           }}
         >
@@ -211,6 +215,16 @@ export function WantsPanel(props: {
               ))}
             </div>
           </fieldset>
+
+          <label className="flex cursor-pointer items-start gap-3 rounded-xl bg-ultra/10 px-3 py-3 text-sm">
+            <input type="checkbox" checked={autopilot} onChange={(e) => setAutopilot(e.target.checked)} className="mt-1 accent-[#2B3FD6]" />
+            <span>
+              <span className="font-semibold">Find sellers and negotiate for me</span>
+              <span className="block text-[13px] text-muted">
+                Hagglebot searches the marketplace for this item, adds the best matches as sellers and starts negotiating. Untick to choose the sellers yourself.
+              </span>
+            </span>
+          </label>
 
           <label className="flex cursor-pointer items-start gap-3 rounded-xl bg-mist px-3 py-3 text-sm">
             <input type="checkbox" checked={form.requireApproval} onChange={(e) => setForm({ ...form, requireApproval: e.target.checked })} className="mt-1 accent-[#2B3FD6]" />

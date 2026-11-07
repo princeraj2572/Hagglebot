@@ -58,6 +58,10 @@ export function NegotiationsPanel(props: {
   demo: boolean;
   /** True when the button redoes everything (Restart); false when it only starts new sellers or a first run. */
   restart: boolean;
+  /** What "find sellers and negotiate for me" is doing right now, if it is running for this want. */
+  autoStatus?: string | null;
+  /** Opens the marketplace, searched for this want. Only given when the marketplace is available. */
+  onFindProducts?: (() => void) | undefined;
   /** Ask the panel to open a tab once (for example Deals right after a purchase). */
   focus?: { view: "deals" } | null;
   onFocusDone?: () => void;
@@ -69,7 +73,7 @@ export function NegotiationsPanel(props: {
   onChanged: () => void;
   onError: (msg: string) => void;
 }) {
-  const { want, threads, deals, wants, bundle, bundles, listings, paypalClientId, buyerEmail, busy, demo, restart, focus, onFocusDone, onLoadDemo, canNegotiate, onNegotiate, run, onChanged, onError } = props;
+  const { want, threads, deals, wants, bundle, bundles, listings, paypalClientId, buyerEmail, busy, demo, restart, autoStatus, onFindProducts, focus, onFocusDone, onLoadDemo, canNegotiate, onNegotiate, run, onChanged, onError } = props;
 
   // Negotiations that finished before this page opened replay once, so the haggling is visible.
   const seen = useRef(replayed);
@@ -224,7 +228,12 @@ export function NegotiationsPanel(props: {
             )}
           </ul>
         </div>
-        <div className="flex shrink-0 items-center gap-2">
+        <div className="flex shrink-0 flex-wrap items-center gap-2">
+          {onFindProducts && (
+            <button className={`${ghost} rounded-full px-5 py-2.5 text-base`} onClick={onFindProducts}>
+              Find products
+            </button>
+          )}
           <button className={`${ghost} rounded-full px-5 py-2.5 text-base`} onClick={() => setManageOpen(true)}>
             Manage
           </button>
@@ -237,6 +246,17 @@ export function NegotiationsPanel(props: {
           </button>
         </div>
       </div>
+
+      {autoStatus && (
+        <div role="status" className="flex items-center gap-3 rounded-2xl bg-ultra px-4 py-3 text-white">
+          <span aria-hidden className="inline-flex gap-1">
+            {[0, 150, 300].map((delay) => (
+              <i key={delay} className="h-2 w-2 rounded-full bg-white motion-safe:animate-typing" style={{ animationDelay: `${delay}ms` }} />
+            ))}
+          </span>
+          <p className="text-sm font-medium">{autoStatus}</p>
+        </div>
+      )}
 
       {!started ? (
         <div className="space-y-6">
@@ -253,10 +273,22 @@ export function NegotiationsPanel(props: {
                 ? "Add at least one seller, then press Negotiate."
                 : `Hagglebot will chat with ${want.sellers.length} seller${want.sellers.length === 1 ? "" : "s"} at once. Your budget of ${usd(want.maxPrice)} is never shown to them. Press Negotiate to start.`}
             </p>
-            {want.sellers.length === 0 && (
-              <button className={`${primary} mt-4`} onClick={() => setManageOpen(true)}>
-                Add sellers
-              </button>
+            <div className="mt-4 flex flex-wrap gap-2">
+              {want.sellers.length === 0 && (
+                <button className={primary} onClick={() => setManageOpen(true)}>
+                  Add sellers
+                </button>
+              )}
+              {onFindProducts && (
+                <button className={want.sellers.length === 0 ? ghost : primary} onClick={onFindProducts}>
+                  Find products for this want
+                </button>
+              )}
+            </div>
+            {onFindProducts && (
+              <p className="mt-2 max-w-2xl text-[13px] text-muted">
+                Search real listings for "{want.item}", check each one's condition (new, used or refurbished), then negotiate the ones you like.
+              </p>
             )}
           </div>
         </div>

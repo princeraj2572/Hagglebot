@@ -20,6 +20,8 @@ export function Dashboard() {
   const [page, setPage] = useState<"negotiate" | "marketplace">("negotiate");
   // After buying at the listed price, land on the Deals tab so the next step (pay) is in front of you.
   const [focus, setFocus] = useState<{ view: "deals" } | null>(null);
+  // Progress of "find sellers and negotiate for me" for one want, shown on its page.
+  const [auto, setAuto] = useState<{ wantId: string; text: string } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const live = useRef(false);
@@ -72,6 +74,37 @@ export function Dashboard() {
     },
     [refresh],
   );
+
+  /**
+   * Find sellers and negotiate, in order: search the marketplace for the want's item and add the best offers; if there
+   * is nothing suitable (or no marketplace), use simulated sellers instead; then start the negotiation.
+   */
+  const autopilot = async (wantId: string) => {
+    try {
+      setAuto({ wantId, text: "Searching the marketplace for the best offers…" });
+      let found = 0;
+      let simulated = false;
+      try {
+        found = (await api<unknown[]>(`/api/wants/${wantId}/listings`, "POST")).length;
+      } catch {
+        simulated = true; // nothing near the budget, or the marketplace is not set up
+      }
+      if (simulated) {
+        setAuto({ wantId, text: "No suitable marketplace listings, so Hagglebot is using simulated sellers…" });
+        const pool = ["ferdi", "fatima", "chen", "bea", "tomas", "leo", "priya", "wei", "nina", "gus", "clara"];
+        const picks = [...pool].sort(() => Math.random() - 0.5).slice(0, 3);
+        for (const persona of picks) await api(`/api/wants/${wantId}/sellers`, "POST", { persona });
+        found = picks.length;
+      }
+      setAuto({ wantId, text: `Negotiating with ${found} seller${found === 1 ? "" : "s"}…` });
+      await api(`/api/wants/${wantId}/negotiate`, "POST");
+      await refresh();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setAuto(null);
+    }
+  };
 
   const wants = state?.wants ?? [];
   const selected = useMemo(
@@ -132,6 +165,7 @@ export function Dashboard() {
                 onSelect={(id) => { setSelectedWant(id); setTab("negotiation"); }}
                 onChanged={refresh}
                 onError={setError}
+                onAutopilot={(id) => void autopilot(id)}
               />
             </aside>
             <main className={`min-w-0 ${tab === "negotiation" ? "" : "hidden lg:block"}`}>
@@ -151,7 +185,9 @@ export function Dashboard() {
                   busy={busy}
                   demo={demo}
                 restart={restarting}
+                onFindProducts={state.config.listings ? () => setPage("marketplace") : undefined}
                 focus={focus}
+                autoStatus={auto && auto.wantId === selected?.id ? auto.text : null}
                 onFocusDone={() => setFocus(null)}
                 onLoadDemo={() => run(async () => { const r = await api<{ wantId: string }>("/api/demo", "POST"); setSelectedWant(r.wantId); setTab("negotiation"); })}
                 canNegotiate={!!selected && selected.status === "open" && selected.sellers.length > 0 && liveCount === 0}

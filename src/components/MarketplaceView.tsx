@@ -330,7 +330,15 @@ export function MarketplaceView(props: {
           const img = webUrl(l.image);
           return (
             <li key={l.url} className="flex min-w-0 flex-col overflow-hidden rounded-2xl bg-paper">
-              <div className="flex h-40 items-center justify-center bg-mist">
+              <div className="relative flex h-40 items-center justify-center bg-mist">
+                <span
+                  className={`absolute left-2.5 top-2.5 rounded-full px-2.5 py-1 text-[12px] font-bold capitalize shadow-sm ${
+                    !l.condition ? "bg-paper/85 text-muted" : l.condition === "new" ? "bg-paper text-ink" : "bg-tag text-ink"
+                  }`}
+                  title={l.condition ? `Condition: ${l.condition}` : "The store did not say whether this is new or used"}
+                >
+                  {l.condition ?? "Condition not stated"}
+                </span>
                 {img ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img src={img} alt="" loading="lazy" referrerPolicy="no-referrer" className="h-full w-full object-contain" />
@@ -343,7 +351,6 @@ export function MarketplaceView(props: {
                 <h3 className="line-clamp-2 break-words text-sm font-semibold leading-snug" title={l.title}>{l.title}</h3>
                 <p className="mt-auto flex flex-wrap items-baseline gap-x-2 pt-2">
                   <span className="num text-2xl font-bold tracking-tight">{usd(l.price)}</span>
-                  {l.condition && <span className="rounded-full bg-mist px-2 py-0.5 text-[12px] font-medium text-muted">{l.condition}</span>}
                   {want && l.price > budget && (
                     <span className="rounded-full bg-tag/30 px-2 py-0.5 text-[12px] font-medium" title="Above your budget: Buy is off, but Hagglebot can still try to negotiate it down.">
                       over budget
