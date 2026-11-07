@@ -224,9 +224,15 @@ export function MarketplaceView(props: {
           void search(query, category, condition);
         }}
       >
-        <input className={input} value={query} maxLength={120} placeholder="Search products, e.g. running shoes" aria-label="Search products" onChange={(e) => setQuery(e.target.value)} />
-        <input className={`${input} w-24 shrink-0`} inputMode="numeric" value={minPrice} placeholder="Min $" aria-label="Lowest price" onChange={(e) => setMinPrice(e.target.value)} />
-        <input className={`${input} w-24 shrink-0`} inputMode="numeric" value={maxPrice} placeholder="Max $" aria-label="Highest price" onChange={(e) => setMaxPrice(e.target.value)} />
+        <div className="min-w-0 flex-1">
+          <input className={input} value={query} maxLength={120} placeholder="Search products, e.g. running shoes" aria-label="Search products" onChange={(e) => setQuery(e.target.value)} />
+        </div>
+        <div className="w-20 shrink-0 sm:w-24">
+          <input className={input} inputMode="numeric" value={minPrice} placeholder="Min $" aria-label="Lowest price" onChange={(e) => setMinPrice(e.target.value)} />
+        </div>
+        <div className="w-20 shrink-0 sm:w-24">
+          <input className={input} inputMode="numeric" value={maxPrice} placeholder="Max $" aria-label="Highest price" onChange={(e) => setMaxPrice(e.target.value)} />
+        </div>
         <button className={primary} type="submit" disabled={loading}>Search</button>
       </form>
 
