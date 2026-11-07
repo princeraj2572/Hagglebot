@@ -7,7 +7,7 @@ export interface RunnerDeps {
   repo: Repo;
   llm: LLM | null;
   /** `demo` runs with canned text (no language model), for the ?demo=1 mode. */
-  sellerFor: (contact: SellerContact, initialAsk: number | null, demo?: boolean) => Seller;
+  sellerFor: (contact: SellerContact, initialAsk: number | null, demo?: boolean, budget?: number) => Seller;
   now?: () => number;
   log?: (msg: string, err?: unknown) => void;
   maxSteps?: number;
@@ -194,7 +194,7 @@ export class NegotiationRunner {
     const stored = repo.getWant(thread.wantId);
     if (!contact || !stored) return;
     const want = this.effectiveWant(stored);
-    const seller = this.d.sellerFor(contact, thread.lastAsk, demo);
+    const seller = this.d.sellerFor(contact, thread.lastAsk, demo, stored.maxPrice);
     const deps: EngineDeps = {
       llm: demo ? null : this.d.llm,
       comparing,

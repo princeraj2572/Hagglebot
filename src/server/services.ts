@@ -1,6 +1,6 @@
 import { createLLMFromEnv } from "../lib/llm";
 import type { LLM } from "../lib/llm/types";
-import { PERSONAS } from "../lib/sellers/personas";
+import { PERSONAS, scaledPersona } from "../lib/sellers/personas";
 import { listCategories, searchListings, type Category, type Page, type SearchOptions } from "../lib/channel3/search";
 import { LISTING_PREFIX, personaFromEndpoint } from "../lib/sellers/listing";
 import { PersonaSeller } from "../lib/sellers/sellerAgent";
@@ -41,12 +41,12 @@ export function buildServices(env: Record<string, string | undefined> = process.
     llm,
     stepDelayMs: Number.isFinite(delay) && delay >= 0 ? Math.min(delay, 30_000) : 1200,
     log: (m, e) => console.error(m, e),
-    sellerFor: (contact, initialAsk, demo) => {
+    sellerFor: (contact, initialAsk, demo, budget) => {
       const sellerLlm = demo ? null : llm;
       if (contact.endpoint.startsWith(LISTING_PREFIX)) return new PersonaSeller(personaFromEndpoint(contact.endpoint), sellerLlm, initialAsk);
       const persona = PERSONAS.find((p) => p.id === contact.persona);
       if (!persona) throw new Error(`Unknown seller persona "${contact.persona}"`);
-      return new PersonaSeller(persona, sellerLlm, initialAsk);
+      return new PersonaSeller(budget ? scaledPersona(persona, budget) : persona, sellerLlm, initialAsk);
     },
   });
   runner.recoverInterrupted();

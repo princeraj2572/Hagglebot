@@ -228,3 +228,19 @@ export const PERSONAS: Persona[] = [
 
 /** The four sellers the demo scenario and the tests use; the rest are available from the Add seller menu. */
 export const DEMO_PERSONAS: Persona[] = PERSONAS.slice(0, 4);
+
+/** The budget the persona price lists were written for: 399 opening asks against a $250 want. */
+const REFERENCE_BUDGET = 250;
+const REFERENCE_LIST = 399;
+
+/**
+ * A made-up seller opens near 1.6x the buyer's budget whatever the item costs, so a $120 want meets $190 sellers
+ * instead of $399 ones. Every price rule is a ratio of the list price, so scaling list and cost keeps them intact.
+ * At the $250 demo budget the scale is exactly 1: the demo is unchanged.
+ */
+export function scaledPersona(p: Persona, budget: number): Persona {
+  if (!(budget > 0)) return p;
+  const scale = (budget * (REFERENCE_LIST / REFERENCE_BUDGET)) / p.listPrice;
+  if (Math.abs(scale - 1) < 1e-9) return p;
+  return { ...p, listPrice: Math.max(2, Math.round(p.listPrice * scale)), costBasis: p.costBasis * scale };
+}

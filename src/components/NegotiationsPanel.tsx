@@ -198,7 +198,7 @@ export function NegotiationsPanel(props: {
     : liveCount > 0
       ? `Hagglebot is talking to every seller at once. Your budget of ${usd(budget)} is never shown to them.`
       : walked > 0
-        ? "No seller has reached a price inside your budget yet."
+        ? `No seller reached a price inside your ${usd(budget)} budget. Raise the budget, or add more sellers and press Negotiate.`
         : "";
   const pending = started && liveCount === 0 ? want.sellers.filter((s) => !threads.some((t) => t.sellerId === s.id)) : [];
   const meta = [
@@ -279,9 +279,9 @@ export function NegotiationsPanel(props: {
           <section aria-label="Scoreboard" className="rounded-3xl bg-ink p-5 text-white sm:p-7">
             <div className="flex flex-wrap items-end justify-between gap-x-10 gap-y-6">
               <div className="min-w-0">
-                <p className="text-sm font-medium text-white/65">{savings ? "Best deal" : liveCount > 0 ? "Haggling now" : "No deal yet"}</p>
+                <p className="text-sm font-medium text-white/65">{savings ? "Best deal" : liveCount > 0 ? "Haggling now" : "Result"}</p>
                 <p className="num mt-1 text-5xl font-bold leading-none tracking-tight sm:text-7xl">
-                  {savings ? usd(savings.best.price) : liveCount > 0 ? `${liveCount} of ${shown.length}` : "–"}
+                  {savings ? usd(savings.best.price) : liveCount > 0 ? `${liveCount} of ${shown.length}` : "No deal"}
                 </p>
                 {sentence && <p className="mt-4 max-w-xl text-base leading-relaxed text-white/80">{sentence}</p>}
               </div>

@@ -55,6 +55,9 @@ Built for the PayPal AI Hackathon (Agentic Commerce).
 
 **Load demo scenario** loads this fixed wishlist so the demo runs reproducibly.
 
+The made-up sellers scale to your budget: they open near 1.6x what you are willing to pay, so any want (a $60
+webcam or a $900 monitor) meets realistic prices. At the $250 demo budget the numbers are exactly the table above.
+
 No PayPal webhooks are used: the order is captured synchronously right after the buyer approves, so
 there are no webhook signatures to verify.
 

@@ -41,11 +41,11 @@ export function Topbar(props: {
 
         <div className="ml-auto flex shrink-0 items-center gap-2 whitespace-nowrap sm:gap-3">
           {live > 0 && (
-            <span className="num inline-flex items-center gap-2 rounded-full bg-ultra px-3 py-1 text-sm font-semibold text-white" role="status">
+            <span className="num inline-flex items-center gap-1.5 rounded-full bg-ultra px-3 py-1 text-sm font-semibold text-white" role="status">
               <span aria-hidden className="h-2 w-2 rounded-full bg-white motion-safe:animate-pulse" />
-              <span className="hidden sm:inline">Live: </span>
+              <span className="hidden sm:inline">Live:</span>
               {live} of {total}
-              <span className="hidden sm:inline"> sellers</span>
+              <span className="hidden sm:inline">sellers</span>
             </span>
           )}
           {demo ? (
