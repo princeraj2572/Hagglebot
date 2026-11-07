@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import type { Category, Condition, Listing } from "@/lib/channel3/search";
+import type { Category, Condition, Listing, Page } from "@/lib/channel3/search";
 import { listingFromEndpoint } from "@/lib/sellers/listing";
 import type { DashboardState } from "@/server/state";
 import { api } from "./api";
@@ -44,16 +44,36 @@ export function MarketplaceView(props: {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<Listing[] | null>(null);
   const [loading, setLoading] = useState(false);
+  const [next, setNext] = useState<string | null>(null);
+  const [minPrice, setMinPrice] = useState("");
+  const [maxPrice, setMaxPrice] = useState("");
   const [view, setView] = useState<"cards" | "table">("cards");
   const latest = useRef(0);
 
-  const search = async (q: string, cat: string | null, cond: Condition) => {
+  const whole = (v: string): number | undefined => (/^\d+$/.test(v.trim()) ? Number(v.trim()) : undefined);
+
+  /** `more` asks for the next page and adds it below what is already shown. */
+  const search = async (q: string, cat: string | null, cond: Condition, more = false) => {
     if (!q.trim() && !cat) return;
     const mine = ++latest.current;
     setLoading(true);
     try {
-      const r = await api<Listing[]>("/api/marketplace/search", "POST", { query: q.trim(), condition: cond, ...(cat ? { category: cat } : {}) });
-      if (mine === latest.current) setResults(r);
+      const r = await api<Page>("/api/marketplace/search", "POST", {
+        query: q.trim(),
+        condition: cond,
+        ...(cat ? { category: cat } : {}),
+        ...(whole(minPrice) !== undefined ? { minPrice: whole(minPrice) } : {}),
+        ...(whole(maxPrice) !== undefined ? { maxPrice: whole(maxPrice) } : {}),
+        ...(more && next ? { pageToken: next } : {}),
+      });
+      if (mine === latest.current) {
+        setResults((prev) => {
+          if (!more || !prev) return r.listings;
+          const seen = new Set(prev.map((l) => l.url));
+          return [...prev, ...r.listings.filter((l) => !seen.has(l.url))];
+        });
+        setNext(r.next);
+      }
     } catch (e) {
       if (mine === latest.current) onError(e instanceof Error ? e.message : String(e));
     } finally {
@@ -205,6 +225,8 @@ export function MarketplaceView(props: {
         }}
       >
         <input className={input} value={query} maxLength={120} placeholder="Search products, e.g. running shoes" aria-label="Search products" onChange={(e) => setQuery(e.target.value)} />
+        <input className={`${input} w-24 shrink-0`} inputMode="numeric" value={minPrice} placeholder="Min $" aria-label="Lowest price" onChange={(e) => setMinPrice(e.target.value)} />
+        <input className={`${input} w-24 shrink-0`} inputMode="numeric" value={maxPrice} placeholder="Max $" aria-label="Highest price" onChange={(e) => setMaxPrice(e.target.value)} />
         <button className={primary} type="submit" disabled={loading}>Search</button>
       </form>
 
@@ -281,6 +303,14 @@ export function MarketplaceView(props: {
           );
         })}
       </ul>
+
+      {next && !loading && results && results.length > 0 && (
+        <div className="flex justify-center">
+          <button className={ghost} onClick={() => void search(query, category, condition, true)}>
+            Load more products
+          </button>
+        </div>
+      )}
     </section>
   );
 }

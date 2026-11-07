@@ -15,7 +15,7 @@ describe("searchListings", () => {
         { title: "C", offers: [offer("c.com", 75)] },
       ],
     });
-    const out = await searchListings("x", "key", { fetchImpl: f });
+    const out = (await searchListings("x", "key", { fetchImpl: f })).listings;
     expect(out).toEqual([
       { title: "A", retailer: "cheap.com", price: 99, condition: "used", url: "https://cheap.com/p", image: "https://cdn/a1c" },
       { title: "C", retailer: "c.com", price: 75, condition: null, url: "https://c.com/p", image: null },
@@ -66,7 +66,28 @@ describe("searchListings", () => {
     const f = (async () => {
       throw new Error("should not be called");
     }) as unknown as typeof fetch;
-    expect(await searchListings("", "k", { fetchImpl: f })).toEqual([]);
+    expect(await searchListings("", "k", { fetchImpl: f })).toEqual({ listings: [], next: null });
+  });
+});
+
+describe("searchListings paging and price", () => {
+  it("sends the price range, and the page token when asked for the next page", async () => {
+    const bodies: Record<string, unknown>[] = [];
+    const f = (async (_u: string, init?: RequestInit) => {
+      bodies.push(JSON.parse(String(init?.body ?? "{}")));
+      return new Response(JSON.stringify({ products: [], next_page_token: "NEXT" }), { status: 200 });
+    }) as unknown as typeof fetch;
+    const first = await searchListings("tv", "k", { minPrice: 50, maxPrice: 300, fetchImpl: f });
+    expect(first.next).toBe("NEXT");
+    expect(bodies[0]).toMatchObject({ filters: { price: { min_price: 50, max_price: 300 } } });
+    expect(bodies[0]).not.toHaveProperty("page_token");
+    await searchListings("tv", "k", { pageToken: "NEXT", fetchImpl: f });
+    expect(bodies[1]).toMatchObject({ page_token: "NEXT" });
+    expect(bodies[1]!.filters).not.toHaveProperty("price");
+  });
+
+  it("reports no next page when Channel3 gives none", async () => {
+    expect((await searchListings("tv", "k", { fetchImpl: fake(200, { products: [], next_page_token: null }) })).next).toBeNull();
   });
 });
 

@@ -38,7 +38,7 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
       }
 
       // Keep listings a negotiation could plausibly close: not far above the budget, not a different kind of product.
-      const found = (await findListings(want.item)).filter((l) => l.price <= want.maxPrice * 1.5 && l.price >= want.maxPrice * 0.4);
+      const found = (await findListings(want.item)).listings.filter((l) => l.price <= want.maxPrice * 1.5 && l.price >= want.maxPrice * 0.4);
       const have = new Set(repo.listSellers(id).map((s) => s.name.replace(/\s+\d+$/, "")));
       const picked = found
         .filter((l) => !have.has(l.retailer) && have.add(l.retailer)) // one seller per retailer, also within this search

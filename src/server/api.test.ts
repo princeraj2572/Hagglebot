@@ -165,7 +165,7 @@ describe("API", () => {
     });
 
     it("adds real retailers near the budget as sellers, skipping far-off prices and repeats", async () => {
-      svc.findListings = async () => [L("bestbuy.com", 240), L("luxury.com", 900), L("target.com", 199), L("bestbuy.com", 210)];
+      svc.findListings = async () => ({ listings: [L("bestbuy.com", 240), L("luxury.com", 900), L("target.com", 199), L("bestbuy.com", 210)], next: null });
       const w = await (await createWant(post("/api/wants", wantBody))).json();
       const res = await addListings(post(`/api/wants/${w.id}/listings`), ctx({ id: w.id }));
       expect(res.status).toBe(201);
@@ -174,7 +174,7 @@ describe("API", () => {
     });
 
     it("says so when nothing is near the budget", async () => {
-      svc.findListings = async () => [L("luxury.com", 900)];
+      svc.findListings = async () => ({ listings: [L("luxury.com", 900)], next: null });
       const w = await (await createWant(post("/api/wants", wantBody))).json();
       expect((await addListings(post(`/api/wants/${w.id}/listings`), ctx({ id: w.id }))).status).toBe(409);
     });
@@ -192,20 +192,20 @@ describe("API", () => {
     it("lists categories and searches by text and category", async () => {
       svc.categories = async () => [{ slug: "electronics", title: "Electronics" }];
       const seen: unknown[] = [];
-      svc.findListings = async (q, c) => (seen.push([q, c]), [L]);
+      svc.findListings = async (q, o) => (seen.push([q, o?.category]), { listings: [L], next: "tok" });
       expect(await (await getCategories(new Request(url("/api/marketplace/categories")))).json()).toEqual([{ slug: "electronics", title: "Electronics" }]);
-      expect((await (await marketSearch(post("/api/marketplace/search", { query: "tv", category: "electronics" }))).json())).toEqual([L]);
+      expect((await (await marketSearch(post("/api/marketplace/search", { query: "tv", category: "electronics" }))).json())).toEqual({ listings: [L], next: "tok" });
       await marketSearch(post("/api/marketplace/search", { category: "Not A Slug!" }).clone());
       expect(seen[0]).toEqual(["tv", "electronics"]);
     });
 
     it("asks for a search or a category", async () => {
-      svc.findListings = async () => [];
+      svc.findListings = async () => ({ listings: [], next: null });
       expect((await marketSearch(post("/api/marketplace/search", {}))).status).toBe(400);
     });
 
     it("adds the one picked listing as a seller, and rejects an invalid one", async () => {
-      svc.findListings = async () => [];
+      svc.findListings = async () => ({ listings: [], next: null });
       const w = await (await createWant(post("/api/wants", wantBody))).json();
       const ok = await addListings(post(`/api/wants/${w.id}/listings`, { listing: L }), ctx({ id: w.id }));
       expect(ok.status).toBe(201);
@@ -217,10 +217,20 @@ describe("API", () => {
 
     it("passes the condition filter through to the search", async () => {
       const seen: unknown[] = [];
-      svc.findListings = async (q, c, cond) => (seen.push([q, c, cond]), []);
+      svc.findListings = async (q, o) => (seen.push([q, o?.category, o?.condition]), { listings: [], next: null });
       await marketSearch(post("/api/marketplace/search", { query: "tv", condition: "used" }));
       await marketSearch(post("/api/marketplace/search", { query: "tv", condition: "bogus" }));
       expect(seen).toEqual([["tv", undefined, "used"], ["tv", undefined, undefined]]);
+    });
+
+    it("passes a price range and a page token through, and ignores or rejects bad ones", async () => {
+      const seen: Record<string, unknown>[] = [];
+      svc.findListings = async (_q, o) => (seen.push({ ...o }), { listings: [], next: null });
+      await marketSearch(post("/api/marketplace/search", { query: "tv", minPrice: 50, maxPrice: 300, pageToken: "abc" }));
+      await marketSearch(post("/api/marketplace/search", { query: "tv", minPrice: -5, maxPrice: "x", pageToken: 7 }));
+      expect(seen[0]).toMatchObject({ minPrice: 50, maxPrice: 300, pageToken: "abc" });
+      expect(seen[1]).toMatchObject({ minPrice: undefined, maxPrice: undefined, pageToken: undefined });
+      expect((await marketSearch(post("/api/marketplace/search", { query: "tv", minPrice: 300, maxPrice: 50 }))).status).toBe(400);
     });
 
     describe("buy at the listed price", () => {

@@ -31,6 +31,23 @@ const mainImage = (images: RawImage[] | undefined): string | null => {
   return typeof u === "string" ? u : null;
 };
 
+/** One page of results, and the token for the next page (null when there is no more). */
+export interface Page {
+  listings: Listing[];
+  next: string | null;
+}
+
+export interface SearchOptions {
+  limit?: number;
+  category?: string | undefined;
+  condition?: Condition | undefined;
+  minPrice?: number | undefined;
+  maxPrice?: number | undefined;
+  /** The `next` of a previous page. */
+  pageToken?: string | undefined;
+  fetchImpl?: typeof fetch;
+}
+
 export type Condition = "new" | "used" | "any";
 
 export interface Category {
@@ -57,7 +74,7 @@ async function call(path: string, apiKey: string, f: typeof fetch, init: { metho
 }
 
 /** Per product: its cheapest in-stock USD offer (relevance order kept). */
-function toListings(data: { products?: RawProduct[] }): Listing[] {
+function toListings(data: { products?: RawProduct[]; next_page_token?: unknown }): Page {
   const out: Listing[] = [];
   for (const p of data.products ?? []) {
     const offers = (p.offers ?? [])
@@ -74,7 +91,7 @@ function toListings(data: { products?: RawProduct[] }): Listing[] {
       image: mainImage(p.images),
     });
   }
-  return out;
+  return { listings: out, next: typeof data.next_page_token === "string" && data.next_page_token ? data.next_page_token : null };
 }
 
 /**
@@ -84,18 +101,28 @@ function toListings(data: { products?: RawProduct[] }): Listing[] {
 export async function searchListings(
   query: string,
   apiKey: string,
-  opts: { limit?: number; category?: string | undefined; condition?: Condition | undefined; fetchImpl?: typeof fetch } = {},
-): Promise<Listing[]> {
+  opts: SearchOptions = {},
+): Promise<Page> {
   const f = opts.fetchImpl ?? fetch;
   // Channel3 returns new items only unless asked; used ones are the more negotiable kind.
   const conditions = opts.condition === "used" ? ["used"] : opts.condition === "any" ? ["new", "used"] : ["new"];
-  const filters = { availability: ["InStock"], conditions, ...(opts.category ? { category_ids: [opts.category] } : {}) };
+  const price = {
+    ...(opts.minPrice !== undefined ? { min_price: opts.minPrice } : {}),
+    ...(opts.maxPrice !== undefined ? { max_price: opts.maxPrice } : {}),
+  };
+  const filters = {
+    availability: ["InStock"],
+    conditions,
+    ...(opts.category ? { category_ids: [opts.category] } : {}),
+    ...(Object.keys(price).length > 0 ? { price } : {}),
+  };
   const limit = opts.limit ?? 20;
-  if (!query && !opts.category) return [];
+  if (!query && !opts.category) return { listings: [], next: null };
+  const paging = opts.pageToken ? { page_token: opts.pageToken } : {};
   const data = query
-    ? await call("/v1/search", apiKey, f, { method: "POST", body: { query, limit, filters } })
-    : await call("/v1/browse", apiKey, f, { method: "POST", body: { limit, filters } });
-  return toListings(data as { products?: RawProduct[] });
+    ? await call("/v1/search", apiKey, f, { method: "POST", body: { query, limit, filters, ...paging } })
+    : await call("/v1/browse", apiKey, f, { method: "POST", body: { limit, filters, ...paging } });
+  return toListings(data as { products?: RawProduct[]; next_page_token?: unknown });
 }
 
 /** The top-level product categories (slug is what search and browse filter on). */
