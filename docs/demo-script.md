@@ -42,7 +42,7 @@ Two honest ways to handle it; pick one and say which in the voiceover:
 | 1:45 | Click **Firm Fatima** for a few seconds, then the summary cards. | "Fatima never moves, so it walks away politely. Ferdi closes at $205 and Chen at $246, both under budget." |
 | 2:00 | Click **Review and pay** to open the Deals tab. Click **Confirm and Pay $205**. | "The price comes from the database, never from the browser." |
 | 2:10 | PayPal popup: log in as the sandbox buyer and approve. | "PayPal Orders v2: create the order, approve it in PayPal's checkout, then capture." |
-| 2:30 | The card shows **Paid** with the payer-id. Optional, 5 seconds: click **Refund**, confirm. | "Hagglebot sends the seller proof of payment and withdraws from the others. A paid deal can also be fully refunded through PayPal." |
+| 2:30 | The card shows **Paid** with the payer-id. Optional, 5 seconds: click **Simulate seller refund**, confirm. | "Hagglebot sends the seller proof of payment and withdraws from the others. In real life the seller issues refunds, so this button simulates that to show PayPal's refund call." |
 | 2:45 | The README on GitHub, honest-limits section. | "The code decides every price; the AI only phrases it. This is a demo: PayPal sandbox only and simulated sellers. It's MIT-licensed on GitHub." |
 
 ## If something goes wrong on the day

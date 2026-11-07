@@ -97,9 +97,9 @@ export function DealsPanel(props: {
                 <div className="pt-2">
                   {confirming === d.id ? (
                     <span className="flex flex-wrap items-center gap-2">
-                      <span>Refund {usd(d.price)} to the buyer?</span>
+                      <span>Simulate the seller refunding {usd(d.price)}?</span>
                       <button className={`${btn} bg-scam text-white`} disabled={refunding} onClick={() => void refund(d.id)}>
-                        {refunding ? "Refunding…" : "Yes, refund"}
+                        {refunding ? "Refunding…" : "Yes, simulate refund"}
                       </button>
                       <button className={`${btn} border border-line [@media(hover:hover)]:hover:border-ink`} disabled={refunding} onClick={() => setConfirming(null)}>
                         Keep
@@ -107,9 +107,10 @@ export function DealsPanel(props: {
                     </span>
                   ) : (
                     <button className={`${btn} border border-line [@media(hover:hover)]:hover:border-ink`} onClick={() => setConfirming(d.id)}>
-                      Refund {usd(d.price)}
+                      Simulate seller refund of {usd(d.price)}
                     </button>
                   )}
+                  <p className="mt-1 text-[13px] text-muted">Demo: in real life the seller issues the refund. Here it shows PayPal's refund call.</p>
                 </div>
               </dl>
             )}
