@@ -31,6 +31,8 @@ export function DealsPanel(props: {
   const refund = async (dealId: string) => {
     setRefunding(true);
     try {
+      // The seller is simulated and always approves; a short wait lets the request read as a request.
+      await new Promise((r) => setTimeout(r, 1500));
       await api(`/api/deals/${dealId}/refund`, "POST");
       setConfirming(null);
       onChanged();
@@ -97,9 +99,9 @@ export function DealsPanel(props: {
                 <div className="pt-2">
                   {confirming === d.id ? (
                     <span className="flex flex-wrap items-center gap-2">
-                      <span>Simulate the seller refunding {usd(d.price)}?</span>
+                      <span>Ask {d.sellerName} to refund {usd(d.price)}?</span>
                       <button className={`${btn} bg-scam text-white`} disabled={refunding} onClick={() => void refund(d.id)}>
-                        {refunding ? "Refunding…" : "Yes, simulate refund"}
+                        {refunding ? `Waiting for ${d.sellerName}…` : "Yes, request refund"}
                       </button>
                       <button className={`${btn} border border-line [@media(hover:hover)]:hover:border-ink`} disabled={refunding} onClick={() => setConfirming(null)}>
                         Keep
@@ -107,17 +109,17 @@ export function DealsPanel(props: {
                     </span>
                   ) : (
                     <button className={`${btn} border border-line [@media(hover:hover)]:hover:border-ink`} onClick={() => setConfirming(d.id)}>
-                      Simulate seller refund of {usd(d.price)}
+                      Request refund of {usd(d.price)}
                     </button>
                   )}
-                  <p className="mt-1 text-[13px] text-muted">Demo: in real life the seller issues the refund. Here it shows PayPal's refund call.</p>
+                  <p className="mt-1 text-[13px] text-muted">Demo: the simulated seller always approves, then PayPal's refund call runs. In real life the seller issues the refund.</p>
                 </div>
               </dl>
             )}
 
             {d.status === "refunded" && (
               <p className="mt-3 border-t border-dashed border-line pt-3 text-sm">
-                Refunded in full through PayPal. The want is open again, so you can negotiate it again.
+                {d.sellerName} approved the refund, and it was paid back in full through PayPal. The want is open again, so you can negotiate it again.
               </p>
             )}
 
