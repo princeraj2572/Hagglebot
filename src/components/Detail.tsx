@@ -22,10 +22,9 @@ export function Detail(props: {
   const scam = t.reason === "scam_detected";
   const guards = t.messages.filter((m) => m.guard).length;
   const saved = t.status === "deal" && t.dealPrice !== null ? budget - t.dealPrice : 0;
-  const edge = scam ? "border-l-scam" : t.status === "deal" ? "border-l-ink" : t.status === "negotiating" ? "border-l-ultra" : t.status === "paused" || t.status === "awaiting_approval" ? "border-l-tag" : "border-l-muted";
 
   return (
-    <article className={`rounded-md border border-l-4 border-line bg-paper p-4 sm:p-5 ${edge}`} data-testid={`thread-${t.sellerName}`}>
+    <article className="rounded-3xl bg-paper p-5 shadow-lift sm:p-7" data-testid={`thread-${t.sellerName}`}>
       <button className="mb-3 rounded-md py-1 text-sm font-medium text-ultra underline-offset-4 hover:underline xl:hidden" onClick={onBack}>
         Back to all sellers
       </button>

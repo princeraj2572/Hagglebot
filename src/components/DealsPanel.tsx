@@ -65,7 +65,7 @@ export function DealsPanel(props: {
   return (
     <section aria-label="Deals and payments" className="space-y-4">
       <p className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted">
-        <span className="inline-flex items-center gap-2 rounded-full border border-line px-3 py-1 text-[13px]">
+        <span className="inline-flex items-center gap-2 rounded-full bg-mist px-3 py-1 text-[13px]">
           <span aria-hidden className="h-2 w-2 rounded-full bg-ink/40" />
           PayPal sandbox only. No real money moves.
         </span>
@@ -77,7 +77,7 @@ export function DealsPanel(props: {
       </p>
 
       {deals.length === 0 && (
-        <div className="max-w-sm rounded-sm border border-dashed border-line bg-paper/60 p-5 text-sm text-muted">
+        <div className="max-w-sm rounded-2xl bg-paper p-5 text-sm text-muted">
           <p className="font-semibold text-ink">Your receipt appears here</p>
           <p className="mt-1">When a seller agrees to a price within budget, the deal shows up with a Confirm and Pay button.</p>
         </div>
@@ -87,7 +87,7 @@ export function DealsPanel(props: {
         {deals.map((d) => (
           <li
             key={d.id}
-            className="min-w-0 rounded-sm border border-dashed border-ink/60 bg-paper p-4"
+            className={`min-w-0 rounded-2xl bg-paper p-5 shadow-lift ${d.status === "paid" ? "ring-1 ring-ultra/40" : ""}`}
             data-testid={`deal-${d.sellerName}`}
           >
             <div className="flex items-start justify-between gap-3">
@@ -98,19 +98,25 @@ export function DealsPanel(props: {
                   <p className="break-words text-sm text-muted">{wantName(d.wantId)}</p>
                 </div>
               </div>
-              <span className="num shrink-0 text-2xl font-bold">{usd(d.price)}</span>
+              <span className="num shrink-0 text-3xl font-bold tracking-tight">{usd(d.price)}</span>
             </div>
             <p className="mt-2 flex flex-wrap items-center gap-2 text-sm text-muted">
-              {LABEL[d.status]}
+              {d.status === "paid" ? (
+                <span className="inline-flex items-center gap-1 rounded-full bg-ultra px-2.5 py-0.5 text-[13px] font-semibold text-white">
+                  <span aria-hidden>✓</span> {LABEL[d.status]}
+                </span>
+              ) : (
+                LABEL[d.status]
+              )}
               {cheapest !== null && d.price === cheapest && d.status !== "cancelled" && d.status !== "refunded" && (
                 <span className="rounded-full bg-tag px-2 py-0.5 text-[13px] font-semibold text-ink">Best price</span>
               )}
             </p>
 
             {d.status === "paid" && (
-              <dl className="mt-3 space-y-0.5 border-t border-dashed border-line pt-3 text-sm">
-                <div className="break-words">PayPal payer-id <span className="num break-all font-medium">{d.payerId ?? "n/a"}</span></div>
-                <div className="break-words">Capture <span className="num break-all font-medium">{d.captureId ?? "n/a"}</span></div>
+              <dl className="mt-4 space-y-1 border-t border-dashed border-ink/25 pt-4 text-sm">
+                <div className="break-words"><span className="text-muted">PayPal payer-id</span> <span className="num break-all font-semibold">{d.payerId ?? "n/a"}</span></div>
+                <div className="break-words"><span className="text-muted">Capture</span> <span className="num break-all font-semibold">{d.captureId ?? "n/a"}</span></div>
                 <div className="text-ultra">Confirmation sent to the seller</div>
                 <div className="pt-2">
                   {confirming === d.id ? (
@@ -119,12 +125,12 @@ export function DealsPanel(props: {
                       <button className={`${btn} bg-scam text-white`} disabled={refunding} onClick={() => void refund(d.id)}>
                         {refunding ? `Waiting for ${d.sellerName}…` : "Yes, request refund"}
                       </button>
-                      <button className={`${btn} border border-line [@media(hover:hover)]:hover:border-ink`} disabled={refunding} onClick={() => setConfirming(null)}>
+                      <button className={`${btn} bg-mist [@media(hover:hover)]:hover:bg-[#DCE2EF]`} disabled={refunding} onClick={() => setConfirming(null)}>
                         Keep
                       </button>
                     </span>
                   ) : (
-                    <button className={`${btn} border border-line [@media(hover:hover)]:hover:border-ink`} onClick={() => setConfirming(d.id)}>
+                    <button className={`${btn} bg-mist [@media(hover:hover)]:hover:bg-[#DCE2EF]`} onClick={() => setConfirming(d.id)}>
                       Request refund of {usd(d.price)}
                     </button>
                   )}
@@ -134,7 +140,7 @@ export function DealsPanel(props: {
             )}
 
             {d.status === "refunded" && (
-              <p className="mt-3 border-t border-dashed border-line pt-3 text-sm">
+              <p className="mt-4 border-t border-dashed border-ink/25 pt-4 text-sm">
                 {d.sellerName} approved the refund{d.captureId?.startsWith("DEMO-") ? " (demo: no PayPal payment was made)" : ", and it was paid back in full through PayPal"}. The want is open again, so you can negotiate it again.
               </p>
             )}

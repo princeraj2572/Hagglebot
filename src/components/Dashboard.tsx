@@ -146,6 +146,7 @@ export function Dashboard() {
                   busy={busy}
                   demo={demo}
                 restart={restarting}
+                onLoadDemo={() => run(async () => { const r = await api<{ wantId: string }>("/api/demo", "POST"); setSelectedWant(r.wantId); setTab("negotiation"); })}
                 canNegotiate={!!selected && selected.status === "open" && selected.sellers.length > 0 && liveCount === 0}
                   onNegotiate={() => selected && run(() => api(`/api/wants/${selected.id}/negotiate${restarting ? "?restart=1" : ""}${demo ? (restarting ? "&demo=1" : "?demo=1") : ""}`, "POST"))}
                   run={run}

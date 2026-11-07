@@ -13,7 +13,10 @@ function Shield() {
   );
 }
 
-/** The actual chat between Hagglebot and one seller. Hagglebot speaks on the right, the seller on the left. */
+/**
+ * The actual chat between Hagglebot and one seller. Hagglebot speaks on the right, the seller on the left.
+ * On wide screens each guardrail note sits in a margin rail beside the message it explains.
+ */
 export function Conversation({ t }: { t: Thread }) {
   const box = useRef<HTMLDivElement>(null);
   const stick = useRef(true); // follow new messages unless the reader scrolled up
@@ -40,41 +43,47 @@ export function Conversation({ t }: { t: Thread }) {
       tabIndex={0}
       role="region"
       aria-label={`Conversation with ${t.sellerName}`}
-      className="max-h-[30rem] overflow-y-auto pr-1"
+      className="max-h-[32rem] overflow-y-auto pr-1"
     >
-      <ol className="space-y-4">
+      <ol className="space-y-5">
         {t.messages.map((m, i) => {
           const buyer = m.from === "buyer";
+          const scamNote = !!m.guard?.startsWith("Scam");
           return (
-            <li key={i} className={`flex ${buyer ? "justify-end" : "justify-start"} ${i >= initial.current ? "motion-safe:animate-msg-in" : ""}`}>
-              <div className="min-w-0 max-w-[min(62ch,92%)]">
-                <div className={`flex items-center gap-1.5 text-[13px] ${buyer ? "justify-end text-ultra" : "text-muted"}`}>
-                  <Avatar name={buyer ? "Hagglebot" : t.sellerName} size="sm" />
-                  <span className="min-w-0 truncate font-medium" title={buyer ? "Hagglebot (AI)" : t.sellerName}>{buyer ? "Hagglebot (AI)" : t.sellerName}</span>
-                  <span className="num shrink-0">{time(m.at)}</span>
-                </div>
-                <p
-                  className={`mt-1 whitespace-pre-wrap break-words rounded-md border-l-2 px-3 py-2 font-serif text-[15px] leading-relaxed ${
-                    buyer ? "border-ultra bg-ultra/5" : "border-tag bg-tag/10"
-                  }`}
-                >
-                  {m.text}
-                  {m.price !== null && (
-                    <b className={`num ml-2 whitespace-nowrap rounded px-1.5 py-0.5 font-display text-sm ${buyer ? "bg-ultra/10 text-ultra" : "bg-tag/30"}`}>{usd(m.price)}</b>
-                  )}
-                </p>
-                {m.guard && (
+            <li
+              key={i}
+              className={`grid gap-x-5 gap-y-1.5 xl:grid-cols-[minmax(0,1fr)_15rem] ${i >= initial.current ? "motion-safe:animate-msg-in" : ""}`}
+            >
+              <div className={`flex ${buyer ? "justify-end" : "justify-start"}`}>
+                <div className="min-w-0 max-w-[min(62ch,94%)]">
+                  <div className={`flex items-center gap-1.5 text-[13px] ${buyer ? "justify-end text-ultra" : "text-muted"}`}>
+                    <Avatar name={buyer ? "Hagglebot" : t.sellerName} size="sm" />
+                    <span className="min-w-0 truncate font-medium" title={buyer ? "Hagglebot (AI)" : t.sellerName}>{buyer ? "Hagglebot (AI)" : t.sellerName}</span>
+                    <span className="num shrink-0">{time(m.at)}</span>
+                  </div>
                   <p
-                    className={`mt-1 flex items-start gap-1.5 rounded-md px-2.5 py-1.5 text-[13px] leading-snug ${
-                      m.guard.startsWith("Scam") ? "bg-scam/10 text-scam" : "bg-ink/5 text-ink/80"
+                    className={`mt-1 whitespace-pre-wrap break-words px-4 py-2.5 font-serif text-[15px] leading-relaxed ${
+                      buyer ? "rounded-2xl rounded-tr-md bg-ultra text-white" : "rounded-2xl rounded-tl-md bg-mist"
                     }`}
-                    data-testid="guardrail"
                   >
-                    <Shield />
-                    <span><b className="font-semibold">Guardrail.</b> {m.guard}</span>
+                    {m.text}
+                    {m.price !== null && (
+                      <b className={`num ml-2 whitespace-nowrap rounded-full px-2 py-0.5 font-display text-sm ${buyer ? "bg-white/20" : "bg-tag"}`}>{usd(m.price)}</b>
+                    )}
                   </p>
-                )}
+                </div>
               </div>
+              {m.guard && (
+                <p
+                  className={`flex items-start gap-1.5 border-l-2 py-0.5 pl-3 text-[13px] leading-snug xl:self-end ${
+                    scamNote ? "border-scam text-scam" : "border-ink/20 text-ink/75"
+                  }`}
+                  data-testid="guardrail"
+                >
+                  <Shield />
+                  <span><b className="font-semibold">Guardrail.</b> {m.guard}</span>
+                </p>
+              )}
             </li>
           );
         })}

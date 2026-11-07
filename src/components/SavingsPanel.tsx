@@ -1,3 +1,5 @@
+"use client";
+import { useState } from "react";
 import { dealSavings, type DealRow } from "@/lib/negotiation/savings";
 import type { Thread } from "@/lib/negotiation/types";
 import { DataGrid, type ColDef } from "./DataGrid";
@@ -5,8 +7,9 @@ import { usd } from "./format";
 
 const money = (p: { value?: number | null }): string => usd(p.value ?? null);
 
-/** What Hagglebot saved, and every closed deal side by side. Shows nothing until a deal exists. */
+/** Every closed deal side by side, folded away until asked for. The headline numbers live in the scoreboard above. */
 export function SavingsPanel({ threads, budget }: { threads: Thread[]; budget: number }) {
+  const [open, setOpen] = useState(false);
   const s = dealSavings(threads, budget);
   if (!s) return null;
   const { best, rows } = s;
@@ -40,26 +43,20 @@ export function SavingsPanel({ threads, budget }: { threads: Thread[]; budget: n
   ];
 
   return (
-    <section aria-label="Savings" className="min-w-0 rounded-md border border-line bg-paper p-4">
-      <p className="text-sm text-muted">Best deal so far</p>
-      <p className="mt-0.5 text-lg font-semibold leading-snug">
-        {best.saved > 0 ? (
-          <>
-            Hagglebot got <span className="num text-ultra">{usd(best.saved)}</span> off{" "}
-            <span className="break-all">{best.seller}</span>
-            {best.savedPct > 0 ? ` (${best.savedPct}%)` : ""}
-          </>
-        ) : (
-          <>
-            <span className="break-all">{best.seller}</span> {best.direct ? "was bought at its listed price" : "agreed at its first price"}
-          </>
-        )}
-        , and <span className="num text-ultra">{usd(best.underBudget)}</span> under your {usd(budget)} budget.
-      </p>
-
-      <div className="mt-3">
-        <DataGrid<DealRow> rows={rows} columns={columns} label="Closed deals compared" />
-      </div>
+    <section aria-label="Savings" className="min-w-0">
+      <button
+        className="inline-flex items-center gap-2 rounded-full bg-paper px-4 py-2 text-sm font-semibold transition-colors duration-150 [@media(hover:hover)]:hover:bg-mist"
+        aria-expanded={open}
+        onClick={() => setOpen((v) => !v)}
+      >
+        Compare deals ({rows.length})
+        <span aria-hidden className={`text-muted transition-transform duration-150 ${open ? "rotate-180" : ""}`}>▾</span>
+      </button>
+      {open && (
+        <div className="mt-3 rounded-2xl bg-paper p-3 sm:p-4">
+          <DataGrid<DealRow> rows={rows} columns={columns} label="Closed deals compared" />
+        </div>
+      )}
     </section>
   );
 }

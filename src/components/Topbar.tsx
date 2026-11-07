@@ -1,6 +1,6 @@
 import { Avatar } from "./Avatar";
 
-/** The app bar: where you are, whether anything is live, and and the mode. */
+/** The app bar: the logo, the two pages, whether anything is live, and the mode. */
 export function Topbar(props: {
   wantItem: string | undefined;
   llmMode: "llm" | "template" | undefined;
@@ -13,24 +13,24 @@ export function Topbar(props: {
   page: "negotiate" | "marketplace";
   onPage: (p: "negotiate" | "marketplace") => void;
 }) {
-  const { wantItem, llmMode, live, total, marketplace, page, onPage, demo } = props;
+  const { llmMode, live, total, marketplace, page, onPage, demo } = props;
   return (
-    <header className="sticky top-0 z-30 border-b border-line bg-paper/90 backdrop-blur">
-      <div className="mx-auto flex h-14 max-w-[96rem] items-center gap-2 px-4 sm:gap-4">
+    <header className="sticky top-0 z-30 bg-chalk/85 backdrop-blur">
+      <div className="mx-auto flex h-16 max-w-[96rem] items-center gap-2 px-4 sm:gap-4 sm:px-6">
         <span className="flex shrink-0 items-center gap-2.5 text-lg font-bold tracking-tight">
           <Avatar name="Hagglebot" />
           <span className="sr-only sm:not-sr-only">Hagglebot</span>
         </span>
 
         {marketplace && (
-          <nav aria-label="Pages" className="flex items-center gap-1">
+          <nav aria-label="Pages" className="flex items-center gap-0.5 rounded-full bg-mist p-1">
             {(["negotiate", "marketplace"] as const).map((p) => (
               <button
                 key={p}
                 aria-current={page === p ? "page" : undefined}
                 onClick={() => onPage(p)}
-                className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors duration-150 ${
-                  page === p ? "bg-ultra/10 text-ultra" : "text-muted [@media(hover:hover)]:hover:text-ink"
+                className={`rounded-full px-3.5 py-1.5 text-sm font-semibold transition-[background-color,color,box-shadow] duration-150 ${
+                  page === p ? "bg-paper text-ink shadow-sm" : "text-muted [@media(hover:hover)]:hover:text-ink"
                 }`}
               >
                 {p === "negotiate" ? "Negotiate" : "Marketplace"}
@@ -39,33 +39,25 @@ export function Topbar(props: {
           </nav>
         )}
 
-        {wantItem && page === "negotiate" && (
-          <nav aria-label="Breadcrumb" className="hidden min-w-0 items-center gap-2 text-sm text-muted md:flex">
-            <span>Wants</span>
-            <span aria-hidden>/</span>
-            <span className="truncate font-medium text-ink">{wantItem}</span>
-          </nav>
-        )}
-
         <div className="ml-auto flex shrink-0 items-center gap-2 whitespace-nowrap sm:gap-3">
           {live > 0 && (
-            <span className="num inline-flex items-center gap-2 rounded-full bg-ultra/10 px-3 py-1 text-sm font-medium text-ultra" role="status">
-              <span aria-hidden className="h-2 w-2 rounded-full bg-ultra motion-safe:animate-pulse" />
+            <span className="num inline-flex items-center gap-2 rounded-full bg-ultra px-3 py-1 text-sm font-semibold text-white" role="status">
+              <span aria-hidden className="h-2 w-2 rounded-full bg-white motion-safe:animate-pulse" />
               <span className="hidden sm:inline">Live: </span>
               {live} of {total}
               <span className="hidden sm:inline"> sellers</span>
             </span>
           )}
           {demo ? (
-            <span className="inline-flex items-center gap-2 rounded-full bg-tag px-3 py-1 text-[13px] font-semibold" data-testid="mode-badge" role="status">
+            <span className="inline-flex items-center rounded-full bg-tag px-3 py-1 text-[13px] font-semibold" data-testid="mode-badge" role="status">
               Demo mode<span className="hidden sm:inline"> · canned negotiation and payment, no PayPal</span>
             </span>
           ) : (
             <span
-              className="hidden items-center gap-2 rounded-full border border-line px-3 py-1 text-[13px] text-muted lg:inline-flex"
+              className="hidden items-center gap-2 rounded-full bg-mist px-3 py-1 text-[13px] font-medium text-muted lg:inline-flex"
               data-testid="mode-badge"
             >
-              <span aria-hidden className="h-2 w-2 rounded-full bg-ink/40" />
+              <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-ink/40" />
               Sandbox only · Simulated sellers · {llmMode === "llm" ? "AI-written messages" : "template negotiator"}
             </span>
           )}

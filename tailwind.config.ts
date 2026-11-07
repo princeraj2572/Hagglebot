@@ -5,14 +5,19 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        chalk: "#EEF1F4",
-        paper: "#F8F9FB",
-        ink: "#12161C",
-        muted: "#566070",
-        line: "#CFD6DE",
-        ultra: "#2B3FD6", // our offers and the pay action
+        chalk: "#F1F3F8", // the canvas behind everything
+        paper: "#FFFFFF", // working surfaces
+        mist: "#E8ECF4", // quiet tonal fills (rails, table headers, inactive controls)
+        ink: "#0E1424",
+        muted: "#586174",
+        line: "#DCE1EB",
+        ultra: "#2B3FD6", // Hagglebot: our offers and the pay action
         tag: "#F2B31B", // seller asks (price-tag yellow); fill only, never text
         scam: "#C8283C", // scams only
+      },
+      boxShadow: {
+        // One lifted surface per screen (the conversation); everything else sits flat.
+        lift: "0 1px 2px rgba(14,20,36,0.05), 0 18px 40px -24px rgba(14,20,36,0.28)",
       },
       keyframes: {
         "ping-once": { "0%": { transform: "scale(1)", opacity: "0.8" }, "100%": { transform: "scale(2.8)", opacity: "0" } },

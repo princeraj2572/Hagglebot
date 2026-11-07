@@ -56,7 +56,7 @@ export function WantsPanel(props: {
 
       {formOpen && (
         <form
-          className="space-y-3 rounded-md border border-line bg-paper p-3"
+          className="space-y-3 rounded-2xl bg-paper p-4"
           onSubmit={(e) => {
             e.preventDefault();
             void run(async () => {
@@ -94,8 +94,8 @@ export function WantsPanel(props: {
             {NEGOTIATION_STYLES.map((s) => (
               <label
                 key={s}
-                className={`flex cursor-pointer items-start gap-2 rounded-md border px-2.5 py-2 text-sm transition-colors duration-150 ${
-                  form.style === s ? "border-ultra bg-ultra/5" : "border-line [@media(hover:hover)]:hover:border-ink/40"
+                className={`flex cursor-pointer items-start gap-2 rounded-xl border px-3 py-2.5 text-sm transition-colors duration-150 ${
+                  form.style === s ? "border-ultra bg-ultra/5" : "border-transparent bg-mist [@media(hover:hover)]:hover:bg-[#DCE2EF]"
                 }`}
               >
                 <input type="radio" name="style" value={s} checked={form.style === s} onChange={() => setForm({ ...form, style: s })} className="mt-1 accent-[#2B3FD6]" />
@@ -141,7 +141,7 @@ export function WantsPanel(props: {
         )}
         <ul className="space-y-1.5">
           {bundles.map((b) => (
-            <li key={b.id} className="flex items-center gap-2 rounded-md border border-line bg-paper/60 px-2.5 py-1.5 text-sm">
+            <li key={b.id} className="flex items-center gap-2 rounded-xl bg-paper px-3 py-2 text-sm">
               <span className="min-w-0 flex-1">
                 <span className="block break-words font-medium leading-tight">{b.name}</span>
                 <span className="num block text-[13px] text-muted">{usd(b.spent)} of {usd(b.total)} spent</span>
@@ -154,7 +154,7 @@ export function WantsPanel(props: {
         </ul>
         {showBundleForm && (
           <form
-            className="space-y-2 rounded-md border border-line bg-paper p-3"
+            className="space-y-2 rounded-2xl bg-paper p-4"
             onSubmit={(e) => {
               e.preventDefault();
               void run(async () => {
@@ -198,7 +198,7 @@ function WantCard({ want: w, bundles, selected, listings, onSelect, run }: {
 }) {
   const [persona, setPersona] = useState(PERSONAS[0]?.id ?? "ferdi");
   return (
-    <div className={`rounded-md border p-3 ${selected ? "border-ultra bg-paper shadow-[0_0_0_1px_#2B3FD6]" : "border-line bg-paper/60"}`}>
+    <div className={`rounded-2xl p-4 transition-[background-color,box-shadow] duration-150 ${selected ? "bg-paper shadow-lift ring-1 ring-ultra/25" : "[@media(hover:hover)]:hover:bg-paper/60"}`}>
       <button className="block w-full min-w-0 text-left" onClick={onSelect} aria-pressed={selected}>
         <span className="flex items-start justify-between gap-2">
           <span className="min-w-0 break-words font-semibold leading-snug">{w.item}</span>
@@ -214,7 +214,7 @@ function WantCard({ want: w, bundles, selected, listings, onSelect, run }: {
       </button>
 
       {selected && (
-        <div className="mt-3 space-y-2 border-t border-line pt-3">
+        <div className="mt-3 space-y-2 border-t border-line/70 pt-3">
           {bundles.length > 0 && (
             <label className="block text-[13px] text-muted">
               Bundle
