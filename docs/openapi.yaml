@@ -1,0 +1,819 @@
+openapi: 3.0.3
+info:
+  title: Hagglebot API
+  version: 1.0.0
+  description: |
+    Hagglebot is an AI buyer agent that haggles with sellers under a budget and pays through PayPal.
+    This is the HTTP API behind its dashboard. It is a single-user, local demo: there is no authentication,
+    PayPal runs in the **sandbox only**, and the sellers are simulated. Browser requests from another
+    origin are rejected with 403.
+
+    Prices are whole US dollars. The budget (`maxPrice`) is never sent to a seller and is never exceeded.
+  license:
+    name: MIT
+servers:
+  - url: http://localhost:3000
+    description: Local development
+tags:
+  - name: State
+  - name: Wants
+  - name: Negotiation
+  - name: Marketplace
+  - name: Payments
+  - name: Demo
+
+paths:
+  /api/state:
+    get:
+      tags: [State]
+      operationId: getState
+      summary: Everything the dashboard shows
+      description: Wants (with their sellers), every negotiation thread, every deal, and the public configuration.
+      responses:
+        "200":
+          description: The current state.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardState"
+
+  /api/wants:
+    post:
+      tags: [Wants]
+      operationId: createWant
+      summary: Add a want
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/WantInput"
+      responses:
+        "201":
+          description: The new want.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Want"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+
+  /api/wants/{id}:
+    delete:
+      tags: [Wants]
+      operationId: deleteWant
+      summary: Delete a want with its sellers, negotiations and deals
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "200":
+          description: Deleted.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /api/wants/{id}/sellers:
+    post:
+      tags: [Wants]
+      operationId: addSeller
+      summary: Add a simulated seller to a want
+      description: At most 8 sellers per want. A seller cannot be added while a negotiation for the want is running.
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [persona]
+              properties:
+                persona:
+                  type: string
+                  description: Persona id, for example `ferdi`, `fatima`, `chen` or `sam`.
+                name:
+                  type: string
+                  maxLength: 60
+                  description: Defaults to the persona's name. A repeated name is numbered ("Shady Sam 2").
+      responses:
+        "201":
+          description: The new seller.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Seller"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+
+  /api/sellers/{id}:
+    delete:
+      tags: [Wants]
+      operationId: deleteSeller
+      summary: Remove a seller
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "200":
+          description: Removed.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /api/wants/{id}/listings:
+    post:
+      tags: [Marketplace]
+      operationId: addListings
+      summary: Add real retailer listings as sellers
+      description: |
+        With no body, searches Channel3 for the want's item and adds up to four real offers near the budget.
+        With a body, adds exactly the one listing given (as picked in the marketplace). The retailer is never
+        contacted: the seller is a simulated agent that opens at the real price.
+        Needs `CHANNEL3_API_KEY`.
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [listing]
+              properties:
+                listing:
+                  $ref: "#/components/schemas/Listing"
+      responses:
+        "201":
+          description: The sellers that were added.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Seller"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "502":
+          $ref: "#/components/responses/UpstreamError"
+
+  /api/wants/{id}/buy:
+    post:
+      tags: [Marketplace, Payments]
+      operationId: buyAtListedPrice
+      summary: Buy a listing at its listed price, skipping the negotiation
+      description: |
+        Creates a seller and a closed negotiation at the listed price, and a deal ready to pay. The budget still
+        applies: a price above `maxPrice` is refused.
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [listing]
+              properties:
+                listing:
+                  $ref: "#/components/schemas/Listing"
+      responses:
+        "201":
+          description: The deal, awaiting payment.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Deal"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+
+  /api/wants/{id}/negotiate:
+    post:
+      tags: [Negotiation]
+      operationId: startNegotiation
+      summary: Start negotiating with the want's sellers
+      description: |
+        Starts one conversation per seller, in parallel. If conversations already exist, only sellers without
+        one are started; pass `restart=1` to run everything again.
+      parameters:
+        - $ref: "#/components/parameters/Id"
+        - name: restart
+          in: query
+          schema:
+            type: string
+            enum: ["1"]
+          description: Delete the existing conversations and start over.
+        - name: demo
+          in: query
+          schema:
+            type: string
+            enum: ["1"]
+          description: Run instantly with canned text and no language model.
+      responses:
+        "202":
+          description: Started.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  threads:
+                    type: array
+                    items:
+                      type: string
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+
+  /api/threads/{id}/pause:
+    post:
+      tags: [Negotiation]
+      operationId: pauseThread
+      summary: Pause a running negotiation (the killswitch)
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "200":
+          description: The paused thread.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Thread"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+
+  /api/threads/{id}/resume:
+    post:
+      tags: [Negotiation]
+      operationId: resumeThread
+      summary: Resume a paused negotiation
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "200":
+          description: The resumed thread.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Thread"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+
+  /api/threads/{id}/approve:
+    post:
+      tags: [Negotiation]
+      operationId: approveThread
+      summary: Accept the price Hagglebot is holding
+      description: Only for wants created with `requireApproval`. Closes the deal at the held price and creates the deal.
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "200":
+          description: The thread, now a deal.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Thread"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+
+  /api/threads/{id}/decline:
+    post:
+      tags: [Negotiation]
+      operationId: declineThread
+      summary: Turn down the price Hagglebot is holding
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "200":
+          description: The thread, now withdrawn.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Thread"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+
+  /api/threads/{id}/transcript:
+    get:
+      tags: [Negotiation]
+      operationId: downloadTranscript
+      summary: Download a negotiation as Markdown
+      description: Every message and every guardrail note, as an audit trail.
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "200":
+          description: A Markdown file.
+          content:
+            text/markdown:
+              schema:
+                type: string
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /api/marketplace/categories:
+    get:
+      tags: [Marketplace]
+      operationId: listCategories
+      summary: The top-level product categories
+      description: Needs `CHANNEL3_API_KEY`.
+      responses:
+        "200":
+          description: Categories.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Category"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "502":
+          $ref: "#/components/responses/UpstreamError"
+
+  /api/marketplace/search:
+    post:
+      tags: [Marketplace]
+      operationId: searchMarketplace
+      summary: Search or browse real products
+      description: Give a `query`, a `category`, or both. Returns the cheapest in-stock USD offer per product. Needs `CHANNEL3_API_KEY`.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                query:
+                  type: string
+                  maxLength: 120
+                category:
+                  type: string
+                  description: A category slug from `listCategories`.
+                condition:
+                  type: string
+                  enum: [used, any]
+                  description: Omit for new items only.
+                minPrice:
+                  type: integer
+                  minimum: 0
+                maxPrice:
+                  type: integer
+                  minimum: 0
+                pageToken:
+                  type: string
+                  description: The `next` of a previous page.
+      responses:
+        "200":
+          description: One page of listings.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListingPage"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "502":
+          $ref: "#/components/responses/UpstreamError"
+
+  /api/deals/{id}/order:
+    post:
+      tags: [Payments]
+      operationId: createOrder
+      summary: Create a PayPal order for a deal
+      description: The amount always comes from the database, never from the request. PayPal sandbox only.
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "200":
+          description: The PayPal order id, for the PayPal checkout.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  orderId:
+                    type: string
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "502":
+          $ref: "#/components/responses/UpstreamError"
+        "503":
+          description: PayPal sandbox credentials are not configured.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /api/orders/{orderId}/capture:
+    post:
+      tags: [Payments]
+      operationId: captureOrder
+      summary: Capture an order the buyer approved in PayPal
+      description: Records the payer id, confirms to the seller, marks the want bought and withdraws from the other sellers.
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: The paid deal.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Deal"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "502":
+          $ref: "#/components/responses/UpstreamError"
+
+  /api/deals/{id}/refund:
+    post:
+      tags: [Payments]
+      operationId: refundDeal
+      summary: Fully refund a paid deal
+      description: Uses the PayPal Payments API and reopens the want. A demo payment is refunded locally. Idempotent.
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "200":
+          description: The refunded deal.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Deal"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "502":
+          $ref: "#/components/responses/UpstreamError"
+
+  /api/deals/{id}/demo-pay:
+    post:
+      tags: [Demo]
+      operationId: demoPay
+      summary: Demo mode payment, with canned and labelled ids
+      description: PayPal is never called. The payer id is `DEMO-PAYER` and the capture id starts with `DEMO-CAPTURE-`.
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "200":
+          description: The deal, marked paid.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Deal"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+
+  /api/demo:
+    post:
+      tags: [Demo]
+      operationId: loadDemoScenario
+      summary: Load the demo wishlist with four simulated sellers
+      description: Idempotent while the demo want is open.
+      responses:
+        "201":
+          description: The demo want.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  wantId:
+                    type: string
+                  created:
+                    type: boolean
+
+components:
+  parameters:
+    Id:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+
+  responses:
+    BadRequest:
+      description: The request was invalid.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    NotFound:
+      description: Not found.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    Conflict:
+      description: The request conflicts with the current state.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    UpstreamError:
+      description: PayPal or Channel3 returned an error.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+
+  schemas:
+    Error:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: string
+
+    WantInput:
+      type: object
+      required: [item, maxPrice, buyerName]
+      properties:
+        item:
+          type: string
+          maxLength: 120
+        maxPrice:
+          type: integer
+          minimum: 1
+          description: The most the user will pay. Never exceeded and never shown to a seller.
+        notes:
+          type: string
+          maxLength: 500
+        buyerName:
+          type: string
+          maxLength: 60
+          description: Used in the AI disclosure that opens every conversation.
+        style:
+          $ref: "#/components/schemas/NegotiationStyle"
+        requireApproval:
+          type: boolean
+          description: Stop at an in-budget price and wait for the user to accept it.
+
+    NegotiationStyle:
+      type: string
+      enum: [patient, balanced, quick]
+      default: balanced
+      description: Only changes pacing. The budget ceiling and the 15-message limit never change.
+
+    Want:
+      type: object
+      required: [id, item, maxPrice, notes, buyerName, status]
+      properties:
+        id:
+          type: string
+        item:
+          type: string
+        maxPrice:
+          type: integer
+        notes:
+          type: string
+        buyerName:
+          type: string
+        style:
+          $ref: "#/components/schemas/NegotiationStyle"
+        requireApproval:
+          type: boolean
+        status:
+          type: string
+          enum: [open, purchased]
+        createdAt:
+          type: integer
+          description: Milliseconds since the epoch.
+
+    Seller:
+      type: object
+      required: [id, wantId, name, persona, endpoint]
+      properties:
+        id:
+          type: string
+        wantId:
+          type: string
+        name:
+          type: string
+        persona:
+          type: string
+        endpoint:
+          type: string
+          description: "`mock://persona` for a made-up seller, or `listing:` plus an encoded real listing."
+
+    Message:
+      type: object
+      required: [from, text, at, price]
+      properties:
+        from:
+          type: string
+          enum: [buyer, seller]
+        text:
+          type: string
+        at:
+          type: integer
+          description: Milliseconds since the epoch.
+        price:
+          type: integer
+          nullable: true
+          description: The price this message puts on the table, if any.
+        guard:
+          type: string
+          description: A guardrail note explaining a rule that shaped this message. Shown to the user, never sent to the seller.
+
+    Thread:
+      type: object
+      required: [id, wantId, sellerId, sellerName, status, messages]
+      properties:
+        id:
+          type: string
+        wantId:
+          type: string
+        sellerId:
+          type: string
+        sellerName:
+          type: string
+        status:
+          type: string
+          enum: [negotiating, deal, walked_away, paused, awaiting_approval]
+        messages:
+          type: array
+          items:
+            $ref: "#/components/schemas/Message"
+        lastOffer:
+          type: integer
+          nullable: true
+        lastAsk:
+          type: integer
+          nullable: true
+        refusals:
+          type: integer
+        reason:
+          type: string
+          nullable: true
+          enum: [too_many_refusals, scam_detected, over_budget, message_limit, purchased_elsewhere, declined_by_user]
+        detail:
+          type: string
+          nullable: true
+        dealPrice:
+          type: integer
+          nullable: true
+
+    Deal:
+      type: object
+      required: [id, threadId, wantId, sellerName, price, status]
+      properties:
+        id:
+          type: string
+        threadId:
+          type: string
+        wantId:
+          type: string
+        sellerName:
+          type: string
+        price:
+          type: integer
+        status:
+          type: string
+          enum: [awaiting_payment, order_created, paid, refunded, cancelled]
+        paypalOrderId:
+          type: string
+          nullable: true
+        payerId:
+          type: string
+          nullable: true
+        payerEmail:
+          type: string
+          nullable: true
+        captureId:
+          type: string
+          nullable: true
+
+    Listing:
+      type: object
+      required: [title, retailer, price, url]
+      properties:
+        title:
+          type: string
+          maxLength: 120
+        retailer:
+          type: string
+          description: The store's domain, for example `bestbuy.com`.
+        price:
+          type: integer
+          minimum: 1
+          description: Whole US dollars.
+        condition:
+          type: string
+          nullable: true
+        url:
+          type: string
+          format: uri
+          description: The store's buy link (http or https).
+        image:
+          type: string
+          format: uri
+          nullable: true
+          description: An https image on Channel3's CDN.
+
+    ListingPage:
+      type: object
+      required: [listings, next]
+      properties:
+        listings:
+          type: array
+          items:
+            $ref: "#/components/schemas/Listing"
+        next:
+          type: string
+          nullable: true
+          description: Pass as `pageToken` for the next page. Null when there is no more.
+
+    Category:
+      type: object
+      required: [slug, title]
+      properties:
+        slug:
+          type: string
+        title:
+          type: string
+
+    DashboardState:
+      type: object
+      required: [config, wants, threads, deals]
+      properties:
+        config:
+          type: object
+          properties:
+            paypalClientId:
+              type: string
+              nullable: true
+              description: The sandbox client id (public by design).
+            paypalBuyerEmail:
+              type: string
+              nullable: true
+            llmMode:
+              type: string
+              enum: [llm, template]
+            listings:
+              type: boolean
+              description: True when a Channel3 key is set, so real listings and the marketplace are available.
+        wants:
+          type: array
+          items:
+            allOf:
+              - $ref: "#/components/schemas/Want"
+              - type: object
+                properties:
+                  sellers:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Seller"
+        threads:
+          type: array
+          items:
+            $ref: "#/components/schemas/Thread"
+        deals:
+          type: array
+          items:
+            $ref: "#/components/schemas/Deal"

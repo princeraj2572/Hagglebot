@@ -83,6 +83,12 @@ there are no webhook signatures to verify.
 - **AG Grid Community** for the sortable, filterable tables: the closed-deals comparison and the Marketplace table view
 - All dependency versions are pinned exactly; `pnpm-lock.yaml` is committed.
 
+## API
+
+The HTTP API behind the dashboard is described in [`docs/openapi.yaml`](docs/openapi.yaml) (OpenAPI 3.0), which
+covers every route. A test keeps it in step with the code, and it can be imported into tools such as Postman or
+APIMatic to generate docs or client SDKs.
+
 ## Setup
 
 Requirements: Node.js 20+ and [pnpm](https://pnpm.io) 10.
