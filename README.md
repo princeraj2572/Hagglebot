@@ -19,19 +19,25 @@ Built for the PayPal AI Hackathon (Agentic Commerce).
    hard to haggle: **Patient** (opens at 60% of budget, concedes slowly, tolerates more refusals),
    **Balanced** (70%, the default) or **Quick** (80%, closes sooner, walks away from stubborn sellers
    faster). The style only changes the pacing; the budget ceiling and the 15-message limit never move.
+   Tick **Ask me before accepting a price** and Hagglebot stops at an in-budget price, shows **Accept $X** and
+   **Decline**, and agrees to nothing until you choose.
 2. **Sellers**: add seller contacts (each is a simulated persona behind a mock chat endpoint).
 3. **Negotiate**: Hagglebot opens a chat with every seller in parallel. It opens with a low anchor,
    concedes in small steps, never exceeds your budget, and walks away gracefully.
 4. **Dashboard**: an app layout. Wants on the left; in the middle a summary (budget, who is live, best
    deal, deals ready) and two tabs. **Conversations** is an inbox of sellers (who is writing now, the
    latest message, the current price, unread dots) next to the selected seller's **price lane** (their ask,
-   our offer, the gap closing) and the full chat, with a **Pause** killswitch per thread. **Deals** holds
+   our offer, the gap closing) and the full chat, with a **Pause** killswitch per thread and a **Download transcript** link (every message and guardrail note, as
+   Markdown). **Deals** holds
    the receipts and payments.
 5. **Pay**: for a closed deal, **Confirm and Pay** opens the PayPal sandbox checkout (Orders v2:
    create, approve in the popup, capture). On success Hagglebot messages the seller a confirmation
    containing the PayPal **payer-id** as proof of payment, and withdraws from the other sellers.
-6. **Refund**: a paid deal has a **Refund** button (with a confirm step) that fully refunds the capture through
-   the PayPal Payments API, tells the seller, and reopens the want so you can negotiate again.
+6. **Refund**: a paid deal has a **Request refund** button (with a confirm step; the simulated seller approves) that
+   fully refunds the capture through the PayPal Payments API, tells the seller, and reopens the want so you can
+   negotiate again.
+7. **Savings**: once a deal closes, a panel says what Hagglebot saved against the first ask and the budget, with every
+   closed deal in a sortable AG Grid table.
 
 ### The simulated marketplace
 
