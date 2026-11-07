@@ -329,8 +329,8 @@ export function MarketplaceView(props: {
         {(results ?? []).map((l) => {
           const img = webUrl(l.image);
           return (
-            <li key={l.url} className="flex min-w-0 flex-col overflow-hidden rounded-2xl bg-paper">
-              <div className="relative flex h-40 items-center justify-center bg-mist">
+            <li key={l.url} className="flex min-w-0 flex-col overflow-hidden rounded-2xl border border-line bg-paper">
+              <div className="relative flex h-44 items-center justify-center border-b border-line bg-paper p-3">
                 <span
                   className={`absolute left-2.5 top-2.5 rounded-full px-2.5 py-1 text-[12px] font-bold capitalize shadow-sm ${
                     !l.condition ? "bg-paper/85 text-muted" : l.condition === "new" ? "bg-paper text-ink" : "bg-tag text-ink"

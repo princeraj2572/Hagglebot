@@ -27,16 +27,16 @@ export function Landing({ onStart }: { onStart?: ((preset?: Preset) => void) | u
   const [tour, setTour] = useState<number | null>(null);
   return (
     <div className="space-y-6">
-      <section aria-label="Welcome" className="rounded-[28px] bg-ink p-7 text-white shadow-lift sm:p-9">
+      <section aria-label="Welcome" className="rounded-[28px] border border-line bg-paper p-7 text-ink sm:p-9">
         <h2 className="text-balance text-3xl font-bold tracking-tight sm:text-4xl">What do you want to buy?</h2>
-        <p className="mt-3 max-w-lg leading-relaxed text-white/70">Add a want and Hagglebot finds sellers, negotiates and pays. Everything is simulated.</p>
+        <p className="mt-3 max-w-lg leading-relaxed text-muted">Add a want and Hagglebot finds sellers, negotiates and pays. Everything is simulated.</p>
         <div className="mt-6 flex flex-wrap items-center gap-3">
           {onStart && (
-            <button className="rounded-full bg-white px-6 py-3 font-semibold text-ink transition-transform duration-150 active:scale-[0.97] [@media(hover:hover)]:hover:bg-tag" onClick={() => onStart()}>
+            <button className="rounded-full bg-ultra px-6 py-3 font-semibold text-white transition-transform duration-150 active:scale-[0.97] [@media(hover:hover)]:hover:bg-[#2335b8]" onClick={() => onStart()}>
               Add your first want
             </button>
           )}
-          <button className="rounded-full bg-white/10 px-6 py-3 font-semibold text-white transition-transform duration-150 active:scale-[0.97] [@media(hover:hover)]:hover:bg-white/20" onClick={() => setTour(0)}>
+          <button className="rounded-full bg-mist px-6 py-3 font-semibold text-ink transition-transform duration-150 active:scale-[0.97] [@media(hover:hover)]:hover:bg-[#DCE2EF]" onClick={() => setTour(0)}>
             Take the 1-minute tour
           </button>
         </div>
