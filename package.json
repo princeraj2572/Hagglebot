@@ -13,7 +13,7 @@
     "start": "next start",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "demo:reset": "node -e \"require('node:fs').rmSync('data',{recursive:true,force:true})\""
+    "reset": "node -e \"require('node:fs').rmSync('data',{recursive:true,force:true})\""
   },
   "dependencies": {
     "@google/generative-ai": "0.24.1",
