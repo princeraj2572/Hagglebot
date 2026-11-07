@@ -19,7 +19,7 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
       if (!findListings) throw new RunnerError("Real listings need a Channel3 key: set CHANNEL3_API_KEY and restart.", "invalid");
       const want = repo.getWant(id);
       if (!want) throw new RunnerError("Want not found", "not_found");
-      if (repo.listThreads(id).length > 0) throw new RunnerError("Negotiations already started for this want", "conflict");
+      if (repo.listThreads(id).some((t) => t.status === "negotiating")) throw new RunnerError("Wait for the negotiation to finish before adding sellers", "conflict");
       const room = MAX_SELLERS - repo.listSellers(id).length;
       if (room <= 0) throw new RunnerError(`At most ${MAX_SELLERS} sellers per want`, "conflict");
 

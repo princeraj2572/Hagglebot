@@ -53,13 +53,15 @@ export function NegotiationsPanel(props: {
   buyerEmail: string | null;
   busy: boolean;
   demo: boolean;
+  /** True when the button redoes everything (Restart); false when it only starts new sellers or a first run. */
+  restart: boolean;
   canNegotiate: boolean;
   onNegotiate: () => void;
   run: (fn: () => Promise<unknown>) => Promise<void>;
   onChanged: () => void;
   onError: (msg: string) => void;
 }) {
-  const { want, threads, deals, wants, paypalClientId, buyerEmail, busy, demo, canNegotiate, onNegotiate, run, onChanged, onError } = props;
+  const { want, threads, deals, wants, paypalClientId, buyerEmail, busy, demo, restart, canNegotiate, onNegotiate, run, onChanged, onError } = props;
 
   // Negotiations that finished before this page opened replay once, so the haggling is visible.
   const seen = useRef(new Set<string>());
@@ -161,7 +163,7 @@ export function NegotiationsPanel(props: {
           </p>
         </div>
         <button className={`${primary} shrink-0`} disabled={!canNegotiate || busy} onClick={onNegotiate}>
-          {started ? "Restart" : "Negotiate"}
+          {restart ? "Restart" : "Negotiate"}
         </button>
       </div>
 

@@ -79,6 +79,9 @@ export function Dashboard() {
   const threads = (state?.threads ?? []).filter((t) => t.wantId === selected?.id);
   const deals = (state?.deals ?? []).filter((d) => d.wantId === selected?.id);
   const started = threads.length > 0;
+  // Sellers with no conversation yet (added after a purchase or a run): Negotiate talks to them without redoing the rest.
+  const hasNewSellers = (selected?.sellers ?? []).some((s) => !threads.some((t) => t.sellerId === s.id));
+  const restarting = started && !hasNewSellers;
   const liveCount = threads.filter((t) => t.status === "negotiating").length;
 
   return (
@@ -129,7 +132,7 @@ export function Dashboard() {
             </aside>
             <main className={`min-w-0 ${tab === "negotiation" ? "" : "hidden lg:block"}`}>
               {page === "marketplace" ? (
-                <MarketplaceView key={selected?.id ?? "none"} want={selected} canAdd={!started} run={run} onError={setError} onBought={() => setPage("negotiate")} />
+                <MarketplaceView key={selected?.id ?? "none"} want={selected} canAdd={liveCount === 0} run={run} onError={setError} onBought={() => setPage("negotiate")} />
               ) : (
                 <NegotiationsPanel
                   want={selected}
@@ -140,8 +143,9 @@ export function Dashboard() {
                   buyerEmail={state.config.paypalBuyerEmail}
                   busy={busy}
                   demo={demo}
+                restart={restarting}
                 canNegotiate={!!selected && selected.status === "open" && selected.sellers.length > 0 && liveCount === 0}
-                  onNegotiate={() => selected && run(() => api(`/api/wants/${selected.id}/negotiate${started ? "?restart=1" : ""}${demo ? (started ? "&demo=1" : "?demo=1") : ""}`, "POST"))}
+                  onNegotiate={() => selected && run(() => api(`/api/wants/${selected.id}/negotiate${restarting ? "?restart=1" : ""}${demo ? (restarting ? "&demo=1" : "?demo=1") : ""}`, "POST"))}
                   run={run}
                   onChanged={refresh}
                   onError={setError}

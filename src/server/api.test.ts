@@ -376,4 +376,30 @@ describe("API", () => {
       expect((await transcript(new Request(url("/api/threads/nope/transcript")), ctx({ id: "nope" }))).status).toBe(404);
     });
   });
+
+  describe("sellers added after a purchase or a run", () => {
+    const wantBody = { item: "Headphones", maxPrice: 250, notes: "", buyerName: "Alex" };
+    const L = { title: "Sony WH", retailer: "bestbuy.com", price: 240, condition: "new", url: "https://bestbuy.com/p", image: null };
+
+    it("negotiates only the new sellers, and keeps a direct purchase and its deal", async () => {
+      const w = await (await createWant(post("/api/wants", wantBody))).json();
+      await buyNow(post(`/api/wants/${w.id}/buy`, { listing: L }), ctx({ id: w.id }));
+      expect((await addSeller(post(`/api/wants/${w.id}/sellers`, { persona: "ferdi" }), ctx({ id: w.id }))).status).toBe(201);
+      expect((await negotiate(post(`/api/wants/${w.id}/negotiate`), ctx({ id: w.id }))).status).toBe(202);
+      await svc.runner.idle();
+      const s = await state();
+      expect(s.threads).toHaveLength(2);
+      expect(s.threads.find((x) => x.sellerName === "bestbuy.com")).toMatchObject({ status: "deal", dealPrice: 240 });
+      expect(s.deals.find((d) => d.sellerName === "bestbuy.com")).toMatchObject({ status: "awaiting_payment", price: 240 });
+      expect(s.threads.find((x) => x.sellerName === "Fast Ferdi")!.status).not.toBe("negotiating");
+    });
+
+    it("still refuses to run again when every seller already has a conversation", async () => {
+      const w = await (await createWant(post("/api/wants", wantBody))).json();
+      await addSeller(post(`/api/wants/${w.id}/sellers`, { persona: "ferdi" }), ctx({ id: w.id }));
+      await negotiate(post(`/api/wants/${w.id}/negotiate`), ctx({ id: w.id }));
+      await svc.runner.idle();
+      expect((await negotiate(post(`/api/wants/${w.id}/negotiate`), ctx({ id: w.id }))).status).toBe(409);
+    });
+  });
 });

@@ -47,6 +47,20 @@ export class NegotiationRunner {
     if (contacts.length === 0) throw new RunnerError("Add at least one seller first", "invalid");
 
     const existing = repo.listThreads(wantId);
+    // Sellers added after a negotiation (or a direct purchase) started get their own thread; the others are left alone.
+    const missing = contacts.filter((c) => !existing.some((t) => t.sellerId === c.id));
+    if (existing.length > 0 && !opts.restart && missing.length > 0) {
+      const added = missing.map((c) => {
+        const t = createThread(want, { id: c.id, name: c.name }, `${wantId}:${c.id}`);
+        repo.saveThread(t);
+        return t;
+      });
+      for (const t of added) {
+        this.paused.delete(t.id);
+        this.launch(t, contacts.length, opts.demo ?? false);
+      }
+      return added;
+    }
     if (existing.length > 0) {
       if (!opts.restart) throw new RunnerError("Negotiations already started; restart to run them again", "conflict");
       if (repo.listDeals(wantId).some((x) => x.status === "order_created" || x.status === "paid")) {

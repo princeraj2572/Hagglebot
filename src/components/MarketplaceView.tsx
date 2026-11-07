@@ -30,7 +30,7 @@ const CONDITIONS: { id: Condition; label: string }[] = [
 /** A marketplace to browse: every category, a search box, and real products to buy as listed or to negotiate. */
 export function MarketplaceView(props: {
   want: Want | undefined;
-  /** False once negotiations have started for the want. */
+  /** False while a negotiation is running for the want. */
   canAdd: boolean;
   run: (fn: () => Promise<unknown>) => Promise<void>;
   onError: (msg: string) => void;
