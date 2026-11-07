@@ -136,7 +136,9 @@ retailer offers (store, price, condition) as sellers. Each is played by a simula
 price. No retailer is contacted and nothing is bought from one.
 
 The **Marketplace** page (top bar) lets you browse everything Channel3 has: search, or pick any of its 16 top-level
-categories, and press **Negotiate this** on the products you want Hagglebot to haggle for.
+categories, and for each product either **Buy at (price)**, which skips the haggling and goes straight to the PayPal
+checkout (still capped by your budget), or **Negotiate this**. Real stores rarely haggle, so **Find similar you can
+negotiate** searches used and refurbished listings, which are the more negotiable kind.
 
 ## Run
 
