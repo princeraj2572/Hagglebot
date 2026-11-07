@@ -178,7 +178,7 @@ export function Hero({ onStart, onContinue, nav }: { onStart: (preset: Preset) =
       <div className="mx-auto max-w-7xl px-3 pt-3 sm:px-5 sm:pt-4">
         <main className="mt-3 rounded-[28px] border border-line bg-paper p-3 sm:mt-4 sm:p-4">
           <div className="grid gap-4 lg:grid-cols-[1fr_1.05fr]">
-            <div className="flex flex-col p-4 sm:p-8">
+            <div className="flex min-w-0 flex-col p-4 sm:p-8">
               <span className={`inline-flex w-fit items-center gap-2 rounded-md border border-line bg-chalk px-2.5 py-1 text-xs ${R}`} style={rise(0)}>
                 <span aria-hidden className="flex -space-x-1.5">
                   {["#F97316", "#3B82F6", "#EC4899"].map((c) => (
@@ -187,7 +187,7 @@ export function Hero({ onStart, onContinue, nav }: { onStart: (preset: Preset) =
                 </span>
                 14 simulated sellers. No real money.
               </span>
-              <h1 className="mt-5 text-balance text-4xl font-semibold leading-[1.05] tracking-[-0.035em] sm:text-[3.4rem]">
+              <h1 className="mt-5 text-balance text-3xl font-semibold min-[400px]:text-4xl leading-[1.05] tracking-[-0.035em] sm:text-[3.4rem]">
                 <span className="block overflow-hidden pb-1">
                   <span className={`block ${R}`} style={rise(60)}>Stop paying</span>
                 </span>
@@ -235,7 +235,7 @@ export function Hero({ onStart, onContinue, nav }: { onStart: (preset: Preset) =
           </div>
         </main>
 
-        <section id="features" className="mx-auto grid max-w-5xl items-center gap-10 px-2 py-24 lg:grid-cols-2">
+        <section id="features" className="mx-auto grid max-w-5xl items-center gap-10 px-2 py-24 lg:grid-cols-2 [&>*]:min-w-0">
           <div>
             <Chip>Core features</Chip>
             <h2 className="mt-4 text-3xl font-semibold tracking-tight sm:text-4xl">A smarter way to buy anything.</h2>
@@ -259,7 +259,7 @@ export function Hero({ onStart, onContinue, nav }: { onStart: (preset: Preset) =
           </div>
         </section>
 
-        <section id="explained" className="mx-auto grid max-w-5xl items-center gap-10 px-2 pb-24 lg:grid-cols-2">
+        <section id="explained" className="mx-auto grid max-w-5xl items-center gap-10 px-2 pb-24 lg:grid-cols-2 [&>*]:min-w-0">
           <div className="rounded-2xl bg-mist p-4 sm:p-6">
             <div className="space-y-3 rounded-xl border border-line bg-paper p-4 text-sm shadow-lift">
               <p className="max-w-[85%] rounded-xl rounded-bl-sm bg-chalk px-3.5 py-2.5">Deal at $210. A $30 processing fee applies, and easiest is to pay me directly, off the platform.</p>

@@ -26,13 +26,13 @@ export function Topbar(props: {
           <span className="sr-only sm:not-sr-only">Hagglebot</span>
         </button>
 
-        <nav aria-label="Pages" className="flex items-center justify-center gap-1 text-sm">
+        <nav aria-label="Pages" className="flex min-w-0 items-center justify-center gap-0.5 text-[13px] sm:gap-1 sm:text-sm">
           {items.map((it) => (
             <button
               key={it.id}
               aria-current={page === it.id ? "page" : undefined}
               onClick={() => onNavigate(it.id)}
-              className={`rounded-md px-3 py-1.5 font-medium transition-colors duration-150 ${
+              className={`rounded-md px-2 py-1.5 font-medium transition-colors duration-150 sm:px-3 ${
                 page === it.id ? "bg-mist text-ink" : "text-muted [@media(hover:hover)]:hover:text-ink"
               }`}
             >
@@ -45,7 +45,7 @@ export function Topbar(props: {
           {live > 0 && (
             <span className="num inline-flex items-center gap-1.5 rounded-md bg-[#E7F7EE] px-2 py-1 text-xs font-medium text-[#15803D]" role="status">
               <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-[#22C55E] motion-safe:animate-pulse" />
-              {live} of {total} live
+              {live}<span className="hidden sm:inline"> of {total}</span> live
             </span>
           )}
           <span
