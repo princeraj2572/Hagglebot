@@ -35,6 +35,14 @@ export class PaymentService {
     return this.d.orders;
   }
 
+  /** A bundle's total is a hard ceiling: nothing is paid that would take the bundle over it. */
+  private assertWithinBundle(deal: Deal): void {
+    const room = this.d.repo.bundleRoom(deal.wantId);
+    if (room !== null && deal.price > room) {
+      throw new PaymentError(`This would take the bundle over its budget: only $${Math.max(0, room)} is left.`, "conflict");
+    }
+  }
+
   /** The amount always comes from our database, never from the browser. */
   async createOrderForDeal(dealId: string): Promise<{ orderId: string; deal: Deal }> {
     const orders = this.requireOrders();
@@ -46,6 +54,7 @@ export class PaymentService {
     }
     const want = repo.getWant(deal.wantId);
     if (!want || want.status !== "open") throw new PaymentError("This want has already been purchased", "conflict");
+    this.assertWithinBundle(deal);
     try {
       const created = await createOrder(orders, {
         amount: deal.price.toFixed(2),
@@ -121,6 +130,7 @@ export class PaymentService {
     if (deal.status === "cancelled" || deal.status === "refunded") throw new PaymentError(`Deal was ${deal.status}`, "conflict");
     const want = this.d.repo.getWant(deal.wantId);
     if (!want || want.status !== "open") throw new PaymentError("This want has already been purchased", "conflict");
+    this.assertWithinBundle(deal);
     return this.settle(deal, {
       payerId: "DEMO-PAYER",
       payerEmail: null,

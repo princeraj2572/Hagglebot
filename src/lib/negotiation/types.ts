@@ -14,6 +14,8 @@ export interface Want {
   style?: NegotiationStyle;
   /** When true, Hagglebot stops at an in-budget price and waits for the user to accept it. */
   requireApproval?: boolean;
+  /** A bundle shares one total budget between several wants. */
+  bundleId?: string | null;
 }
 
 export interface Message {

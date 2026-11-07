@@ -43,6 +43,8 @@ export class NegotiationRunner {
     const want = repo.getWant(wantId);
     if (!want) throw new RunnerError("Want not found", "not_found");
     if (want.status !== "open") throw new RunnerError("This want has already been purchased", "conflict");
+    const room = repo.bundleRoom(wantId);
+    if (room !== null && room < 1) throw new RunnerError("This bundle's budget is already used up", "conflict");
     const contacts = repo.listSellers(wantId);
     if (contacts.length === 0) throw new RunnerError("Add at least one seller first", "invalid");
 
@@ -82,14 +84,21 @@ export class NegotiationRunner {
     return threads;
   }
 
+  /** The want as Hagglebot must treat it: its budget never exceeds what is left of its bundle. */
+  private effectiveWant<T extends { id: string; maxPrice: number }>(want: T): T {
+    const room = this.d.repo.bundleRoom(want.id);
+    return room === null ? want : { ...want, maxPrice: Math.max(0, Math.min(want.maxPrice, room)) };
+  }
+
   /** The user accepted the price a thread was holding: close the deal. */
   approve(threadId: string): Thread {
     const { repo } = this.d;
     const t = repo.getThread(threadId);
     if (!t) throw new RunnerError("Thread not found", "not_found");
     if (t.status !== "awaiting_approval") throw new RunnerError(`Nothing to approve: the thread is ${t.status}`, "conflict");
-    const want = repo.getWant(t.wantId);
-    if (!want || want.status !== "open") throw new RunnerError("This want has already been purchased", "conflict");
+    const stored = repo.getWant(t.wantId);
+    if (!stored || stored.status !== "open") throw new RunnerError("This want has already been purchased", "conflict");
+    const want = this.effectiveWant(stored);
     try {
       approveThread(t, want, { ...(this.d.now ? { now: this.d.now } : {}), onMessage: (th, m) => repo.addMessage(th.id, m) });
     } catch {
@@ -182,8 +191,9 @@ export class NegotiationRunner {
   private launch(thread: Thread, comparing: number, demo = false): void {
     const { repo } = this.d;
     const contact = repo.listSellers(thread.wantId).find((c) => c.id === thread.sellerId);
-    const want = repo.getWant(thread.wantId);
-    if (!contact || !want) return;
+    const stored = repo.getWant(thread.wantId);
+    if (!contact || !stored) return;
+    const want = this.effectiveWant(stored);
     const seller = this.d.sellerFor(contact, thread.lastAsk, demo);
     const deps: EngineDeps = {
       llm: demo ? null : this.d.llm,

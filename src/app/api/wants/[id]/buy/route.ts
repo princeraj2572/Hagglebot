@@ -27,7 +27,9 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
       const want = repo.getWant(id);
       if (!want) throw new RunnerError("Want not found", "not_found");
       if (want.status !== "open") throw new RunnerError("This want is already purchased", "conflict");
-      if (l.price > want.maxPrice) throw new RunnerError(`That price is above your $${want.maxPrice} budget.`, "invalid");
+      const room = repo.bundleRoom(id);
+      const cap = room === null ? want.maxPrice : Math.min(want.maxPrice, room);
+      if (l.price > cap) throw new RunnerError(room !== null && room < want.maxPrice ? `That price is above the $${Math.max(0, room)} left in your bundle.` : `That price is above your $${want.maxPrice} budget.`, "invalid");
       if (repo.listThreads(id).some((t) => t.status === "negotiating")) throw new RunnerError("Wait for the negotiation to finish first", "conflict");
 
       const sellers = repo.listSellers(id);

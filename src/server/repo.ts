@@ -27,6 +27,15 @@ export interface Deal {
   captureId: string | null;
 }
 
+export interface BundleRecord {
+  id: string;
+  name: string;
+  /** The most the whole bundle may spend. */
+  total: number;
+  /** Paid so far across the bundle's wants. */
+  spent: number;
+}
+
 export type WantStatus = "open" | "purchased";
 export type WantRecord = Want & { status: WantStatus; createdAt: number };
 
@@ -43,8 +52,8 @@ export class Repo {
   createWant(w: Omit<Want, "id">): WantRecord {
     const rec = { ...w, id: id() };
     this.db
-      .prepare("INSERT INTO wants (id,item,max_price,notes,buyer_name,status,created_at,style,approval) VALUES (?,?,?,?,?, 'open', ?, ?, ?)")
-      .run(rec.id, rec.item, rec.maxPrice, rec.notes, rec.buyerName, this.now(), rec.style ?? "balanced", rec.requireApproval ? 1 : 0);
+      .prepare("INSERT INTO wants (id,item,max_price,notes,buyer_name,status,created_at,style,approval,bundle_id) VALUES (?,?,?,?,?, 'open', ?, ?, ?, ?)")
+      .run(rec.id, rec.item, rec.maxPrice, rec.notes, rec.buyerName, this.now(), rec.style ?? "balanced", rec.requireApproval ? 1 : 0, rec.bundleId ?? null);
     return this.getWant(rec.id)!;
   }
 
@@ -54,6 +63,7 @@ export class Repo {
       buyerName: r.buyer_name as string, status: r.status as WantStatus, createdAt: r.created_at as number,
       style: ((r.style as NegotiationStyle | null) ?? "balanced"),
       requireApproval: r.approval === 1,
+      bundleId: (r.bundle_id as string | null) ?? null,
     };
   }
   getWant(wantId: string): WantRecord | undefined {
@@ -63,6 +73,44 @@ export class Repo {
   listWants(): WantRecord[] {
     return (this.db.prepare("SELECT * FROM wants ORDER BY created_at, rowid").all() as Row[]).map((r) => this.wantFrom(r));
   }
+  // ---- bundles: one total budget shared by several wants ----
+  createBundle(name: string, total: number): BundleRecord {
+    const bid = id();
+    this.db.prepare("INSERT INTO bundles (id,name,total_price,created_at) VALUES (?,?,?,?)").run(bid, name, total, this.now());
+    return this.getBundle(bid)!;
+  }
+  private bundleFrom(r: Row): BundleRecord {
+    const spent = this.db
+      .prepare("SELECT COALESCE(SUM(d.price),0) AS s FROM deals d JOIN wants w ON w.id = d.want_id WHERE w.bundle_id = ? AND d.status = 'paid'")
+      .get(r.id) as Row;
+    return { id: r.id as string, name: r.name as string, total: r.total_price as number, spent: spent.s as number };
+  }
+  getBundle(bundleId: string): BundleRecord | undefined {
+    const r = this.db.prepare("SELECT * FROM bundles WHERE id = ?").get(bundleId) as Row | undefined;
+    return r && this.bundleFrom(r);
+  }
+  listBundles(): BundleRecord[] {
+    return (this.db.prepare("SELECT * FROM bundles ORDER BY created_at, rowid").all() as Row[]).map((r) => this.bundleFrom(r));
+  }
+  deleteBundle(bundleId: string): boolean {
+    return this.db.prepare("DELETE FROM bundles WHERE id = ?").run(bundleId).changes > 0; // its wants keep their own budgets
+  }
+  setWantBundle(wantId: string, bundleId: string | null): void {
+    this.db.prepare("UPDATE wants SET bundle_id = ? WHERE id = ?").run(bundleId, wantId);
+  }
+  /**
+   * What this want may still spend: the bundle total minus what the bundle's other wants have actually paid.
+   * Null when the want is not in a bundle.
+   */
+  bundleRoom(wantId: string): number | null {
+    const w = this.getWant(wantId);
+    if (!w || !w.bundleId) return null;
+    const b = this.getBundle(w.bundleId);
+    if (!b) return null;
+    const own = this.db.prepare("SELECT COALESCE(SUM(price),0) AS s FROM deals WHERE want_id = ? AND status = 'paid'").get(wantId) as Row;
+    return b.total - (b.spent - (own.s as number));
+  }
+
   setWantStatus(wantId: string, status: WantStatus): void {
     this.db.prepare("UPDATE wants SET status = ? WHERE id = ?").run(status, wantId);
   }

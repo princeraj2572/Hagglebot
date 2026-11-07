@@ -25,6 +25,7 @@ export interface WantInput {
   buyerName: string;
   style?: NegotiationStyle;
   requireApproval?: boolean;
+  bundleId?: string;
 }
 
 export function parseWantInput(body: unknown): WantInput {
@@ -43,7 +44,7 @@ export function parseWantInput(body: unknown): WantInput {
   if (style && !(NEGOTIATION_STYLES as string[]).includes(style)) {
     throw new ValidationError(`Style must be one of: ${NEGOTIATION_STYLES.join(", ")}`);
   }
-  return { item, maxPrice, notes, buyerName, ...(style ? { style: style as NegotiationStyle } : {}), ...(b.requireApproval === true ? { requireApproval: true } : {}) };
+  return { item, maxPrice, notes, buyerName, ...(style ? { style: style as NegotiationStyle } : {}), ...(b.requireApproval === true ? { requireApproval: true } : {}), ...(clean(b.bundleId) ? { bundleId: clean(b.bundleId) } : {}) };
 }
 
 export interface SellerInput {
@@ -84,4 +85,18 @@ export function parseListingInput(body: unknown): Listing {
   }
   const condition = clean(b.condition).slice(0, 20);
   return { title, retailer, price, url, condition: condition || null, image: webUrl(b.image, 500, true) };
+}
+
+export interface BundleInput {
+  name: string;
+  total: number;
+}
+
+export function parseBundleInput(body: unknown): BundleInput {
+  const b = obj(body);
+  const name = clean(b.name);
+  const total = typeof b.total === "number" ? b.total : Number(clean(b.total));
+  if (!name || name.length > 60) throw new ValidationError("A bundle needs a name of up to 60 characters");
+  if (!Number.isInteger(total) || total < 1 || total > 10_000_000) throw new ValidationError("The bundle budget must be a whole number of dollars, at least 1");
+  return { name, total };
 }

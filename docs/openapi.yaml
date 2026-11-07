@@ -17,6 +17,7 @@ servers:
 tags:
   - name: State
   - name: Wants
+  - name: Bundles
   - name: Negotiation
   - name: Marketplace
   - name: Payments
@@ -75,6 +76,79 @@ paths:
                 properties:
                   ok:
                     type: boolean
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /api/bundles:
+    post:
+      tags: [Bundles]
+      operationId: createBundle
+      summary: "Create a bundle: one total budget shared by several wants"
+      description: |
+        Hagglebot negotiates each want in the bundle within what is left of the total, and refuses to pay anything
+        that would take the bundle over it. Only payments that were actually made count as spent.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BundleInput"
+      responses:
+        "201":
+          description: The new bundle.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Bundle"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+
+  /api/bundles/{id}:
+    delete:
+      tags: [Bundles]
+      operationId: deleteBundle
+      summary: Delete a bundle
+      description: Its wants are kept, each with its own budget again.
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "200":
+          description: Deleted.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /api/wants/{id}/bundle:
+    post:
+      tags: [Bundles]
+      operationId: setWantBundle
+      summary: Put a want in a bundle, or take it out
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                bundleId:
+                  type: string
+                  nullable: true
+                  description: A bundle id, or null to take the want out of its bundle.
+      responses:
+        "200":
+          description: The updated want.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Want"
         "404":
           $ref: "#/components/responses/NotFound"
 
@@ -593,6 +667,9 @@ components:
         requireApproval:
           type: boolean
           description: Stop at an in-budget price and wait for the user to accept it.
+        bundleId:
+          type: string
+          description: Put the want in a bundle that shares one total budget.
 
     NegotiationStyle:
       type: string
@@ -618,12 +695,41 @@ components:
           $ref: "#/components/schemas/NegotiationStyle"
         requireApproval:
           type: boolean
+        bundleId:
+          type: string
+          nullable: true
         status:
           type: string
           enum: [open, purchased]
         createdAt:
           type: integer
           description: Milliseconds since the epoch.
+
+    BundleInput:
+      type: object
+      required: [name, total]
+      properties:
+        name:
+          type: string
+          maxLength: 60
+        total:
+          type: integer
+          minimum: 1
+          description: The most the whole bundle may spend, in whole US dollars.
+
+    Bundle:
+      type: object
+      required: [id, name, total, spent]
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        total:
+          type: integer
+        spent:
+          type: integer
+          description: Paid so far across the bundle's wants.
 
     Seller:
       type: object
@@ -780,8 +886,12 @@ components:
 
     DashboardState:
       type: object
-      required: [config, wants, threads, deals]
+      required: [config, bundles, wants, threads, deals]
       properties:
+        bundles:
+          type: array
+          items:
+            $ref: "#/components/schemas/Bundle"
         config:
           type: object
           properties:

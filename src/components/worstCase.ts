@@ -81,6 +81,7 @@ export function worstCaseState(): DashboardState {
     sellers: Array.from({ length: sellers }, (_, i) => ({ id: `${id}s${i}`, wantId: id, name: nm(i % NAMES.length), persona: "ferdi", endpoint: `mock://${noSpace(40)}` })),
   });
   return {
+    bundles: [],
     config: { paypalClientId: "x", paypalBuyerEmail: "bartholomew.fitzgerald@northwind-industries-holdings.example.com", llmMode: "llm", listings: true },
     wants: [
       w(wantMain, `${longText} ${noSpace(40)}`.slice(0, 120), 400, noSpace(250) + " " + "Must ship this week, black only. ".repeat(8).slice(0, 250), 12),
