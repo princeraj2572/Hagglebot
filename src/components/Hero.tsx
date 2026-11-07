@@ -134,6 +134,77 @@ export function Hero({ onStart, onContinue }: { onStart: (preset: Preset) => voi
 
         <Replay />
       </main>
+
+      <div className="mx-auto max-w-6xl space-y-24 px-5 pb-24 sm:px-8">
+        <section aria-label="How it works">
+          <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">Three steps, no haggling by you.</h2>
+          <ol className="mt-8 grid gap-4 md:grid-cols-3">
+            {[
+              ["Say what you want", "An item, the most you will pay, and how hard to push: patient, balanced or quick."],
+              ["Hagglebot works the room", "It finds sellers and talks to all of them at once, with a reason behind every offer."],
+              ["You pick the deal", "The best price inside your budget is ready to pay. Or approve each deal before it closes."],
+            ].map(([title, text], i) => (
+              <li key={title} className="rounded-2xl bg-white/[0.06] p-6">
+                <span className="num flex h-8 w-8 items-center justify-center rounded-full bg-ultra text-sm font-bold">{i + 1}</span>
+                <p className="mt-4 text-lg font-semibold">{title}</p>
+                <p className="mt-1 leading-relaxed text-white/65">{text}</p>
+              </li>
+            ))}
+          </ol>
+        </section>
+
+        <section aria-label="Scam protection" className="grid items-center gap-10 lg:grid-cols-2">
+          <div>
+            <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">It walks away from scams.</h2>
+            <p className="mt-4 max-w-md leading-relaxed text-white/70">
+              Some sellers add a hidden fee or ask you to pay outside the platform. Hagglebot spots the pattern, refuses and leaves, then tells you why.
+            </p>
+            <ul className="mt-5 space-y-2 text-white/80">
+              <li>Hidden fees added after the price is agreed</li>
+              <li>Requests to pay off-platform, by gift card or wire</li>
+              <li>Pressure to decide now</li>
+            </ul>
+          </div>
+          <div className="space-y-3 rounded-3xl bg-white/[0.06] p-5 text-sm">
+            <p className="max-w-[85%] rounded-2xl rounded-bl-md bg-white/10 px-4 py-3">Deal at $210. A small $30 processing fee applies, and easiest is to pay me directly, off the platform.</p>
+            <p className="ml-auto max-w-[85%] rounded-2xl rounded-br-md bg-ultra px-4 py-3">I only pay through this platform and agreed prices include everything. I will step away from this one. Thank you for your time.</p>
+            <p className="flex items-center gap-2 text-white/65">
+              <span aria-hidden className="h-2 w-2 rounded-full bg-scam" />
+              Guardrail: hidden fee and off-platform payment detected. Walked away.
+            </p>
+          </div>
+        </section>
+
+        <section aria-label="Features">
+          <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">Built to be trusted with your budget.</h2>
+          <ul className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {[
+              ["Parallel negotiation", "Every seller at once on one price scale, so you see who is moving."],
+              ["A hard budget ceiling", "The code decides every price. Your maximum is never shown to a seller and never exceeded."],
+              ["Real listings, real condition", "Browse the marketplace and see whether each item is new, used or refurbished before you negotiate."],
+              ["Bundles", "Share one total budget across several wants, like a whole desk setup."],
+              ["Approve before accepting", "Pause at a good price and decide yourself."],
+              ["Every move explained", "Guardrail notes sit beside the messages they shaped. Download any transcript."],
+            ].map(([title, text]) => (
+              <li key={title} className="rounded-2xl bg-white/[0.06] p-5">
+                <p className="font-semibold">{title}</p>
+                <p className="mt-1 text-sm leading-relaxed text-white/65">{text}</p>
+              </li>
+            ))}
+          </ul>
+        </section>
+
+        <section aria-label="Get started" className="rounded-3xl bg-ultra p-8 text-center sm:p-12">
+          <h2 className="text-balance text-3xl font-bold tracking-tight sm:text-4xl">Ready to see it haggle?</h2>
+          <p className="mx-auto mt-3 max-w-md text-white/80">It takes under a minute, and nothing real is bought.</p>
+          <button
+            onClick={onContinue}
+            className="mt-6 rounded-full bg-white px-7 py-3 font-semibold text-ink transition-transform duration-150 active:scale-[0.97] [@media(hover:hover)]:hover:bg-tag"
+          >
+            Continue to the dashboard
+          </button>
+        </section>
+      </div>
     </div>
   );
 }
