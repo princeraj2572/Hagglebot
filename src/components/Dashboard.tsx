@@ -125,7 +125,7 @@ export function Dashboard() {
             </aside>
             <main className={`min-w-0 ${tab === "negotiation" ? "" : "hidden lg:block"}`}>
               {page === "marketplace" ? (
-                <MarketplaceView key={selected?.id ?? "none"} want={selected} canAdd={!started} run={run} onError={setError} />
+                <MarketplaceView key={selected?.id ?? "none"} want={selected} canAdd={!started} run={run} onError={setError} onBought={() => setPage("negotiate")} />
               ) : (
                 <NegotiationsPanel
                   want={selected}

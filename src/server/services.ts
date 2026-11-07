@@ -1,7 +1,7 @@
 import { createLLMFromEnv } from "../lib/llm";
 import type { LLM } from "../lib/llm/types";
 import { PERSONAS } from "../lib/sellers/personas";
-import { listCategories, searchListings, type Category, type Listing } from "../lib/channel3/search";
+import { listCategories, searchListings, type Category, type Condition, type Listing } from "../lib/channel3/search";
 import { LISTING_PREFIX, personaFromEndpoint } from "../lib/sellers/listing";
 import { PersonaSeller } from "../lib/sellers/sellerAgent";
 import { createOrdersController, createPaymentsController } from "../lib/paypal/client";
@@ -16,7 +16,7 @@ export interface Services {
   runner: NegotiationRunner;
   payments: PaymentService;
   /** Real retailer listings from Channel3; null until CHANNEL3_API_KEY is set. */
-  findListings: ((query: string, category?: string) => Promise<Listing[]>) | null;
+  findListings: ((query: string, category?: string, condition?: Condition) => Promise<Listing[]>) | null;
   /** The marketplace's top-level categories; cached because they rarely change. */
   categories: (() => Promise<Category[]>) | null;
   /** Safe to expose to the browser: the sandbox client id is public by design. */
@@ -59,7 +59,7 @@ export function buildServices(env: Record<string, string | undefined> = process.
   });
 
   const c3 = env.CHANNEL3_API_KEY?.trim();
-  const findListings = c3 ? (q: string, category?: string) => searchListings(q, c3, { category, limit: 24 }) : null;
+  const findListings = c3 ? (q: string, category?: string, condition?: Condition) => searchListings(q, c3, { category, condition, limit: 24 }) : null;
   let cached: { at: number; list: Category[] } | null = null;
   const categories = c3
     ? async () => {

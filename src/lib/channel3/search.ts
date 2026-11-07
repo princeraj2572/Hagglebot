@@ -31,6 +31,8 @@ const mainImage = (images: RawImage[] | undefined): string | null => {
   return typeof u === "string" ? u : null;
 };
 
+export type Condition = "new" | "used" | "any";
+
 export interface Category {
   slug: string;
   title: string;
@@ -82,10 +84,12 @@ function toListings(data: { products?: RawProduct[] }): Listing[] {
 export async function searchListings(
   query: string,
   apiKey: string,
-  opts: { limit?: number; category?: string | undefined; fetchImpl?: typeof fetch } = {},
+  opts: { limit?: number; category?: string | undefined; condition?: Condition | undefined; fetchImpl?: typeof fetch } = {},
 ): Promise<Listing[]> {
   const f = opts.fetchImpl ?? fetch;
-  const filters = { availability: ["InStock"], ...(opts.category ? { category_ids: [opts.category] } : {}) };
+  // Channel3 returns new items only unless asked; used ones are the more negotiable kind.
+  const conditions = opts.condition === "used" ? ["used"] : opts.condition === "any" ? ["new", "used"] : ["new"];
+  const filters = { availability: ["InStock"], conditions, ...(opts.category ? { category_ids: [opts.category] } : {}) };
   const limit = opts.limit ?? 20;
   if (!query && !opts.category) return [];
   const data = query

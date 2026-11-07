@@ -50,6 +50,18 @@ describe("searchListings", () => {
     expect(calls[1]!.body).toMatchObject({ query: "shoes", filters: { category_ids: ["apparel-accessories"] } });
   });
 
+  it("asks for new items by default, and used ones or both on request", async () => {
+    const bodies: { filters: { conditions: string[] } }[] = [];
+    const f = (async (_u: string, init?: RequestInit) => {
+      bodies.push(JSON.parse(String(init?.body ?? "{}")));
+      return new Response("{}", { status: 200 });
+    }) as unknown as typeof fetch;
+    await searchListings("tv", "k", { fetchImpl: f });
+    await searchListings("tv", "k", { condition: "used", fetchImpl: f });
+    await searchListings("tv", "k", { condition: "any", fetchImpl: f });
+    expect(bodies.map((b) => b.filters.conditions)).toEqual([["new"], ["used"], ["new", "used"]]);
+  });
+
   it("returns nothing for an empty query with no category, without calling Channel3", async () => {
     const f = (async () => {
       throw new Error("should not be called");

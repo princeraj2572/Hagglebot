@@ -5,6 +5,7 @@ import { POST as addSeller } from "@/app/api/wants/[id]/sellers/route";
 import { POST as addListings } from "@/app/api/wants/[id]/listings/route";
 import { GET as getCategories } from "@/app/api/marketplace/categories/route";
 import { POST as marketSearch } from "@/app/api/marketplace/search/route";
+import { POST as buyNow } from "@/app/api/wants/[id]/buy/route";
 import { POST as negotiate } from "@/app/api/wants/[id]/negotiate/route";
 import { POST as loadDemo } from "@/app/api/demo/route";
 import { GET as getState } from "@/app/api/state/route";
@@ -208,6 +209,48 @@ describe("API", () => {
       const bad = await addListings(post(`/api/wants/${w.id}/listings`, { listing: { ...L, url: "javascript:alert(1)" } }), ctx({ id: w.id }));
       expect(bad.status).toBe(400);
       expect((await state()).wants[0]!.sellers).toHaveLength(1);
+    });
+
+    it("passes the condition filter through to the search", async () => {
+      const seen: unknown[] = [];
+      svc.findListings = async (q, c, cond) => (seen.push([q, c, cond]), []);
+      await marketSearch(post("/api/marketplace/search", { query: "tv", condition: "used" }));
+      await marketSearch(post("/api/marketplace/search", { query: "tv", condition: "bogus" }));
+      expect(seen).toEqual([["tv", undefined, "used"], ["tv", undefined, undefined]]);
+    });
+
+    describe("buy at the listed price", () => {
+      it("creates a deal at the listed price, with no haggling, ready to pay", async () => {
+        const w = await (await createWant(post("/api/wants", wantBody))).json();
+        const res = await buyNow(post(`/api/wants/${w.id}/buy`, { listing: L }), ctx({ id: w.id }));
+        expect(res.status).toBe(201);
+        const s = await state();
+        expect(s.deals).toHaveLength(1);
+        expect(s.deals[0]).toMatchObject({ price: 240, status: "awaiting_payment", sellerName: "bestbuy.com" });
+        const t = s.threads[0]!;
+        expect(t).toMatchObject({ status: "deal", dealPrice: 240 });
+        expect(t.messages.at(-1)!.guard).toContain("within your $250 budget");
+      });
+
+      it("refuses a price above the budget, so the ceiling holds without haggling too", async () => {
+        const w = await (await createWant(post("/api/wants", wantBody))).json();
+        const res = await buyNow(post(`/api/wants/${w.id}/buy`, { listing: { ...L, price: 251 } }), ctx({ id: w.id }));
+        expect(res.status).toBe(400);
+        expect((await res.json()).error).toContain("above your $250 budget");
+        expect((await state()).deals).toHaveLength(0);
+      });
+
+      it("refuses the same product twice, and an invalid listing", async () => {
+        const w = await (await createWant(post("/api/wants", wantBody))).json();
+        expect((await buyNow(post(`/api/wants/${w.id}/buy`, { listing: L }), ctx({ id: w.id }))).status).toBe(201);
+        expect((await buyNow(post(`/api/wants/${w.id}/buy`, { listing: L }), ctx({ id: w.id }))).status).toBe(409);
+        expect((await buyNow(post(`/api/wants/${w.id}/buy`, { listing: { ...L, url: "javascript:1" } }), ctx({ id: w.id }))).status).toBe(400);
+        expect((await state()).deals).toHaveLength(1);
+      });
+
+      it("answers 404 for an unknown want", async () => {
+        expect((await buyNow(post("/api/wants/nope/buy", { listing: L }), ctx({ id: "nope" }))).status).toBe(404);
+      });
     });
   });
 });

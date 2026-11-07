@@ -1,6 +1,6 @@
 "use client";
-import { useEffect, useRef, useState } from "react";
-import type { Category, Listing } from "@/lib/channel3/search";
+import { useEffect, useRef, useState, type ReactNode } from "react";
+import type { Category, Condition, Listing } from "@/lib/channel3/search";
 import { listingFromEndpoint } from "@/lib/sellers/listing";
 import type { DashboardState } from "@/server/state";
 import { api } from "./api";
@@ -18,29 +18,41 @@ const webUrl = (u: string | null | undefined): string | null => {
   }
 };
 
-/** A marketplace to browse: every category, a search box, and a grid of real products to negotiate. */
+/** First few words of a title: a looser query that finds similar products. */
+const similarQuery = (title: string): string => title.split(/\s+/).slice(0, 5).join(" ");
+
+const CONDITIONS: { id: Condition; label: string }[] = [
+  { id: "new", label: "New" },
+  { id: "used", label: "Used and refurbished" },
+  { id: "any", label: "Any" },
+];
+
+/** A marketplace to browse: every category, a search box, and real products to buy as listed or to negotiate. */
 export function MarketplaceView(props: {
   want: Want | undefined;
   /** False once negotiations have started for the want. */
   canAdd: boolean;
   run: (fn: () => Promise<unknown>) => Promise<void>;
   onError: (msg: string) => void;
+  /** Called after a product was bought at its listed price, so the app can show the deal. */
+  onBought: () => void;
 }) {
-  const { want, canAdd, run, onError } = props;
+  const { want, canAdd, run, onError, onBought } = props;
   const [categories, setCategories] = useState<Category[]>([]);
   const [category, setCategory] = useState<string | null>(null);
+  const [condition, setCondition] = useState<Condition>("new");
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<Listing[] | null>(null);
   const [loading, setLoading] = useState(false);
   const [view, setView] = useState<"cards" | "table">("cards");
   const latest = useRef(0);
 
-  const search = async (q: string, cat: string | null) => {
+  const search = async (q: string, cat: string | null, cond: Condition) => {
     if (!q.trim() && !cat) return;
     const mine = ++latest.current;
     setLoading(true);
     try {
-      const r = await api<Listing[]>("/api/marketplace/search", "POST", { query: q.trim(), ...(cat ? { category: cat } : {}) });
+      const r = await api<Listing[]>("/api/marketplace/search", "POST", { query: q.trim(), condition: cond, ...(cat ? { category: cat } : {}) });
       if (mine === latest.current) setResults(r);
     } catch (e) {
       if (mine === latest.current) onError(e instanceof Error ? e.message : String(e));
@@ -60,7 +72,7 @@ export function MarketplaceView(props: {
         setQuery(q);
         const first = q ? null : (c[0]?.slug ?? null);
         setCategory(first);
-        void search(q, first);
+        void search(q, first, "new");
       })
       .catch((e: unknown) => onError(e instanceof Error ? e.message : String(e)));
     return () => {
@@ -72,7 +84,79 @@ export function MarketplaceView(props: {
 
   const added = new Set((want?.sellers ?? []).flatMap((s) => listingFromEndpoint(s.endpoint)?.url ?? []));
   const full = (want?.sellers.length ?? 0) >= 8;
-  const addable = !!want && canAdd && !full;
+  const open = want?.status === "open";
+  const budget = want?.maxPrice ?? 0;
+
+  const negotiate = (l: Listing) => run(() => api(`/api/wants/${want!.id}/listings`, "POST", { listing: l }));
+  const buy = (l: Listing) =>
+    run(async () => {
+      await api(`/api/wants/${want!.id}/buy`, "POST", { listing: l });
+      onBought();
+    });
+  const similar = (l: Listing) => {
+    const q = similarQuery(l.title);
+    setQuery(q);
+    setCategory(null);
+    setCondition("used");
+    void search(q, null, "used");
+  };
+
+  /** The three things you can do with a product; the same in the card and the table. */
+  const actions = (l: Listing, layout: "card" | "row"): ReactNode => {
+    const isAdded = added.has(l.url);
+    const href = webUrl(l.url);
+    const overBudget = !!want && l.price > budget;
+    const negotiateBtn = (
+      <button
+        className={`${btn} ${layout === "card" ? "flex-1" : "py-1"} ${isAdded ? "border border-line text-muted" : "bg-ultra text-white [@media(hover:hover)]:hover:bg-[#2335b8]"}`}
+        disabled={!want || !canAdd || full || isAdded}
+        onClick={() => void negotiate(l)}
+      >
+        {isAdded ? "Added" : "Negotiate this"}
+      </button>
+    );
+    const buyBtn = (
+      <button
+        className={`${ghost} ${layout === "card" ? "w-full" : "py-1"}`}
+        disabled={!want || !open || overBudget}
+        title={overBudget ? `Above your ${usd(budget)} budget` : "Skip the haggling and pay the listed price through PayPal"}
+        onClick={() => void buy(l)}
+      >
+        Buy at {usd(l.price)}
+      </button>
+    );
+    const viewLink = href && (
+      <a href={href} target="_blank" rel="noopener noreferrer" className={layout === "card" ? `${ghost} text-center` : "text-sm font-medium text-ultra underline-offset-4 hover:underline"}>
+        View
+      </a>
+    );
+    const similarBtn = (
+      <button
+        className={layout === "card" ? "py-0.5 text-left text-[13px] font-medium text-ultra underline-offset-4 hover:underline" : "text-sm font-medium text-ultra underline-offset-4 hover:underline"}
+        onClick={() => similar(l)}
+      >
+        {layout === "card" ? "Find similar you can negotiate" : "Similar"}
+      </button>
+    );
+    return layout === "card" ? (
+      <div className="mt-2 flex flex-col gap-2">
+        <div className="flex gap-2">
+          {negotiateBtn}
+          {viewLink}
+        </div>
+        {buyBtn}
+        {similarBtn}
+      </div>
+    ) : (
+      <span className="flex items-center gap-3">
+        {negotiateBtn}
+        {buyBtn}
+        {viewLink}
+        {similarBtn}
+      </span>
+    );
+  };
+
   const columns: ColDef<Listing>[] = [
     {
       headerName: "",
@@ -92,30 +176,9 @@ export function MarketplaceView(props: {
     {
       headerName: "",
       colId: "act",
-      width: 210,
+      width: 450,
       sortable: false,
-      cellRenderer: (p: { data?: Listing }) => {
-        const l = p.data;
-        if (!l) return null;
-        const isAdded = added.has(l.url);
-        const href = webUrl(l.url);
-        return (
-          <span className="flex items-center gap-2">
-            <button
-              className={`${btn} py-1 ${isAdded ? "border border-line text-muted" : "bg-ultra text-white"}`}
-              disabled={!addable || isAdded}
-              onClick={() => run(() => api(`/api/wants/${want!.id}/listings`, "POST", { listing: l }))}
-            >
-              {isAdded ? "Added" : "Negotiate this"}
-            </button>
-            {href && (
-              <a href={href} target="_blank" rel="noopener noreferrer" className="text-sm font-medium text-ultra underline-offset-4 hover:underline">
-                View
-              </a>
-            )}
-          </span>
-        );
-      },
+      cellRenderer: (p: { data?: Listing }) => (p.data ? actions(p.data, "row") : null),
     },
   ];
 
@@ -129,7 +192,8 @@ export function MarketplaceView(props: {
       <div>
         <h2 className="text-2xl font-bold tracking-tight">Marketplace</h2>
         <p className="mt-1 text-sm text-muted">
-          Real products and prices from Channel3. Pick the ones you want Hagglebot to negotiate; the haggling is simulated and no store is contacted.
+          Real products and prices from Channel3. Stores rarely haggle, so you can buy at the listed price, or have Hagglebot negotiate (simulated; no store is
+          contacted). Used and refurbished listings are the most negotiable.
         </p>
       </div>
 
@@ -137,7 +201,7 @@ export function MarketplaceView(props: {
         className="flex gap-2"
         onSubmit={(e) => {
           e.preventDefault();
-          void search(query, category);
+          void search(query, category, condition);
         }}
       >
         <input className={input} value={query} maxLength={120} placeholder="Search products, e.g. running shoes" aria-label="Search products" onChange={(e) => setQuery(e.target.value)} />
@@ -145,38 +209,45 @@ export function MarketplaceView(props: {
       </form>
 
       <div role="group" aria-label="Categories" className="flex flex-wrap gap-2">
-        <button className={chip(category === null)} aria-pressed={category === null} onClick={() => { setCategory(null); void search(query, null); }}>
+        <button className={chip(category === null)} aria-pressed={category === null} onClick={() => { setCategory(null); void search(query, null, condition); }}>
           All categories
         </button>
         {categories.map((c) => (
-          <button key={c.slug} className={chip(category === c.slug)} aria-pressed={category === c.slug} onClick={() => { setCategory(c.slug); void search(query, c.slug); }}>
+          <button key={c.slug} className={chip(category === c.slug)} aria-pressed={category === c.slug} onClick={() => { setCategory(c.slug); void search(query, c.slug, condition); }}>
             {c.title}
           </button>
         ))}
       </div>
 
-      <div className="flex flex-wrap items-center justify-between gap-2">
-      <p className="text-sm text-muted" role="status">
-        {!want
-          ? "Select or add a want first to negotiate a product."
-          : !canAdd
-            ? "Negotiations have started for this want. Restart it to change its sellers."
-            : full
-              ? "This want already has 8 sellers."
-              : `Adding to: ${want.item}`}
-        {results && !loading ? ` · ${results.length} products` : ""}
-      </p>
-      <div role="group" aria-label="View" className="flex gap-1">
-        {(["cards", "table"] as const).map((v) => (
-          <button key={v} aria-pressed={view === v} onClick={() => setView(v)} className={chip(view === v)}>
-            {v === "cards" ? "Cards" : "Table"}
+      <div role="group" aria-label="Condition" className="flex flex-wrap items-center gap-2">
+        <span className="text-sm text-muted">Condition</span>
+        {CONDITIONS.map((c) => (
+          <button key={c.id} className={chip(condition === c.id)} aria-pressed={condition === c.id} onClick={() => { setCondition(c.id); void search(query, category, c.id); }}>
+            {c.label}
           </button>
         ))}
       </div>
+
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <p className="text-sm text-muted" role="status">
+          {!want
+            ? "Select or add a want first to buy or negotiate a product."
+            : !open
+              ? "This want is already purchased."
+              : `For: ${want.item} (budget ${usd(budget)})`}
+          {results && !loading ? ` · ${results.length} products` : ""}
+        </p>
+        <div role="group" aria-label="View" className="flex gap-1">
+          {(["cards", "table"] as const).map((v) => (
+            <button key={v} aria-pressed={view === v} onClick={() => setView(v)} className={chip(view === v)}>
+              {v === "cards" ? "Cards" : "Table"}
+            </button>
+          ))}
+        </div>
       </div>
 
       {loading && !results && <p className="text-sm text-muted">Loading products…</p>}
-      {results && results.length === 0 && !loading && <p className="text-sm text-muted">No products found. Try another search or category.</p>}
+      {results && results.length === 0 && !loading && <p className="text-sm text-muted">No products found. Try another search, category or condition.</p>}
 
       {view === "table" && results && results.length > 0 && (
         <div className={loading ? "opacity-60" : ""}>
@@ -187,8 +258,6 @@ export function MarketplaceView(props: {
       <ul className={`grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4 ${loading ? "opacity-60" : ""} ${view === "table" ? "hidden" : ""}`}>
         {(results ?? []).map((l) => {
           const img = webUrl(l.image);
-          const href = webUrl(l.url);
-          const isAdded = added.has(l.url);
           return (
             <li key={l.url} className="flex min-w-0 flex-col overflow-hidden rounded-md border border-line bg-paper">
               <div className="flex h-36 items-center justify-center bg-chalk">
@@ -206,20 +275,7 @@ export function MarketplaceView(props: {
                   <span className="num text-xl font-bold">{usd(l.price)}</span>
                   {l.condition && <span className="rounded-full border border-line px-2 py-0.5 text-[12px] text-muted">{l.condition}</span>}
                 </p>
-                <div className="mt-2 flex gap-2">
-                  <button
-                    className={`${btn} flex-1 ${isAdded ? "border border-line text-muted" : "bg-ultra text-white [@media(hover:hover)]:hover:bg-[#2335b8]"}`}
-                    disabled={!want || !canAdd || full || isAdded}
-                    onClick={() => run(() => api(`/api/wants/${want!.id}/listings`, "POST", { listing: l }))}
-                  >
-                    {isAdded ? "Added" : "Negotiate this"}
-                  </button>
-                  {href && (
-                    <a href={href} target="_blank" rel="noopener noreferrer" className={`${ghost} text-center`}>
-                      View
-                    </a>
-                  )}
-                </div>
+                {actions(l, "card")}
               </div>
             </li>
           );
