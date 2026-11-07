@@ -1,4 +1,3 @@
-import { Avatar } from "./Avatar";
 
 /** The app bar: the logo, the two pages, whether anything is live, and the mode. */
 export function Topbar(props: {
@@ -14,22 +13,22 @@ export function Topbar(props: {
 }) {
   const { live, total, marketplace, page, onPage, onHome } = props;
   return (
-    <header className="sticky top-0 z-30 bg-chalk/85 backdrop-blur">
-      <div className="mx-auto flex h-16 max-w-[96rem] items-center gap-2 px-3 sm:gap-4 sm:px-6">
-        <button onClick={onHome} title="Back to the welcome page" className="flex shrink-0 items-center gap-2.5 rounded-lg text-lg font-bold tracking-tight">
-          <Avatar name="Hagglebot" />
+    <header className="sticky top-2 z-30 mx-auto max-w-[96rem] px-3 pt-3 sm:px-5 sm:pt-4">
+      <div className="flex items-center gap-2 rounded-xl border border-line bg-paper px-3 py-2 shadow-lift sm:gap-4 sm:px-4">
+        <button onClick={onHome} title="Back to the welcome page" className="flex shrink-0 items-center gap-2 rounded-lg text-[15px] font-semibold tracking-tight">
+          <span aria-hidden className="flex h-6 w-6 items-center justify-center rounded-md bg-ink text-xs font-bold text-white">H</span>
           <span className="sr-only sm:not-sr-only">Hagglebot</span>
         </button>
 
         {marketplace && (
-          <nav aria-label="Pages" className="flex items-center gap-0.5 rounded-lg bg-mist p-1">
+          <nav aria-label="Pages" className="mx-auto flex items-center gap-1 text-sm">
             {(["negotiate", "marketplace"] as const).map((p) => (
               <button
                 key={p}
                 aria-current={page === p ? "page" : undefined}
                 onClick={() => onPage(p)}
-                className={`rounded-md px-2.5 py-1.5 text-sm font-semibold transition-[background-color,color,box-shadow] sm:px-3.5 duration-150 ${
-                  page === p ? "bg-paper text-ink shadow-sm" : "text-muted [@media(hover:hover)]:hover:text-ink"
+                className={`rounded-md px-3 py-1.5 font-medium transition-colors duration-150 ${
+                  page === p ? "bg-mist text-ink" : "text-muted [@media(hover:hover)]:hover:text-ink"
                 }`}
               >
                 {p === "negotiate" ? "Negotiate" : "Marketplace"}
@@ -38,23 +37,21 @@ export function Topbar(props: {
           </nav>
         )}
 
-        <div className="ml-auto flex shrink-0 items-center gap-2 whitespace-nowrap sm:gap-3">
+        <div className={`${marketplace ? "" : "ml-auto"} flex shrink-0 items-center gap-2 whitespace-nowrap`}>
           {live > 0 && (
-            <span className="num inline-flex items-center gap-1.5 rounded-md bg-ultra px-2.5 py-1 text-sm font-medium text-white" role="status">
-              <span aria-hidden className="h-2 w-2 rounded-full bg-white motion-safe:animate-pulse" />
-              <span className="hidden sm:inline">Live:</span>
+            <span className="num inline-flex items-center gap-1.5 rounded-md bg-[#E7F7EE] px-2 py-1 text-xs font-medium text-[#15803D]" role="status">
+              <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-[#22C55E] motion-safe:animate-pulse" />
+              <span className="hidden sm:inline">Live</span>
               {live} of {total}
-              <span className="hidden sm:inline">sellers</span>
             </span>
           )}
-            <span
-              className="hidden items-center gap-2 rounded-md bg-mist px-2.5 py-1 text-[13px] font-medium text-muted sm:inline-flex"
-              data-testid="mode-badge"
-              title="Sellers, negotiation and payments are simulated. No real money moves."
-            >
-              <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-ink/40" />
-              Simulation
-            </span>
+          <span
+            className="hidden items-center gap-1.5 rounded-md bg-[#E8F0FE] px-2 py-1 text-xs font-medium text-[#2F63F3] sm:inline-flex"
+            data-testid="mode-badge"
+            title="Sellers, negotiation and payments are simulated. No real money moves."
+          >
+            Simulation
+          </span>
         </div>
       </div>
     </header>

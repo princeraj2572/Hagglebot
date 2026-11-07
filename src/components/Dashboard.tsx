@@ -163,7 +163,7 @@ export function Dashboard() {
         onPage={setPage}
       />
 
-      <div className="mx-auto max-w-[96rem] px-4 py-5">
+      <div className="mx-auto max-w-[96rem] px-3 pb-6 pt-3 sm:px-5 sm:pt-4">
         {error && (
           <p role="alert" className="mb-4 border-l-4 border-scam bg-paper px-3 py-2 text-sm text-scam">
             {error}{" "}
@@ -185,8 +185,8 @@ export function Dashboard() {
         {!state ? (
           <p className="text-sm text-muted">Loading…</p>
         ) : (
-          <div className={`grid grid-cols-1 gap-6 lg:grid-cols-[16rem_minmax(0,1fr)]`}>
-            <aside className={`min-w-0 ${tab === "wants" ? "" : "hidden lg:block"}`}>
+          <div className="grid grid-cols-1 gap-4 rounded-[28px] border border-line bg-paper p-3 sm:p-4 lg:grid-cols-[17rem_minmax(0,1fr)]">
+            <aside className={`min-w-0 rounded-2xl bg-chalk p-3 sm:p-4 ${tab === "wants" ? "" : "hidden lg:block"}`}>
               <WantsPanel
                 wants={wants}
                 bundles={state.bundles}
@@ -201,7 +201,7 @@ export function Dashboard() {
                 preset={preset}
               />
             </aside>
-            <main className={`min-w-0 ${tab === "negotiation" ? "" : "hidden lg:block"}`}>
+            <main className={`min-w-0 p-1 sm:p-3 ${tab === "negotiation" ? "" : "hidden lg:block"}`}>
               {page === "marketplace" ? (
                 <MarketplaceView key={selected?.id ?? "none"} want={selected} canAdd={liveCount === 0} run={run} onError={setError} onBought={() => { setFocus({ view: "deals" }); setPage("negotiate"); }} onGoToWant={() => setPage("negotiate")} />
               ) : (
