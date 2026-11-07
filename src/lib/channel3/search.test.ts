@@ -10,15 +10,15 @@ describe("searchListings", () => {
   it("returns each product's cheapest in-stock USD offer, rounded, in relevance order", async () => {
     const f = fake(200, {
       products: [
-        { title: "A", offers: [offer("www.shop.com", 120.6), offer("cheap.com", 99.4, { condition: "used" }), offer("gone.com", 10, { availability: "OutOfStock" })] },
+        { title: "A", images: [{ url: "https://cdn/a2", is_main_image: false }, { url: "https://cdn/a1", cleaned_url: "https://cdn/a1c", is_main_image: true }], offers: [offer("www.shop.com", 120.6), offer("cheap.com", 99.4, { condition: "used" }), offer("gone.com", 10, { availability: "OutOfStock" })] },
         { title: "B", offers: [{ ...offer("eur.com", 50), price: { price: 50, currency: "EUR" } }] },
         { title: "C", offers: [offer("c.com", 75)] },
       ],
     });
     const out = await searchListings("x", "key", { fetchImpl: f });
     expect(out).toEqual([
-      { title: "A", retailer: "cheap.com", price: 99, condition: "used", url: "https://cheap.com/p" },
-      { title: "C", retailer: "c.com", price: 75, condition: null, url: "https://c.com/p" },
+      { title: "A", retailer: "cheap.com", price: 99, condition: "used", url: "https://cheap.com/p", image: "https://cdn/a1c" },
+      { title: "C", retailer: "c.com", price: 75, condition: null, url: "https://c.com/p", image: null },
     ]);
   });
 

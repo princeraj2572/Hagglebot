@@ -8,6 +8,8 @@ export interface Listing {
   condition: string | null;
   /** The retailer's buy link. */
   url: string;
+  /** Product image on Channel3's CDN, when it has one. */
+  image: string | null;
 }
 
 export class Channel3Error extends Error {
@@ -20,7 +22,14 @@ export class Channel3Error extends Error {
 const URL_SEARCH = "https://api.trychannel3.com/v1/search";
 
 interface RawOffer { url?: unknown; domain?: unknown; price?: { price?: unknown; currency?: unknown }; availability?: unknown; condition?: unknown }
-interface RawProduct { title?: unknown; offers?: RawOffer[] }
+interface RawImage { url?: unknown; cleaned_url?: unknown; is_main_image?: unknown }
+interface RawProduct { title?: unknown; offers?: RawOffer[]; images?: RawImage[] }
+
+const mainImage = (images: RawImage[] | undefined): string | null => {
+  const img = images?.find((i) => i.is_main_image) ?? images?.[0];
+  const u = img?.cleaned_url ?? img?.url;
+  return typeof u === "string" ? u : null;
+};
 
 /**
  * Searches Channel3 and returns, per product, its cheapest in-stock USD offer (relevance order kept).
@@ -61,6 +70,7 @@ export async function searchListings(
       price: Math.max(1, Math.round(best.price!.price as number)),
       condition: typeof best.condition === "string" ? best.condition : null,
       url: best.url as string,
+      image: mainImage(p.images),
     });
   }
   return out;

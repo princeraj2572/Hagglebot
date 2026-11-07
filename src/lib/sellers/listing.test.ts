@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
 import type { Listing } from "../channel3/search";
-import { encodeListing, listingPersona, personaFromEndpoint, personaIdForListing } from "./listing";
+import { encodeListing, listingFromEndpoint, listingPersona, personaFromEndpoint, personaIdForListing } from "./listing";
 import { PERSONAS } from "./personas";
 import { PersonaSeller } from "./sellerAgent";
 
-const l: Listing = { title: "Sony WH-1000XM6", retailer: "bestbuy.com", price: 378, condition: "new", url: "https://bestbuy.com/x" };
+const l: Listing = { title: "Sony WH-1000XM6", retailer: "bestbuy.com", price: 378, condition: "new", url: "https://bestbuy.com/x", image: null };
 
 describe("real listing sellers", () => {
   it("never gives a real retailer a scam personality", () => {
@@ -30,6 +30,12 @@ describe("real listing sellers", () => {
     expect(seller.plan(1).action).toBe("refuse");
     const floor = Math.ceil(PERSONAS.find((p) => p.id === "tomas")!.costBasis * (378 / 399) * 1.08);
     expect(seller.plan(floor + 20).price).toBeGreaterThanOrEqual(floor);
+  });
+
+  it("reads a stored listing back for the Listings view, and ignores anything else", () => {
+    expect(listingFromEndpoint(encodeListing("bea", { ...l, image: "https://cdn.example/i.png" }))).toEqual({ ...l, image: "https://cdn.example/i.png" });
+    expect(listingFromEndpoint("mock://ferdi")).toBeNull();
+    expect(listingFromEndpoint("listing:%7Bbroken")).toBeNull();
   });
 
   it("rejects a malformed stored listing", () => {

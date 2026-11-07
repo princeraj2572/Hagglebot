@@ -148,7 +148,7 @@ describe("API", () => {
 
   describe("real listings", () => {
     const wantBody = { item: "Headphones", maxPrice: 250, notes: "", buyerName: "Alex" };
-    const L = (retailer: string, price: number) => ({ title: "Sony WH", retailer, price, condition: "new", url: `https://${retailer}/p` });
+    const L = (retailer: string, price: number) => ({ title: "Sony WH", retailer, price, condition: "new", url: `https://${retailer}/p`, image: null });
 
     it("explains how to enable it when there is no Channel3 key", async () => {
       const w = await (await createWant(post("/api/wants", wantBody))).json();

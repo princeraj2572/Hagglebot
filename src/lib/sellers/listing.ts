@@ -28,6 +28,17 @@ export function listingPersona(base: Persona, l: Listing): Persona {
 
 export const encodeListing = (personaId: string, l: Listing): string => LISTING_PREFIX + encodeURIComponent(JSON.stringify({ p: personaId, l }));
 
+/** The listing behind a seller's endpoint, or null for a made-up seller or malformed data. */
+export function listingFromEndpoint(endpoint: string): Listing | null {
+  if (!endpoint.startsWith(LISTING_PREFIX)) return null;
+  try {
+    const l = (JSON.parse(decodeURIComponent(endpoint.slice(LISTING_PREFIX.length))) as { l?: Listing }).l;
+    return l && typeof l.price === "number" && typeof l.retailer === "string" && typeof l.title === "string" ? { ...l, image: l.image ?? null } : null;
+  } catch {
+    return null;
+  }
+}
+
 /** Reads a stored listing endpoint back into a persona; throws on anything malformed. */
 export function personaFromEndpoint(endpoint: string): Persona {
   const raw = JSON.parse(decodeURIComponent(endpoint.slice(LISTING_PREFIX.length))) as { p?: string; l?: Listing };

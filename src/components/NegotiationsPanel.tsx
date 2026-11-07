@@ -7,12 +7,14 @@ import { DealsPanel } from "./DealsPanel";
 import { Detail } from "./Detail";
 import { usd } from "./format";
 import { Inbox } from "./Inbox";
+import { ListingsPanel } from "./ListingsPanel";
 import { axisFor } from "./Lane";
 import { primary } from "./ui";
+import { listingFromEndpoint } from "@/lib/sellers/listing";
 import { openingOffer, STYLE_INFO } from "@/lib/negotiation/strategy";
 
 type Want = DashboardState["wants"][number];
-type View = "conversations" | "deals";
+type View = "conversations" | "deals" | "listings";
 
 /** The thread as it looked after its first n messages, for the replay. */
 function atStep(t: Thread, n: number): Thread {
@@ -139,6 +141,7 @@ export function NegotiationsPanel(props: {
   }
 
   const axis = axisFor(want.maxPrice, threads);
+  const listingCount = want.sellers.filter((s) => listingFromEndpoint(s.endpoint)).length;
   const dealThreads = shown.filter((t) => t.status === "deal" && t.dealPrice !== null);
   const best = [...dealThreads].sort((a, b) => (a.dealPrice as number) - (b.dealPrice as number))[0];
   const liveCount = shown.filter((t) => t.status === "negotiating").length;
@@ -168,6 +171,7 @@ export function NegotiationsPanel(props: {
               ? "Add at least one seller in the sidebar, then press Negotiate."
               : `Hagglebot will chat with ${want.sellers.length} seller${want.sellers.length === 1 ? "" : "s"} at once. Your budget of ${usd(want.maxPrice)} is never shown to them. Press Negotiate to start.`}
           </p>
+          <ListingsPanel sellers={want.sellers} threads={[]} />
         </div>
       ) : (
         <>
@@ -213,6 +217,7 @@ export function NegotiationsPanel(props: {
               [
                 ["conversations", `Conversations (${shown.length})`],
                 ["deals", deals.length > 0 ? `Deals (${deals.length})` : "Deals"],
+                ...(listingCount > 0 ? ([["listings", `Listings (${listingCount})`]] as const) : []),
               ] as const
             ).map(([id, label]) => (
               <button
@@ -248,6 +253,8 @@ export function NegotiationsPanel(props: {
                 )}
               </div>
             </div>
+          ) : view === "listings" ? (
+            <ListingsPanel sellers={want.sellers} threads={shown} />
           ) : (
             <DealsPanel deals={deals} wants={wants} paypalClientId={paypalClientId} buyerEmail={buyerEmail} onChanged={onChanged} onError={onError} />
           )}
