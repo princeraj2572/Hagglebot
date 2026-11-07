@@ -6,6 +6,7 @@ import { POST as addListings } from "@/app/api/wants/[id]/listings/route";
 import { GET as getCategories } from "@/app/api/marketplace/categories/route";
 import { POST as marketSearch } from "@/app/api/marketplace/search/route";
 import { POST as buyNow } from "@/app/api/wants/[id]/buy/route";
+import { POST as demoPayRoute } from "@/app/api/deals/[id]/demo-pay/route";
 import { POST as negotiate } from "@/app/api/wants/[id]/negotiate/route";
 import { POST as loadDemo } from "@/app/api/demo/route";
 import { GET as getState } from "@/app/api/state/route";
@@ -251,6 +252,59 @@ describe("API", () => {
       it("answers 404 for an unknown want", async () => {
         expect((await buyNow(post("/api/wants/nope/buy", { listing: L }), ctx({ id: "nope" }))).status).toBe(404);
       });
+    });
+  });
+
+  describe("demo mode (?demo=1)", () => {
+    const demoNegotiate = (wantId: string) => negotiate(post(`/api/wants/${wantId}/negotiate?demo=1`), ctx({ id: wantId }));
+    const demoPay = (dealId: string) => demoPayRoute(post(`/api/deals/${dealId}/demo-pay`), ctx({ id: dealId }));
+
+    async function closedDeal() {
+      const demo = await (await loadDemo(post("/api/demo"))).json();
+      await demoNegotiate(demo.wantId);
+      await svc.runner.idle();
+      return (await state()).deals.find((d) => d.wantId === demo.wantId)!;
+    }
+
+    it("runs the negotiation to the end with canned text and no delay", async () => {
+      const demo = await (await loadDemo(post("/api/demo"))).json();
+      expect((await demoNegotiate(demo.wantId)).status).toBe(202);
+      await svc.runner.idle();
+      const s = await state();
+      expect(s.threads.every((t) => t.status !== "negotiating")).toBe(true);
+      expect(s.deals.length).toBeGreaterThan(0);
+    });
+
+    it("pays with DEMO-labelled ids, never calls PayPal, buys the want and withdraws from the others", async () => {
+      const deal = await closedDeal();
+      expect(svc.publicConfig.paypalClientId).toBeNull(); // no PayPal configured: the real flow could not have run
+      const res = await demoPay(deal.id);
+      expect(res.status).toBe(200);
+      expect(await res.json()).toMatchObject({ status: "paid", payerId: "DEMO-PAYER", captureId: `DEMO-CAPTURE-${deal.id}` });
+      const s = await state();
+      expect(s.wants.find((w) => w.id === deal.wantId)!.status).toBe("purchased");
+      const paidThread = s.threads.find((t) => t.id === deal.threadId)!;
+      expect(paidThread.messages.at(-1)!.text).toContain("DEMO MODE");
+      expect(s.threads.filter((t) => t.id !== deal.threadId).every((t) => t.status === "walked_away" || t.status === "deal")).toBe(true);
+    });
+
+    it("can refund a demo payment without PayPal, and says it was a demo", async () => {
+      const deal = await closedDeal();
+      await demoPay(deal.id);
+      const res = await refund(post(`/api/deals/${deal.id}/refund`), ctx({ id: deal.id }));
+      expect(res.status).toBe(200);
+      expect((await res.json()).status).toBe("refunded");
+      const t = (await state()).threads.find((x) => x.id === deal.threadId)!;
+      expect(t.messages.at(-1)!.text).toContain("DEMO MODE");
+    });
+
+    it("is idempotent, and refuses unknown or cancelled deals", async () => {
+      const deal = await closedDeal();
+      expect((await demoPay(deal.id)).status).toBe(200);
+      expect((await demoPay(deal.id)).status).toBe(200);
+      expect((await demoPay("nope")).status).toBe(404);
+      const cancelled = (await state()).deals.find((d) => d.status === "cancelled");
+      if (cancelled) expect((await demoPay(cancelled.id)).status).toBe(409);
     });
   });
 });

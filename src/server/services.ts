@@ -41,11 +41,12 @@ export function buildServices(env: Record<string, string | undefined> = process.
     llm,
     stepDelayMs: Number.isFinite(delay) && delay >= 0 ? Math.min(delay, 30_000) : 1200,
     log: (m, e) => console.error(m, e),
-    sellerFor: (contact, initialAsk) => {
-      if (contact.endpoint.startsWith(LISTING_PREFIX)) return new PersonaSeller(personaFromEndpoint(contact.endpoint), llm, initialAsk);
+    sellerFor: (contact, initialAsk, demo) => {
+      const sellerLlm = demo ? null : llm;
+      if (contact.endpoint.startsWith(LISTING_PREFIX)) return new PersonaSeller(personaFromEndpoint(contact.endpoint), sellerLlm, initialAsk);
       const persona = PERSONAS.find((p) => p.id === contact.persona);
       if (!persona) throw new Error(`Unknown seller persona "${contact.persona}"`);
-      return new PersonaSeller(persona, llm, initialAsk);
+      return new PersonaSeller(persona, sellerLlm, initialAsk);
     },
   });
   runner.recoverInterrupted();

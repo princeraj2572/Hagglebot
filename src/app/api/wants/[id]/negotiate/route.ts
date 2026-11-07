@@ -5,6 +5,8 @@ export const runtime = "nodejs";
 
 export async function POST(req: Request, ctx: { params: Promise<{ id: string }> }) {
   const { id } = await ctx.params;
-  const restart = new URL(req.url).searchParams.get("restart") === "1";
-  return handle(req, () => ({ threads: getServices().runner.start(id, { restart }).map((t) => t.id) }), 202);
+  const q = new URL(req.url).searchParams;
+  const restart = q.get("restart") === "1";
+  const demo = q.get("demo") === "1";
+  return handle(req, () => ({ threads: getServices().runner.start(id, { restart, demo }).map((t) => t.id) }), 202);
 }

@@ -52,13 +52,14 @@ export function NegotiationsPanel(props: {
   paypalClientId: string | null;
   buyerEmail: string | null;
   busy: boolean;
+  demo: boolean;
   canNegotiate: boolean;
   onNegotiate: () => void;
   run: (fn: () => Promise<unknown>) => Promise<void>;
   onChanged: () => void;
   onError: (msg: string) => void;
 }) {
-  const { want, threads, deals, wants, paypalClientId, buyerEmail, busy, canNegotiate, onNegotiate, run, onChanged, onError } = props;
+  const { want, threads, deals, wants, paypalClientId, buyerEmail, busy, demo, canNegotiate, onNegotiate, run, onChanged, onError } = props;
 
   // Negotiations that finished before this page opened replay once, so the haggling is visible.
   const seen = useRef(new Set<string>());
@@ -266,7 +267,7 @@ export function NegotiationsPanel(props: {
           ) : view === "listings" ? (
             <ListingsPanel sellers={want.sellers} threads={shown} />
           ) : (
-            <DealsPanel deals={deals} wants={wants} paypalClientId={paypalClientId} buyerEmail={buyerEmail} onChanged={onChanged} onError={onError} />
+            <DealsPanel deals={deals} wants={wants} demo={demo} paypalClientId={paypalClientId} buyerEmail={buyerEmail} onChanged={onChanged} onError={onError} />
           )}
         </>
       )}

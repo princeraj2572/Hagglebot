@@ -21,6 +21,9 @@ export function Dashboard() {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const live = useRef(false);
+  // ?demo=1: negotiation runs instantly with canned text and payment is a labelled mock (no models, no PayPal).
+  const [demo, setDemo] = useState(false);
+  useEffect(() => setDemo(new URLSearchParams(window.location.search).get("demo") === "1"), []);
 
   const refresh = useCallback(async () => {
     // Dev-only stress fixture (?data=worst); the NODE_ENV check is inlined by Next, so it is dead code in production.
@@ -86,6 +89,7 @@ export function Dashboard() {
         live={liveCount}
         total={threads.length}
         marketplace={state?.config.listings ?? false}
+        demo={demo}
         page={page}
         onPage={setPage}
       />
@@ -135,8 +139,9 @@ export function Dashboard() {
                   paypalClientId={state.config.paypalClientId}
                   buyerEmail={state.config.paypalBuyerEmail}
                   busy={busy}
-                  canNegotiate={!!selected && selected.status === "open" && selected.sellers.length > 0 && liveCount === 0}
-                  onNegotiate={() => selected && run(() => api(`/api/wants/${selected.id}/negotiate${started ? "?restart=1" : ""}`, "POST"))}
+                  demo={demo}
+                canNegotiate={!!selected && selected.status === "open" && selected.sellers.length > 0 && liveCount === 0}
+                  onNegotiate={() => selected && run(() => api(`/api/wants/${selected.id}/negotiate${started ? "?restart=1" : ""}${demo ? (started ? "&demo=1" : "?demo=1") : ""}`, "POST"))}
                   run={run}
                   onChanged={refresh}
                   onError={setError}

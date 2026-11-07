@@ -8,10 +8,12 @@ export function Topbar(props: {
   total: number;
   /** Show the page switch only when the marketplace is available (needs a Channel3 key). */
   marketplace: boolean;
+  /** ?demo=1: canned negotiation and a mock payment. */
+  demo: boolean;
   page: "negotiate" | "marketplace";
   onPage: (p: "negotiate" | "marketplace") => void;
 }) {
-  const { wantItem, llmMode, live, total, marketplace, page, onPage } = props;
+  const { wantItem, llmMode, live, total, marketplace, page, onPage, demo } = props;
   return (
     <header className="sticky top-0 z-30 border-b border-line bg-paper/90 backdrop-blur">
       <div className="mx-auto flex h-14 max-w-[96rem] items-center gap-4 px-4">
@@ -54,13 +56,19 @@ export function Topbar(props: {
               <span className="hidden sm:inline"> sellers</span>
             </span>
           )}
-          <span
-            className="hidden items-center gap-2 rounded-full border border-line px-3 py-1 text-[13px] text-muted lg:inline-flex"
-            data-testid="mode-badge"
-          >
-            <span aria-hidden className="h-2 w-2 rounded-full bg-ink/40" />
-            Sandbox only · Simulated sellers · {llmMode === "llm" ? "AI-written messages" : "template negotiator"}
-          </span>
+          {demo ? (
+            <span className="inline-flex items-center gap-2 rounded-full bg-tag px-3 py-1 text-[13px] font-semibold" data-testid="mode-badge" role="status">
+              Demo mode · canned negotiation and payment, no PayPal
+            </span>
+          ) : (
+            <span
+              className="hidden items-center gap-2 rounded-full border border-line px-3 py-1 text-[13px] text-muted lg:inline-flex"
+              data-testid="mode-badge"
+            >
+              <span aria-hidden className="h-2 w-2 rounded-full bg-ink/40" />
+              Sandbox only · Simulated sellers · {llmMode === "llm" ? "AI-written messages" : "template negotiator"}
+            </span>
+          )}
         </div>
       </div>
     </header>
