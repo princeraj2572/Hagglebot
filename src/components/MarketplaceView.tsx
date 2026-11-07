@@ -265,7 +265,7 @@ export function MarketplaceView(props: {
               : `For: ${want.item} (budget ${usd(budget)})`}
           {results && !loading ? ` · ${results.length} products` : ""}
         </p>
-        <div role="group" aria-label="View" className="flex gap-1">
+        <div role="group" aria-label="View" className="hidden gap-1 sm:flex">
           {(["cards", "table"] as const).map((v) => (
             <button key={v} aria-pressed={view === v} onClick={() => setView(v)} className={chip(view === v)}>
               {v === "cards" ? "Cards" : "Table"}

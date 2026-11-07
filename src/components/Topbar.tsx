@@ -16,10 +16,10 @@ export function Topbar(props: {
   const { wantItem, llmMode, live, total, marketplace, page, onPage, demo } = props;
   return (
     <header className="sticky top-0 z-30 border-b border-line bg-paper/90 backdrop-blur">
-      <div className="mx-auto flex h-14 max-w-[96rem] items-center gap-4 px-4">
+      <div className="mx-auto flex h-14 max-w-[96rem] items-center gap-2 px-4 sm:gap-4">
         <span className="flex shrink-0 items-center gap-2.5 text-lg font-bold tracking-tight">
           <Avatar name="Hagglebot" />
-          Hagglebot
+          <span className="sr-only sm:not-sr-only">Hagglebot</span>
         </span>
 
         {marketplace && (
@@ -47,7 +47,7 @@ export function Topbar(props: {
           </nav>
         )}
 
-        <div className="ml-auto flex shrink-0 items-center gap-3 whitespace-nowrap">
+        <div className="ml-auto flex shrink-0 items-center gap-2 whitespace-nowrap sm:gap-3">
           {live > 0 && (
             <span className="num inline-flex items-center gap-2 rounded-full bg-ultra/10 px-3 py-1 text-sm font-medium text-ultra" role="status">
               <span aria-hidden className="h-2 w-2 rounded-full bg-ultra motion-safe:animate-pulse" />
@@ -58,7 +58,7 @@ export function Topbar(props: {
           )}
           {demo ? (
             <span className="inline-flex items-center gap-2 rounded-full bg-tag px-3 py-1 text-[13px] font-semibold" data-testid="mode-badge" role="status">
-              Demo mode · canned negotiation and payment, no PayPal
+              Demo mode<span className="hidden sm:inline"> · canned negotiation and payment, no PayPal</span>
             </span>
           ) : (
             <span
