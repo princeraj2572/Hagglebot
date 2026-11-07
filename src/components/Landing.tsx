@@ -22,74 +22,23 @@ const STEPS = [
   { title: "Pay, or ask first", text: "A deal inside your budget appears under Deals. Confirm and Pay completes a mock payment and withdraws from the other sellers. Turn on 'Ask me before accepting a price' to approve each deal yourself." },
 ];
 
-const RULER = {
-  backgroundImage:
-    "repeating-linear-gradient(90deg, rgba(255,255,255,.22) 0 1px, transparent 1px 48px), repeating-linear-gradient(90deg, rgba(255,255,255,.12) 0 1px, transparent 1px 12px)",
-  backgroundSize: "100% 14px, 100% 7px",
-  backgroundRepeat: "no-repeat",
-  maskImage: "linear-gradient(90deg, transparent, #000 20%, #000 80%, transparent)",
-  WebkitMaskImage: "linear-gradient(90deg, transparent, #000 20%, #000 80%, transparent)",
-} as const;
-
-/** The first screen: what Hagglebot does, a few ready-made things to try, and a short walkthrough. */
+/** The empty dashboard: a few ready-made things to try and a short walkthrough. */
 export function Landing({ onStart }: { onStart?: ((preset?: Preset) => void) | undefined }) {
   const [tour, setTour] = useState<number | null>(null);
   return (
     <div className="space-y-6">
-      <section aria-label="Welcome" className="relative isolate overflow-hidden rounded-[28px] bg-ink p-7 text-white shadow-lift sm:p-12">
-        <div aria-hidden className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-28 opacity-60" style={RULER} />
-        <div aria-hidden className="pointer-events-none absolute -right-20 -top-28 -z-10 h-96 w-96 rounded-full bg-ultra/45 blur-3xl" />
-
-        <div className="grid items-center gap-10 lg:grid-cols-[1.15fr_1fr]">
-          <div>
-            <h2 className="max-w-2xl text-balance text-4xl font-bold leading-[1.04] tracking-tight sm:text-6xl">Stop paying the first price.</h2>
-            <p className="mt-5 max-w-lg text-lg leading-relaxed text-white/75">
-              Tell Hagglebot what you want and the most you will pay. It talks to every seller at once, never goes over budget and walks away from scams.
-            </p>
-            <div className="mt-8 flex flex-wrap items-center gap-3">
-              {onStart && (
-                <button className="rounded-full bg-white px-6 py-3 font-semibold text-ink transition-transform duration-150 active:scale-[0.97] [@media(hover:hover)]:hover:bg-tag" onClick={() => onStart()}>
-                  Add your first want
-                </button>
-              )}
-              <button
-                className="rounded-full bg-white/10 px-6 py-3 font-semibold text-white transition-transform duration-150 active:scale-[0.97] [@media(hover:hover)]:hover:bg-white/20"
-                onClick={() => setTour(0)}
-              >
-                Take the 1-minute tour
-              </button>
-            </div>
-            <p className="mt-4 text-sm text-white/55">Sellers, negotiation and payments are simulated. No account needed and no real money moves.</p>
-          </div>
-
-          {/* A frozen negotiation: the two prices closing in on each other under the budget line. */}
-          <figure aria-label="Example negotiation" className="rounded-2xl bg-white/[0.07] p-5">
-            <figcaption className="flex items-baseline justify-between text-sm">
-              <span className="font-semibold">Headphones, budget $250</span>
-              <span className="text-white/55">example</span>
-            </figcaption>
-            <div className="relative mt-8 h-16" aria-hidden>
-              <div className="absolute inset-x-0 top-1/2 h-px bg-white/20" />
-              <div className="absolute inset-y-0 left-[72%] w-px bg-white/60" />
-              <span className="absolute -top-5 left-[72%] -translate-x-1/2 text-[11px] text-white/70">budget</span>
-              {[
-                ["12%", "$175", "bg-ultra"],
-                ["44%", "$205", "bg-ultra"],
-                ["58%", "$225", "bg-tag"],
-                ["90%", "$399", "bg-tag"],
-              ].map(([x, label, c]) => (
-                <span key={label} className="absolute top-1/2 -translate-x-1/2 -translate-y-1/2" style={{ left: x }}>
-                  <i className={`block h-3 w-3 rounded-full ${c}`} />
-                  <span className="absolute left-1/2 top-4 -translate-x-1/2 text-[11px] text-white/70">{label}</span>
-                </span>
-              ))}
-            </div>
-            <ul className="mt-6 space-y-1.5 text-sm text-white/75">
-              <li><span className="mr-2 inline-block h-2 w-2 rounded-full bg-tag" />the seller opens at $399</li>
-              <li><span className="mr-2 inline-block h-2 w-2 rounded-full bg-ultra" />Hagglebot offers $175, then $205</li>
-              <li><span className="mr-2 inline-block h-2 w-2 rounded-full bg-white" />they meet at $225, $25 under budget</li>
-            </ul>
-          </figure>
+      <section aria-label="Welcome" className="rounded-[28px] bg-ink p-7 text-white shadow-lift sm:p-9">
+        <h2 className="text-balance text-3xl font-bold tracking-tight sm:text-4xl">What do you want to buy?</h2>
+        <p className="mt-3 max-w-lg leading-relaxed text-white/70">Add a want and Hagglebot finds sellers, negotiates and pays. Everything is simulated.</p>
+        <div className="mt-6 flex flex-wrap items-center gap-3">
+          {onStart && (
+            <button className="rounded-full bg-white px-6 py-3 font-semibold text-ink transition-transform duration-150 active:scale-[0.97] [@media(hover:hover)]:hover:bg-tag" onClick={() => onStart()}>
+              Add your first want
+            </button>
+          )}
+          <button className="rounded-full bg-white/10 px-6 py-3 font-semibold text-white transition-transform duration-150 active:scale-[0.97] [@media(hover:hover)]:hover:bg-white/20" onClick={() => setTour(0)}>
+            Take the 1-minute tour
+          </button>
         </div>
       </section>
 
