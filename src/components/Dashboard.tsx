@@ -124,8 +124,9 @@ export function Dashboard() {
               <WantsPanel
                 wants={wants}
                 bundles={state.bundles}
+                threads={state.threads}
+                deals={state.deals}
                 selectedId={selected?.id ?? null}
-                listings={state.config.listings}
                 onSelect={(id) => { setSelectedWant(id); setTab("negotiation"); }}
                 onChanged={refresh}
                 onError={setError}
@@ -141,6 +142,8 @@ export function Dashboard() {
                   deals={deals}
                   wants={wants}
                   bundle={state.bundles.find((b) => b.id === selected?.bundleId)}
+                  bundles={state.bundles}
+                  listings={state.config.listings}
                   paypalClientId={state.config.paypalClientId}
                   buyerEmail={state.config.paypalBuyerEmail}
                   busy={busy}

@@ -7,11 +7,14 @@ import { DealsPanel } from "./DealsPanel";
 import { Detail } from "./Detail";
 import { usd } from "./format";
 import { Inbox } from "./Inbox";
+import { ManagePanel } from "./ManagePanel";
+import { Modal } from "./Modal";
+import { PriceLadder } from "./PriceLadder";
 import { SavingsPanel } from "./SavingsPanel";
 import { dealSavings } from "@/lib/negotiation/savings";
 import { ListingsPanel } from "./ListingsPanel";
 import { axisFor } from "./Lane";
-import { primary } from "./ui";
+import { ghost, primary } from "./ui";
 import { listingFromEndpoint } from "@/lib/sellers/listing";
 import { openingOffer, STYLE_INFO } from "@/lib/negotiation/strategy";
 
@@ -42,6 +45,10 @@ export function NegotiationsPanel(props: {
   wants: WantRecord[];
   /** The bundle this want belongs to, if any. */
   bundle: DashboardState["bundles"][number] | undefined;
+  /** Every bundle, for the manage drawer. */
+  bundles: DashboardState["bundles"];
+  /** True when a Channel3 key is set, so real listings can be added. */
+  listings: boolean;
   paypalClientId: string | null;
   buyerEmail: string | null;
   busy: boolean;
@@ -56,7 +63,7 @@ export function NegotiationsPanel(props: {
   onChanged: () => void;
   onError: (msg: string) => void;
 }) {
-  const { want, threads, deals, wants, bundle, paypalClientId, buyerEmail, busy, demo, restart, onLoadDemo, canNegotiate, onNegotiate, run, onChanged, onError } = props;
+  const { want, threads, deals, wants, bundle, bundles, listings, paypalClientId, buyerEmail, busy, demo, restart, onLoadDemo, canNegotiate, onNegotiate, run, onChanged, onError } = props;
 
   // Negotiations that finished before this page opened replay once, so the haggling is visible.
   const seen = useRef(new Set<string>());
@@ -64,6 +71,7 @@ export function NegotiationsPanel(props: {
   const [, rerender] = useState(0);
   const [view, setView] = useState<View>("conversations");
   const [pick, setPick] = useState<{ wantId: string; id: string } | null>(null);
+  const [manageOpen, setManageOpen] = useState(false);
   const [showDetail, setShowDetail] = useState(false); // below xl the inbox and the detail are two screens
   const [read, setRead] = useState<Record<string, number>>({});
   const wantId = want?.id;
@@ -74,6 +82,8 @@ export function NegotiationsPanel(props: {
   const shown = replaying ? threads.map((t) => atStep(t, step)) : threads;
   const selected =
     (pick && pick.wantId === wantId ? shown.find((t) => t.id === pick.id) : undefined) ?? shown[0];
+
+  useEffect(() => setManageOpen(false), [wantId]);
 
   useEffect(() => {
     if (!wantId) return;
@@ -151,7 +161,7 @@ export function NegotiationsPanel(props: {
               Load the demo scenario
             </button>
           )}
-          <span className="text-sm text-white/60">or add a want in the sidebar</span>
+          <span className="text-sm text-white/60">or click New want to add your own</span>
         </div>
       </section>
     );
@@ -198,13 +208,18 @@ export function NegotiationsPanel(props: {
             )}
           </ul>
         </div>
-        <button
-          className={`${primary} shrink-0 rounded-full px-6 py-2.5 text-base`}
-          disabled={!canNegotiate || busy}
-          onClick={onNegotiate}
-        >
-          {restart ? "Restart" : "Negotiate"}
-        </button>
+        <div className="flex shrink-0 items-center gap-2">
+          <button className={`${ghost} rounded-full px-5 py-2.5 text-base`} onClick={() => setManageOpen(true)}>
+            Manage
+          </button>
+          <button
+            className={`${primary} rounded-full px-6 py-2.5 text-base`}
+            disabled={!canNegotiate || busy}
+            onClick={onNegotiate}
+          >
+            {restart ? "Restart" : "Negotiate"}
+          </button>
+        </div>
       </div>
 
       {!started ? (
@@ -219,9 +234,14 @@ export function NegotiationsPanel(props: {
             <h3 className="text-lg font-semibold">Ready to negotiate</h3>
             <p className="mt-1 max-w-2xl text-muted">
               {want.sellers.length === 0
-                ? "Add at least one seller in the sidebar, then press Negotiate."
+                ? "Add at least one seller, then press Negotiate."
                 : `Hagglebot will chat with ${want.sellers.length} seller${want.sellers.length === 1 ? "" : "s"} at once. Your budget of ${usd(want.maxPrice)} is never shown to them. Press Negotiate to start.`}
             </p>
+            {want.sellers.length === 0 && (
+              <button className={`${primary} mt-4`} onClick={() => setManageOpen(true)}>
+                Add sellers
+              </button>
+            )}
           </div>
         </div>
       ) : (
@@ -263,6 +283,18 @@ export function NegotiationsPanel(props: {
                   </dd>
                 </div>
               </dl>
+            </div>
+            <div className="mt-6 border-t border-white/10 pt-5">
+              <PriceLadder
+                threads={shown}
+                budget={budget}
+                axis={axis}
+                onOpen={(id) => {
+                  setPick({ wantId: want.id, id });
+                  setView("conversations");
+                  setShowDetail(true);
+                }}
+              />
             </div>
             {replaying && (
               <p className="mt-5 text-sm text-white/70">
@@ -322,6 +354,10 @@ export function NegotiationsPanel(props: {
           )}
         </>
       )}
+
+      <Modal open={manageOpen} onClose={() => setManageOpen(false)} title={`Manage: ${want.item}`} side="right">
+        <ManagePanel want={want} bundles={bundles} listings={listings} busy={busy} run={run} onDeleted={() => setManageOpen(false)} />
+      </Modal>
     </section>
   );
 }

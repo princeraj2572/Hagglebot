@@ -1,35 +1,48 @@
 "use client";
 import { useState } from "react";
 import { STYLE_INFO } from "@/lib/negotiation/strategy";
-import { NEGOTIATION_STYLES, type NegotiationStyle } from "@/lib/negotiation/types";
-import { PERSONAS } from "@/lib/sellers/personas";
+import { NEGOTIATION_STYLES, type NegotiationStyle, type Thread } from "@/lib/negotiation/types";
+import type { Deal } from "@/server/repo";
 import type { DashboardState } from "@/server/state";
 import { api } from "./api";
-import { Avatar, tagline } from "./Avatar";
 import { usd } from "./format";
-import { ghost, input, primary } from "./ui";
+import { Modal } from "./Modal";
+import { input, primary, ghost } from "./ui";
 
 type Want = DashboardState["wants"][number];
 type Bundle = DashboardState["bundles"][number];
 
+/** Where a want stands, in a few words, so the list can be scanned without opening anything. */
+function statusOf(w: Want, threads: Thread[], deals: Deal[]): { text: string; dot: string } {
+  if (w.status === "purchased") return { text: "Purchased", dot: "bg-ink" };
+  const mine = threads.filter((t) => t.wantId === w.id);
+  const live = mine.filter((t) => t.status === "negotiating").length;
+  if (live > 0) return { text: `Haggling · ${live} of ${mine.length} live`, dot: "bg-ultra motion-safe:animate-pulse" };
+  if (mine.some((t) => t.status === "awaiting_approval")) return { text: "Needs your approval", dot: "bg-tag" };
+  const ready = deals.filter((d) => d.wantId === w.id && (d.status === "awaiting_payment" || d.status === "order_created")).length;
+  if (ready > 0) return { text: `${ready} deal${ready === 1 ? "" : "s"} ready to pay`, dot: "bg-ultra" };
+  if (mine.length > 0) return { text: "No deal yet", dot: "bg-muted/50" };
+  if (w.sellers.length === 0) return { text: "No sellers yet", dot: "bg-muted/40" };
+  return { text: `Ready · ${w.sellers.length} seller${w.sellers.length === 1 ? "" : "s"}`, dot: "bg-tag" };
+}
+
 export function WantsPanel(props: {
   wants: Want[];
   bundles: Bundle[];
+  threads: Thread[];
+  deals: Deal[];
   selectedId: string | null;
-  listings: boolean;
   onSelect: (id: string) => void;
   onChanged: () => void;
   onError: (msg: string) => void;
 }) {
-  const { wants, bundles, selectedId, listings, onSelect, onChanged, onError } = props;
-  const [bundleForm, setBundleForm] = useState({ name: "", total: "" });
-  const [showBundleForm, setShowBundleForm] = useState(false);
+  const { wants, bundles, threads, deals, selectedId, onSelect, onChanged, onError } = props;
   const [form, setForm] = useState<{ item: string; maxPrice: string; notes: string; buyerName: string; style: NegotiationStyle; requireApproval: boolean }>({
     item: "", maxPrice: "", notes: "", buyerName: "", style: "balanced", requireApproval: false,
   });
-  const [showForm, setShowForm] = useState(false);
+  const [bundleForm, setBundleForm] = useState({ name: "", total: "" });
+  const [dialog, setDialog] = useState<"want" | "bundle" | null>(null);
   const [busy, setBusy] = useState(false);
-  const formOpen = showForm || wants.length === 0;
 
   const run = async (fn: () => Promise<unknown>) => {
     setBusy(true);
@@ -44,141 +57,92 @@ export function WantsPanel(props: {
   };
 
   return (
-    <section aria-label="Wants" className="min-w-0 space-y-4">
-      <div className="flex items-center justify-between gap-2">
-        <h2 className="text-lg font-semibold">Wants</h2>
-        {wants.length > 0 && (
-          <button className={`${ghost} py-1.5`} aria-expanded={formOpen} onClick={() => setShowForm((v) => !v)}>
-            {formOpen ? "Close" : "New want"}
-          </button>
-        )}
+    <section aria-label="Wants" className="min-w-0 space-y-6">
+      <div className="space-y-3">
+        <div className="flex items-baseline justify-between gap-2 px-1">
+          <h2 className="text-lg font-bold tracking-tight">Wants</h2>
+          {wants.length > 0 && <span className="num text-sm text-muted">{wants.length}</span>}
+        </div>
+        <button className={`${primary} w-full py-2.5 text-base`} onClick={() => setDialog("want")}>
+          New want
+        </button>
       </div>
 
-      {formOpen && (
-        <form
-          className="space-y-3 rounded-2xl bg-paper p-4"
-          onSubmit={(e) => {
-            e.preventDefault();
-            void run(async () => {
-              const w = await api<{ id: string }>("/api/wants", "POST", { ...form, maxPrice: form.maxPrice });
-              setForm({ ...form, item: "", maxPrice: "", notes: "" });
-              setShowForm(false);
-              onSelect(w.id);
-            });
-          }}
-        >
-          <label className="block text-[13px] text-muted">
-            What do you want?
-            <input className={`${input} mt-1`} required maxLength={120} value={form.item} placeholder="e.g. Wireless noise-cancelling headphones"
-              onChange={(e) => setForm({ ...form, item: e.target.value })} />
-          </label>
-          <div className="grid grid-cols-2 gap-3">
-            <label className="block text-[13px] text-muted">
-              Max price (USD)
-              <input className={`${input} mt-1`} required inputMode="numeric" pattern="[0-9]*" value={form.maxPrice} placeholder="250"
-                onChange={(e) => setForm({ ...form, maxPrice: e.target.value })} />
-            </label>
-            <label className="block text-[13px] text-muted">
-              Your name
-              <input className={`${input} mt-1`} required maxLength={60} value={form.buyerName} placeholder="Alex"
-                onChange={(e) => setForm({ ...form, buyerName: e.target.value })} />
-            </label>
-          </div>
-          <label className="block text-[13px] text-muted">
-            Notes for the sellers
-            <textarea className={`${input} mt-1`} rows={2} maxLength={500} value={form.notes} placeholder="prefer black, must ship this week"
-              onChange={(e) => setForm({ ...form, notes: e.target.value })} />
-          </label>
-          <fieldset className="space-y-1.5">
-            <legend className="text-[13px] text-muted">How hard should it haggle?</legend>
-            {NEGOTIATION_STYLES.map((s) => (
-              <label
-                key={s}
-                className={`flex cursor-pointer items-start gap-2 rounded-xl border px-3 py-2.5 text-sm transition-colors duration-150 ${
-                  form.style === s ? "border-ultra bg-ultra/5" : "border-transparent bg-mist [@media(hover:hover)]:hover:bg-[#DCE2EF]"
-                }`}
-              >
-                <input type="radio" name="style" value={s} checked={form.style === s} onChange={() => setForm({ ...form, style: s })} className="mt-1 accent-[#2B3FD6]" />
-                <span>
-                  <b className="font-semibold">{STYLE_INFO[s].label}</b>
-                  <span className="block text-[13px] text-muted">{STYLE_INFO[s].description}</span>
-                </span>
-              </label>
-            ))}
-          </fieldset>
-          <label className="flex cursor-pointer items-start gap-2 text-sm">
-            <input type="checkbox" checked={form.requireApproval} onChange={(e) => setForm({ ...form, requireApproval: e.target.checked })} className="mt-1 accent-[#2B3FD6]" />
-            <span>
-              Ask me before accepting a price
-              <span className="block text-[13px] text-muted">Hagglebot stops at an in-budget price and waits for your OK.</span>
-            </span>
-          </label>
-          <button className={`${primary} w-full`} disabled={busy} type="submit">
-            Add want
-          </button>
-        </form>
+      {wants.length === 0 && (
+        <p className="px-1 text-sm leading-relaxed text-muted">
+          A want is something you would like to buy, and the most you will pay for it. Hagglebot does the haggling.
+        </p>
       )}
 
-      {wants.length === 0 && <p className="text-sm text-muted">No wants yet. Add one above, or load the demo scenario.</p>}
-
-      <ul className="space-y-2">
-        {wants.map((w) => (
-          <li key={w.id}>
-            <WantCard want={w} bundles={bundles} selected={w.id === selectedId} listings={listings} onSelect={() => onSelect(w.id)} run={run} />
-          </li>
-        ))}
+      <ul className="-mx-1 space-y-0.5">
+        {wants.map((w) => {
+          const selected = w.id === selectedId;
+          const st = statusOf(w, threads, deals);
+          const bundle = w.bundleId ? bundles.find((b) => b.id === w.bundleId) : undefined;
+          return (
+            <li key={w.id}>
+              <button
+                onClick={() => onSelect(w.id)}
+                aria-pressed={selected}
+                className={`relative flex w-full items-start gap-3 rounded-2xl px-4 py-3 text-left transition-[background-color,box-shadow] duration-150 ${
+                  selected
+                    ? "bg-paper shadow-lift before:absolute before:bottom-3 before:left-0 before:top-3 before:w-1 before:rounded-full before:bg-ultra"
+                    : "[@media(hover:hover)]:hover:bg-paper/60"
+                }`}
+              >
+                <i aria-hidden className={`mt-[7px] h-2.5 w-2.5 shrink-0 rounded-full ${st.dot}`} />
+                <span className="min-w-0 flex-1">
+                  <span className="flex items-start justify-between gap-2">
+                    <span className="line-clamp-2 min-w-0 break-words font-semibold leading-snug" title={w.item}>{w.item}</span>
+                    <span className="num shrink-0 text-sm font-semibold text-muted">{usd(w.maxPrice)}</span>
+                  </span>
+                  <span className="mt-0.5 block text-[13px] text-muted">{st.text}</span>
+                  {bundle && <span className="mt-0.5 block truncate text-[13px] text-muted">Bundle: {bundle.name}</span>}
+                </span>
+              </button>
+            </li>
+          );
+        })}
       </ul>
 
       <div className="space-y-2">
-        <div className="flex items-center justify-between gap-2">
+        <div className="flex items-baseline justify-between gap-2 px-1">
           <h3 className="text-sm font-semibold">Bundles</h3>
-          <button className="rounded py-0.5 text-sm font-medium text-ultra underline-offset-4 hover:underline" aria-expanded={showBundleForm} onClick={() => setShowBundleForm((v) => !v)}>
-            {showBundleForm ? "Close" : "New bundle"}
+          <button className="rounded py-0.5 text-sm font-semibold text-ultra underline-offset-4 hover:underline" onClick={() => setDialog("bundle")}>
+            New bundle
           </button>
         </div>
-        {bundles.length === 0 && !showBundleForm && (
-          <p className="text-[13px] text-muted">A bundle shares one total budget between several wants, for example a whole desk setup.</p>
-        )}
-        <ul className="space-y-1.5">
-          {bundles.map((b) => (
-            <li key={b.id} className="flex items-center gap-2 rounded-xl bg-paper px-3 py-2 text-sm">
-              <span className="min-w-0 flex-1">
-                <span className="block break-words font-medium leading-tight">{b.name}</span>
-                <span className="num block text-[13px] text-muted">{usd(b.spent)} of {usd(b.total)} spent</span>
-              </span>
-              <button className="shrink-0 rounded px-1 text-muted [@media(hover:hover)]:hover:text-scam" aria-label={`Delete bundle ${b.name}`} onClick={() => run(() => api(`/api/bundles/${b.id}`, "DELETE"))}>
-                ✕
-              </button>
-            </li>
-          ))}
-        </ul>
-        {showBundleForm && (
-          <form
-            className="space-y-2 rounded-2xl bg-paper p-4"
-            onSubmit={(e) => {
-              e.preventDefault();
-              void run(async () => {
-                await api("/api/bundles", "POST", { name: bundleForm.name, total: Number(bundleForm.total) });
-                setBundleForm({ name: "", total: "" });
-                setShowBundleForm(false);
-              });
-            }}
-          >
-            <label className="block text-[13px] text-muted">
-              Name
-              <input className={`${input} mt-1`} required maxLength={60} value={bundleForm.name} placeholder="Desk setup" onChange={(e) => setBundleForm({ ...bundleForm, name: e.target.value })} />
-            </label>
-            <label className="block text-[13px] text-muted">
-              Total budget (USD)
-              <input className={`${input} mt-1`} required inputMode="numeric" pattern="[0-9]*" value={bundleForm.total} placeholder="600" onChange={(e) => setBundleForm({ ...bundleForm, total: e.target.value })} />
-            </label>
-            <button className={`${primary} w-full`} disabled={busy} type="submit">Add bundle</button>
-          </form>
+        {bundles.length === 0 ? (
+          <p className="px-1 text-[13px] leading-relaxed text-muted">Share one total budget between several wants, for example a whole desk setup.</p>
+        ) : (
+          <ul className="space-y-1.5">
+            {bundles.map((b) => {
+              const pct = Math.min(100, Math.round((b.spent / b.total) * 100));
+              return (
+                <li key={b.id} className="rounded-xl bg-paper px-3 py-2.5 text-sm">
+                  <div className="flex items-start justify-between gap-2">
+                    <span className="min-w-0 break-words font-semibold leading-tight">{b.name}</span>
+                    <button
+                      className="-mr-1 -mt-0.5 shrink-0 rounded-full p-1 text-muted transition-colors [@media(hover:hover)]:hover:bg-mist [@media(hover:hover)]:hover:text-scam"
+                      aria-label={`Delete bundle ${b.name}`}
+                      onClick={() => run(() => api(`/api/bundles/${b.id}`, "DELETE"))}
+                    >
+                      ✕
+                    </button>
+                  </div>
+                  <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-mist" role="img" aria-label={`${pct}% of the bundle budget spent`}>
+                    <div className="h-full rounded-full bg-ultra" style={{ width: `${pct}%` }} />
+                  </div>
+                  <p className="num mt-1.5 text-[13px] text-muted">{usd(b.spent)} of {usd(b.total)} spent</p>
+                </li>
+              );
+            })}
+          </ul>
         )}
       </div>
 
       <button
-        className="rounded-md py-1 text-sm font-medium text-ultra underline-offset-4 hover:underline disabled:opacity-50"
+        className={`${ghost} w-full`}
         disabled={busy}
         onClick={() =>
           run(async () => {
@@ -189,86 +153,107 @@ export function WantsPanel(props: {
       >
         Load demo scenario
       </button>
-    </section>
-  );
-}
 
-function WantCard({ want: w, bundles, selected, listings, onSelect, run }: {
-  want: Want; bundles: Bundle[]; selected: boolean; listings: boolean; onSelect: () => void; run: (fn: () => Promise<unknown>) => Promise<void>;
-}) {
-  const [persona, setPersona] = useState(PERSONAS[0]?.id ?? "ferdi");
-  return (
-    <div className={`rounded-2xl p-4 transition-[background-color,box-shadow] duration-150 ${selected ? "bg-paper shadow-lift ring-1 ring-ultra/25" : "[@media(hover:hover)]:hover:bg-paper/60"}`}>
-      <button className="block w-full min-w-0 text-left" onClick={onSelect} aria-pressed={selected}>
-        <span className="flex items-start justify-between gap-2">
-          <span className="min-w-0 break-words font-semibold leading-snug">{w.item}</span>
-          <span className="num shrink-0 text-sm font-semibold">{usd(w.maxPrice)}</span>
-        </span>
-        {w.notes && <span className="mt-1 block break-words text-[13px] text-muted">{w.notes}</span>}
-        <span className="mt-1 block text-[13px] text-muted">
-          {w.status === "purchased" ? "Purchased" : `${w.sellers.length} seller${w.sellers.length === 1 ? "" : "s"}`}
-          {" · "}
-          {STYLE_INFO[w.style ?? "balanced"].label}
-          {w.bundleId ? ` · ${bundles.find((b) => b.id === w.bundleId)?.name ?? "Bundle"}` : ""}
-        </span>
-      </button>
-
-      {selected && (
-        <div className="mt-3 space-y-2 border-t border-line/70 pt-3">
-          {bundles.length > 0 && (
-            <label className="block text-[13px] text-muted">
-              Bundle
-              <select
-                className={`${input} mt-1`}
-                value={w.bundleId ?? ""}
-                onChange={(e) => run(() => api(`/api/wants/${w.id}/bundle`, "POST", { bundleId: e.target.value || null }))}
-              >
-                <option value="">No bundle (own budget)</option>
-                {bundles.map((b) => (
-                  <option key={b.id} value={b.id}>{b.name} ({usd(b.total - b.spent)} left)</option>
-                ))}
-              </select>
+      <Modal open={dialog === "want"} onClose={() => setDialog(null)} title="New want">
+        <form
+          className="space-y-4"
+          onSubmit={(e) => {
+            e.preventDefault();
+            void run(async () => {
+              const w = await api<{ id: string }>("/api/wants", "POST", { ...form, maxPrice: form.maxPrice });
+              setForm({ ...form, item: "", maxPrice: "", notes: "" });
+              setDialog(null);
+              onSelect(w.id);
+            });
+          }}
+        >
+          <label className="block text-sm font-medium">
+            What do you want?
+            <input className={`${input} mt-1.5`} required maxLength={120} value={form.item} placeholder="e.g. Wireless noise-cancelling headphones"
+              onChange={(e) => setForm({ ...form, item: e.target.value })} />
+          </label>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <label className="block text-sm font-medium">
+              The most you will pay (USD)
+              <input className={`${input} mt-1.5`} required inputMode="numeric" pattern="[0-9]*" value={form.maxPrice} placeholder="250"
+                onChange={(e) => setForm({ ...form, maxPrice: e.target.value })} />
+              <span className="mt-1 block text-[13px] font-normal text-muted">Never shown to sellers, never exceeded.</span>
             </label>
-          )}
-          <ul className="space-y-1.5">
-            {w.sellers.map((s) => (
-              <li key={s.id} className="flex items-center gap-2 text-sm">
-                <Avatar name={s.name} size="sm" />
-                <span className="min-w-0 flex-1">
-                  <span className="block break-words font-medium leading-tight">{s.name}</span>
-                  <span className="block text-[13px] text-muted">{tagline(s.name)}</span>
-                </span>
-                <button className="shrink-0 rounded px-1 text-muted [@media(hover:hover)]:hover:text-scam" aria-label={`Remove ${s.name}`}
-                  onClick={() => run(() => api(`/api/sellers/${s.id}`, "DELETE"))}>
-                  ✕
-                </button>
-              </li>
-            ))}
-          </ul>
-          <div className="flex gap-2">
-            <select className={input} value={persona} aria-label="Seller persona" onChange={(e) => setPersona(e.target.value)}>
-              {PERSONAS.map((p) => (
-                <option key={p.id} value={p.id}>{p.name}</option>
-              ))}
-            </select>
-            <button className={ghost} onClick={() => run(() => api(`/api/wants/${w.id}/sellers`, "POST", { persona }))}>
-              Add seller
-            </button>
+            <label className="block text-sm font-medium">
+              Your name
+              <input className={`${input} mt-1.5`} required maxLength={60} value={form.buyerName} placeholder="Alex"
+                onChange={(e) => setForm({ ...form, buyerName: e.target.value })} />
+              <span className="mt-1 block text-[13px] font-normal text-muted">Used when Hagglebot introduces itself.</span>
+            </label>
           </div>
-          {listings && (
-            <div>
-              <button className={`${ghost} w-full`} onClick={() => run(() => api(`/api/wants/${w.id}/listings`, "POST"))}>
-                Find real listings
-              </button>
-              <p className="mt-1 text-[13px] text-muted">Real stores and prices from Channel3. The haggling is simulated.</p>
+          <label className="block text-sm font-medium">
+            Notes for the sellers <span className="font-normal text-muted">(optional)</span>
+            <textarea className={`${input} mt-1.5`} rows={2} maxLength={500} value={form.notes} placeholder="prefer black, must ship this week"
+              onChange={(e) => setForm({ ...form, notes: e.target.value })} />
+          </label>
+
+          <fieldset>
+            <legend className="text-sm font-medium">How hard should it haggle?</legend>
+            <div className="mt-2 grid gap-2 sm:grid-cols-3">
+              {NEGOTIATION_STYLES.map((s) => (
+                <label
+                  key={s}
+                  className={`flex cursor-pointer flex-col gap-1 rounded-xl border-2 px-3 py-2.5 text-sm transition-colors duration-150 ${
+                    form.style === s ? "border-ultra bg-ultra/5" : "border-transparent bg-mist [@media(hover:hover)]:hover:bg-[#DCE2EF]"
+                  }`}
+                >
+                  <span className="flex items-center gap-2">
+                    <input type="radio" name="style" value={s} checked={form.style === s} onChange={() => setForm({ ...form, style: s })} className="accent-[#2B3FD6]" />
+                    <b className="font-semibold">{STYLE_INFO[s].label}</b>
+                  </span>
+                  <span className="text-[13px] leading-snug text-muted">{STYLE_INFO[s].description}</span>
+                </label>
+              ))}
             </div>
-          )}
-          <button className="rounded py-1 text-sm text-muted [@media(hover:hover)]:hover:text-scam"
-            onClick={() => { if (confirm(`Delete "${w.item}" and its negotiations?`)) void run(() => api(`/api/wants/${w.id}`, "DELETE")); }}>
-            Delete want
-          </button>
-        </div>
-      )}
-    </div>
+          </fieldset>
+
+          <label className="flex cursor-pointer items-start gap-3 rounded-xl bg-mist px-3 py-3 text-sm">
+            <input type="checkbox" checked={form.requireApproval} onChange={(e) => setForm({ ...form, requireApproval: e.target.checked })} className="mt-1 accent-[#2B3FD6]" />
+            <span>
+              <span className="font-medium">Ask me before accepting a price</span>
+              <span className="block text-[13px] text-muted">Hagglebot stops at an in-budget price and waits for your OK.</span>
+            </span>
+          </label>
+
+          <div className="flex justify-end gap-2 pt-1">
+            <button type="button" className={ghost} onClick={() => setDialog(null)}>Cancel</button>
+            <button className={primary} disabled={busy} type="submit">Add want</button>
+          </div>
+        </form>
+      </Modal>
+
+      <Modal open={dialog === "bundle"} onClose={() => setDialog(null)} title="New bundle">
+        <form
+          className="space-y-4"
+          onSubmit={(e) => {
+            e.preventDefault();
+            void run(async () => {
+              await api("/api/bundles", "POST", { name: bundleForm.name, total: Number(bundleForm.total) });
+              setBundleForm({ name: "", total: "" });
+              setDialog(null);
+            });
+          }}
+        >
+          <p className="text-sm text-muted">A bundle shares one total budget between several wants. Hagglebot never pays more than the total across all of them.</p>
+          <label className="block text-sm font-medium">
+            Name
+            <input className={`${input} mt-1.5`} required maxLength={60} value={bundleForm.name} placeholder="Desk setup" onChange={(e) => setBundleForm({ ...bundleForm, name: e.target.value })} />
+          </label>
+          <label className="block text-sm font-medium">
+            Total budget (USD)
+            <input className={`${input} mt-1.5`} required inputMode="numeric" pattern="[0-9]*" value={bundleForm.total} placeholder="600" onChange={(e) => setBundleForm({ ...bundleForm, total: e.target.value })} />
+          </label>
+          <div className="flex justify-end gap-2 pt-1">
+            <button type="button" className={ghost} onClick={() => setDialog(null)}>Cancel</button>
+            <button className={primary} disabled={busy} type="submit">Add bundle</button>
+          </div>
+        </form>
+      </Modal>
+    </section>
   );
 }
