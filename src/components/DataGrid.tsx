@@ -1,0 +1,42 @@
+"use client";
+import { AgGridReact } from "ag-grid-react";
+import { AllCommunityModule, ModuleRegistry, themeQuartz, type ColDef } from "ag-grid-community";
+
+ModuleRegistry.registerModules([AllCommunityModule]);
+
+/** AG Grid dressed in Hagglebot's own tokens, so a table looks like the rest of the app. */
+const theme = themeQuartz.withParams({
+  accentColor: "#2B3FD6",
+  backgroundColor: "#F8F9FB",
+  foregroundColor: "#12161C",
+  borderColor: "#CFD6DE",
+  headerBackgroundColor: "#EEF1F4",
+  headerTextColor: "#566070",
+  headerFontWeight: 600,
+  fontFamily: "inherit",
+  fontSize: 14,
+  wrapperBorderRadius: 6,
+  rowHoverColor: "#EEF1F4",
+});
+
+export type { ColDef };
+
+const ROW = 44;
+
+/** A sortable, filterable table. Pass `height` for a scrolling grid; omit it to fit exactly the header and rows. */
+export function DataGrid<T>({ rows, columns, height, label }: { rows: T[]; columns: ColDef<T>[]; height?: number; label: string }) {
+  return (
+    <div aria-label={label} style={{ height: height ?? (rows.length + 1) * ROW + 4 }} className="min-w-0">
+      <AgGridReact<T>
+        theme={theme}
+        rowData={rows}
+        columnDefs={columns}
+        defaultColDef={{ sortable: true, resizable: true }}
+        rowHeight={ROW}
+        headerHeight={ROW}
+        suppressCellFocus
+        tooltipShowDelay={400}
+      />
+    </div>
+  );
+}

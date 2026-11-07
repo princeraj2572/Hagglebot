@@ -20,6 +20,8 @@
   "dependencies": {
     "@google/generative-ai": "0.24.1",
     "@paypal/paypal-server-sdk": "2.5.0",
+    "ag-grid-community": "36.2.0",
+    "ag-grid-react": "36.2.0",
     "better-sqlite3": "12.4.1",
     "dotenv": "18.0.9",
     "next": "15.5.28",

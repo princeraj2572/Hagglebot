@@ -1,12 +1,43 @@
-import { dealSavings } from "@/lib/negotiation/savings";
+import { dealSavings, type DealRow } from "@/lib/negotiation/savings";
 import type { Thread } from "@/lib/negotiation/types";
+import { DataGrid, type ColDef } from "./DataGrid";
 import { usd } from "./format";
+
+const money = (p: { value?: number | null }): string => usd(p.value ?? null);
 
 /** What Hagglebot saved, and every closed deal side by side. Shows nothing until a deal exists. */
 export function SavingsPanel({ threads, budget }: { threads: Thread[]; budget: number }) {
   const s = dealSavings(threads, budget);
   if (!s) return null;
   const { best, rows } = s;
+
+  const columns: ColDef<DealRow>[] = [
+    {
+      field: "seller",
+      headerName: "Seller",
+      flex: 2,
+      minWidth: 160,
+      cellRenderer: (p: { data?: DealRow; value?: string }) =>
+        p.data && p.data === best && rows.length > 1 ? (
+          <span>
+            {p.value} <span className="ml-1 rounded-full bg-tag px-2 py-0.5 text-[12px] font-semibold">Best price</span>
+          </span>
+        ) : (
+          p.value
+        ),
+    },
+    { field: "firstAsk", headerName: "First ask", type: "rightAligned", flex: 1, minWidth: 100, valueFormatter: money },
+    { field: "price", headerName: "Agreed", type: "rightAligned", flex: 1, minWidth: 100, valueFormatter: money, cellStyle: { fontWeight: 600 }, sort: "asc" },
+    {
+      field: "saved",
+      headerName: "Saved",
+      type: "rightAligned",
+      flex: 1,
+      minWidth: 120,
+      valueFormatter: (p) => (p.data && p.data.saved > 0 ? `${usd(p.data.saved)} (${p.data.savedPct}%)` : "–"),
+    },
+    { field: "underBudget", headerName: "Under budget", type: "rightAligned", flex: 1, minWidth: 120, valueFormatter: money },
+  ];
 
   return (
     <section aria-label="Savings" className="min-w-0 rounded-md border border-line bg-paper p-4">
@@ -26,33 +57,8 @@ export function SavingsPanel({ threads, budget }: { threads: Thread[]; budget: n
         , and <span className="num text-ultra">{usd(best.underBudget)}</span> under your {usd(budget)} budget.
       </p>
 
-      <div className="mt-3 overflow-x-auto">
-        <table className="w-full min-w-[28rem] border-collapse text-left text-sm">
-          <caption className="sr-only">Closed deals compared</caption>
-          <thead>
-            <tr className="border-b border-line text-[13px] text-muted">
-              <th scope="col" className="py-1.5 pr-3 font-medium">Seller</th>
-              <th scope="col" className="px-3 py-1.5 text-right font-medium">First ask</th>
-              <th scope="col" className="px-3 py-1.5 text-right font-medium">Agreed</th>
-              <th scope="col" className="px-3 py-1.5 text-right font-medium">Saved</th>
-              <th scope="col" className="py-1.5 pl-3 text-right font-medium">Under budget</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((r, i) => (
-              <tr key={`${r.seller}-${i}`} className="border-b border-line/60 last:border-0">
-                <th scope="row" className="py-2 pr-3 font-medium">
-                  <span className="break-all">{r.seller}</span>
-                  {i === 0 && rows.length > 1 && <span className="ml-2 rounded-full bg-tag px-2 py-0.5 text-[12px] font-semibold">Best price</span>}
-                </th>
-                <td className="num px-3 py-2 text-right text-muted">{usd(r.firstAsk)}</td>
-                <td className="num px-3 py-2 text-right font-semibold">{usd(r.price)}</td>
-                <td className="num px-3 py-2 text-right">{r.saved > 0 ? `${usd(r.saved)} (${r.savedPct}%)` : "–"}</td>
-                <td className="num py-2 pl-3 text-right">{usd(r.underBudget)}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+      <div className="mt-3">
+        <DataGrid<DealRow> rows={rows} columns={columns} label="Closed deals compared" />
       </div>
     </section>
   );

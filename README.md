@@ -79,6 +79,8 @@ there are no webhook signatures to verify.
   rate-limited or down. *Why:* both have free tiers, Gemini Flash is fast and cheap for short chat
   turns, and Groq's separate quota keeps the demo running when Gemini throttles. With neither key set,
   the template negotiator is used.
+- **Channel3** product search for real listings, categories and the Marketplace page (optional, see below)
+- **AG Grid Community** for the sortable, filterable tables: the closed-deals comparison and the Marketplace table view
 - All dependency versions are pinned exactly; `pnpm-lock.yaml` is committed.
 
 ## Setup

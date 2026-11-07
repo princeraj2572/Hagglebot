@@ -12,7 +12,7 @@
 
 **Real listings.** "Find real listings" searches Channel3's product catalog for the item and turns the real retailer offers (store, price, condition) into sellers. Each one is played by a simulated agent that opens at the real price; no retailer is contacted and only friendly personalities are used for real stores. A **Marketplace** page lets you search or browse all 16 product categories and pick any product to negotiate. The result is real prices to negotiate against, with the negotiation itself still simulated.
 
-**Tech.** Next.js 15, TypeScript, Tailwind, SQLite, PayPal Orders v2 (official server SDK plus the JS checkout), Channel3 product search, and Gemini Flash-Lite with an automatic Groq fallback and a template negotiator if no model is reachable.
+**Tech.** Next.js 15, TypeScript, Tailwind, SQLite, PayPal Orders v2 (official server SDK plus the JS checkout), Channel3 product search, AG Grid for the deal comparison and the marketplace table, and Gemini Flash-Lite with an automatic Groq fallback and a template negotiator if no model is reachable.
 
 **Honest limits.** This is a demo: PayPal sandbox only (no real money), and the sellers (four in the demo, fourteen to choose from) are simulated AI personas, not real listings. Real listings come from Channel3 search only: no retailer is contacted and nothing is bought from one. The scam detector is heuristic.
 

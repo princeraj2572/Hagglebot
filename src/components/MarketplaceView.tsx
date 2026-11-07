@@ -4,6 +4,7 @@ import type { Category, Listing } from "@/lib/channel3/search";
 import { listingFromEndpoint } from "@/lib/sellers/listing";
 import type { DashboardState } from "@/server/state";
 import { api } from "./api";
+import { DataGrid, type ColDef } from "./DataGrid";
 import { usd } from "./format";
 import { btn, ghost, input, primary } from "./ui";
 
@@ -31,6 +32,7 @@ export function MarketplaceView(props: {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<Listing[] | null>(null);
   const [loading, setLoading] = useState(false);
+  const [view, setView] = useState<"cards" | "table">("cards");
   const latest = useRef(0);
 
   const search = async (q: string, cat: string | null) => {
@@ -70,6 +72,53 @@ export function MarketplaceView(props: {
 
   const added = new Set((want?.sellers ?? []).flatMap((s) => listingFromEndpoint(s.endpoint)?.url ?? []));
   const full = (want?.sellers.length ?? 0) >= 8;
+  const addable = !!want && canAdd && !full;
+  const columns: ColDef<Listing>[] = [
+    {
+      headerName: "",
+      field: "image",
+      width: 72,
+      sortable: false,
+      cellRenderer: (p: { value?: string | null }) => {
+        const u = webUrl(p.value);
+        // eslint-disable-next-line @next/next/no-img-element
+        return u ? <img src={u} alt="" loading="lazy" referrerPolicy="no-referrer" className="h-12 w-12 object-contain" /> : null;
+      },
+    },
+    { field: "title", headerName: "Product", flex: 3, minWidth: 220, filter: "agTextColumnFilter", tooltipField: "title" },
+    { field: "retailer", headerName: "Store", flex: 1, minWidth: 130, filter: "agTextColumnFilter" },
+    { field: "price", headerName: "Price", width: 110, type: "rightAligned", filter: "agNumberColumnFilter", valueFormatter: (p) => usd(p.value as number), cellStyle: { fontWeight: 600 } },
+    { field: "condition", headerName: "Condition", width: 120, filter: "agTextColumnFilter", valueFormatter: (p) => (p.value as string | null) ?? "–" },
+    {
+      headerName: "",
+      colId: "act",
+      width: 210,
+      sortable: false,
+      cellRenderer: (p: { data?: Listing }) => {
+        const l = p.data;
+        if (!l) return null;
+        const isAdded = added.has(l.url);
+        const href = webUrl(l.url);
+        return (
+          <span className="flex items-center gap-2">
+            <button
+              className={`${btn} py-1 ${isAdded ? "border border-line text-muted" : "bg-ultra text-white"}`}
+              disabled={!addable || isAdded}
+              onClick={() => run(() => api(`/api/wants/${want!.id}/listings`, "POST", { listing: l }))}
+            >
+              {isAdded ? "Added" : "Negotiate this"}
+            </button>
+            {href && (
+              <a href={href} target="_blank" rel="noopener noreferrer" className="text-sm font-medium text-ultra underline-offset-4 hover:underline">
+                View
+              </a>
+            )}
+          </span>
+        );
+      },
+    },
+  ];
+
   const chip = (active: boolean) =>
     `shrink-0 rounded-full border px-3 py-1 text-sm transition-colors duration-150 ${
       active ? "border-ultra bg-ultra/10 font-medium text-ultra" : "border-line [@media(hover:hover)]:hover:border-ink/40"
@@ -106,6 +155,7 @@ export function MarketplaceView(props: {
         ))}
       </div>
 
+      <div className="flex flex-wrap items-center justify-between gap-2">
       <p className="text-sm text-muted" role="status">
         {!want
           ? "Select or add a want first to negotiate a product."
@@ -116,11 +166,25 @@ export function MarketplaceView(props: {
               : `Adding to: ${want.item}`}
         {results && !loading ? ` · ${results.length} products` : ""}
       </p>
+      <div role="group" aria-label="View" className="flex gap-1">
+        {(["cards", "table"] as const).map((v) => (
+          <button key={v} aria-pressed={view === v} onClick={() => setView(v)} className={chip(view === v)}>
+            {v === "cards" ? "Cards" : "Table"}
+          </button>
+        ))}
+      </div>
+      </div>
 
       {loading && !results && <p className="text-sm text-muted">Loading products…</p>}
       {results && results.length === 0 && !loading && <p className="text-sm text-muted">No products found. Try another search or category.</p>}
 
-      <ul className={`grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4 ${loading ? "opacity-60" : ""}`}>
+      {view === "table" && results && results.length > 0 && (
+        <div className={loading ? "opacity-60" : ""}>
+          <DataGrid<Listing> rows={results} columns={columns} height={620} label="Marketplace products" />
+        </div>
+      )}
+
+      <ul className={`grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4 ${loading ? "opacity-60" : ""} ${view === "table" ? "hidden" : ""}`}>
         {(results ?? []).map((l) => {
           const img = webUrl(l.image);
           const href = webUrl(l.url);
