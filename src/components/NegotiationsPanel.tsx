@@ -189,10 +189,10 @@ export function NegotiationsPanel(props: {
           {want.notes && <p className="mt-2 break-words text-base text-muted">{want.notes}</p>}
           <ul className="mt-3 flex flex-wrap gap-2" title={STYLE_INFO[want.style ?? "balanced"].description}>
             {meta.map((m) => (
-              <li key={m} className="rounded-full bg-mist px-3 py-1 text-[13px] font-medium text-muted">{m}</li>
+              <li key={m} className="rounded-md bg-mist px-3 py-1 text-[13px] font-medium text-muted">{m}</li>
             ))}
             {bundle && (
-              <li className="num rounded-full bg-mist px-3 py-1 text-[13px] font-medium text-muted">
+              <li className="num rounded-md bg-mist px-3 py-1 text-[13px] font-medium text-muted">
                 Bundle "{bundle.name}": {usd(bundle.spent)} of {usd(bundle.total)} spent, {usd(bundleRoom)} left for this want
               </li>
             )}
@@ -272,7 +272,7 @@ export function NegotiationsPanel(props: {
                 </b>
                 : {pending.map((s) => s.name).join(", ")}. They have not been talked to yet. Press Negotiate to start; the existing conversations stay as they are.
               </p>
-              <button className={`${primary} shrink-0 rounded-full`} disabled={!canNegotiate || busy} onClick={onNegotiate}>
+              <button className={`${primary} shrink-0`} disabled={!canNegotiate || busy} onClick={onNegotiate}>
                 Negotiate with {pending.length === 1 ? "it" : `${pending.length} new`}
               </button>
             </div>
@@ -317,7 +317,7 @@ export function NegotiationsPanel(props: {
             {replaying && (
               <p className="mt-5 text-sm text-muted">
                 Replaying the negotiation.{" "}
-                <button className="rounded-full bg-mist px-3 py-0.5 font-semibold text-ink [@media(hover:hover)]:hover:bg-[#E4E5E9]" onClick={skipReplay}>Skip</button>
+                <button className="rounded-md bg-mist px-3 py-0.5 font-semibold text-ink [@media(hover:hover)]:hover:bg-[#E4E5E9]" onClick={skipReplay}>Skip</button>
               </p>
             )}
           </section>

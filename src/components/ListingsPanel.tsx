@@ -48,7 +48,7 @@ export function ListingsPanel({ sellers, threads }: { sellers: Seller[]; threads
                 <h3 className="line-clamp-2 break-words text-sm font-semibold leading-snug" title={l.title}>{l.title}</h3>
                 <p className="mt-auto flex flex-wrap items-baseline gap-x-2 pt-2">
                   <span className="num text-2xl font-bold tracking-tight">{usd(l.price)}</span>
-                  {l.condition && <span className="rounded-full bg-mist px-2 py-0.5 text-[12px] font-medium text-muted">{l.condition}</span>}
+                  {l.condition && <span className="rounded-md bg-mist px-2 py-0.5 text-[12px] font-medium text-muted">{l.condition}</span>}
                 </p>
                 {deal && <p className="text-[13px] font-medium text-ultra">Hagglebot agreed {usd(deal.dealPrice)}</p>}
                 {href && (

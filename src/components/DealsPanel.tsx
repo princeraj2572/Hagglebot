@@ -59,7 +59,7 @@ export function DealsPanel(props: {
   return (
     <section aria-label="Deals and payments" className="space-y-4">
       <p className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted">
-        <span className="inline-flex items-center gap-2 rounded-full bg-mist px-3 py-1 text-[13px]">
+        <span className="inline-flex items-center gap-2 rounded-md bg-mist px-3 py-1 text-[13px]">
           <span aria-hidden className="h-2 w-2 rounded-full bg-ink/40" />
           Mock payments. No real money moves.
         </span>
@@ -91,14 +91,14 @@ export function DealsPanel(props: {
             </div>
             <p className="mt-2 flex flex-wrap items-center gap-2 text-sm text-muted">
               {d.status === "paid" ? (
-                <span className="inline-flex items-center gap-1 rounded-full bg-ultra px-2.5 py-0.5 text-[13px] font-semibold text-white">
+                <span className="inline-flex items-center gap-1 rounded-md bg-[#E7F7EE] px-2.5 py-0.5 text-[13px] font-medium text-[#15803D]">
                   <span aria-hidden>✓</span> {LABEL[d.status]}
                 </span>
               ) : (
                 LABEL[d.status]
               )}
               {cheapest !== null && d.price === cheapest && d.status !== "cancelled" && d.status !== "refunded" && (
-                <span className="rounded-full bg-tag px-2 py-0.5 text-[13px] font-semibold text-ink">Best price</span>
+                <span className="rounded-md bg-[#FEF3C7] px-2 py-0.5 text-[13px] font-medium text-[#92400E]">Best price</span>
               )}
             </p>
 
@@ -114,12 +114,12 @@ export function DealsPanel(props: {
                       <button className={`${btn} bg-scam text-white`} disabled={refunding} onClick={() => void refund(d.id)}>
                         {refunding ? `Waiting for ${d.sellerName}…` : "Yes, request refund"}
                       </button>
-                      <button className={`${btn} bg-mist [@media(hover:hover)]:hover:bg-[#E4E5E9]`} disabled={refunding} onClick={() => setConfirming(null)}>
+                      <button className={`${btn} border border-line bg-paper [@media(hover:hover)]:hover:bg-mist`} disabled={refunding} onClick={() => setConfirming(null)}>
                         Keep
                       </button>
                     </span>
                   ) : (
-                    <button className={`${btn} bg-mist [@media(hover:hover)]:hover:bg-[#E4E5E9]`} onClick={() => setConfirming(d.id)}>
+                    <button className={`${btn} border border-line bg-paper [@media(hover:hover)]:hover:bg-mist`} onClick={() => setConfirming(d.id)}>
                       Request refund of {usd(d.price)}
                     </button>
                   )}
@@ -137,7 +137,7 @@ export function DealsPanel(props: {
             {(d.status === "awaiting_payment" || d.status === "order_created") && (
               <div className="mt-3">
                 <button
-                  className={`${btn} w-full bg-ultra py-2.5 font-semibold text-white [@media(hover:hover)]:hover:bg-[#2553D6]`}
+                  className={`${btn} w-full bg-ink py-2.5 text-white [@media(hover:hover)]:hover:bg-[#2A2A2A]`}
                   disabled={paying !== null}
                   onClick={() => void pay(d.id)}
                 >

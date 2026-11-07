@@ -155,7 +155,7 @@ export function MarketplaceView(props: {
     const overBudget = !!want && l.price > budget;
     const negotiateBtn = (
       <button
-        className={`${btn} ${layout === "card" ? "whitespace-nowrap px-2 text-[13px]" : "py-1"} ${isAdded ? "bg-mist text-muted" : "bg-ultra text-white [@media(hover:hover)]:hover:bg-[#2553D6]"}`}
+        className={`${btn} ${layout === "card" ? "whitespace-nowrap px-2 text-[13px]" : "py-1"} ${isAdded ? "bg-mist text-muted" : "bg-ink text-white [@media(hover:hover)]:hover:bg-[#2A2A2A]"}`}
         disabled={!want || !canAdd || full || isAdded}
         onClick={(e) => void negotiate(l, e.currentTarget)}
       >
@@ -302,7 +302,7 @@ export function MarketplaceView(props: {
         </p>
         <div className="flex flex-wrap items-center gap-2">
           {want && open && want.sellers.length > 0 && (
-            <button className={`${primary} rounded-full`} onClick={onGoToWant}>
+            <button className={`${primary}`} onClick={onGoToWant}>
               Go to negotiation ({want.sellers.length} seller{want.sellers.length === 1 ? "" : "s"})
             </button>
           )}
@@ -352,7 +352,7 @@ export function MarketplaceView(props: {
                 <p className="mt-auto flex flex-wrap items-baseline gap-x-2 pt-2">
                   <span className="num text-2xl font-bold tracking-tight">{usd(l.price)}</span>
                   {want && l.price > budget && (
-                    <span className="rounded-full bg-tag/30 px-2 py-0.5 text-[12px] font-medium" title="Above your budget: Buy is off, but Hagglebot can still try to negotiate it down.">
+                    <span className="rounded-md bg-tag/30 px-2 py-0.5 text-[12px] font-medium" title="Above your budget: Buy is off, but Hagglebot can still try to negotiate it down.">
                       over budget
                     </span>
                   )}

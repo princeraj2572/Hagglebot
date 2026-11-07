@@ -73,7 +73,7 @@ export function Detail(props: {
           </p>
           <span className="flex gap-2">
             <button
-              className={`${btn} bg-ultra text-white [@media(hover:hover)]:hover:bg-[#2553D6]`}
+              className={`${btn} bg-ink text-white [@media(hover:hover)]:hover:bg-[#2A2A2A]`}
               disabled={busy}
               onClick={() => run(() => api(`/api/threads/${t.id}/approve`, "POST"))}
             >

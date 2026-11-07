@@ -4,55 +4,103 @@ import type { Preset } from "./Landing";
 
 const reduced = () => typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-// One negotiation, replayed: the seller's ask falls and Hagglebot's offer rises until they meet.
-const ASKS = [399, 330, 268, 225];
+// One product, three sellers, replayed: Ferdi comes down to a deal, Chen stays above the budget, Sam tries a fee and is refused.
+const LIST = 399;
+const FERDI = [399, 330, 268, 225];
 const OFFERS = [175, 190, 208, 225];
+const CHEN = [399, 360, 320, 285];
 const BUDGET = 250;
 const pct = (price: number) => ((price - 150) / (420 - 150)) * 100;
+
+/** A small line drawing of the product being negotiated. */
+function HeadphonesArt() {
+  return (
+    <svg viewBox="0 0 48 48" className="h-9 w-9" fill="none" stroke="#F97316" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <path d="M9 29v-5a15 15 0 0130 0v5" />
+      <rect x="6" y="28" width="9" height="13" rx="3.5" fill="#FED7AA" />
+      <rect x="33" y="28" width="9" height="13" rx="3.5" fill="#FED7AA" />
+    </svg>
+  );
+}
+
+const STATUS: Record<string, string> = {
+  Deal: "bg-[#E7F7EE] text-[#15803D]",
+  Haggling: "bg-[#E8F0FE] text-[#2F63F3]",
+  "Over budget": "bg-[#FEF3C7] text-[#92400E]",
+  Scam: "bg-[#FDE8E4] text-[#B42318]",
+};
 
 function Replay() {
   const [step, setStep] = useState(0);
   useEffect(() => {
     if (reduced()) {
-      setStep(ASKS.length - 1);
+      setStep(FERDI.length - 1);
       return;
     }
-    const id = setInterval(() => setStep((s) => (s + 1) % (ASKS.length + 2)), 1500);
+    const id = setInterval(() => setStep((s) => (s + 1) % (FERDI.length + 2)), 1500);
     return () => clearInterval(id);
   }, []);
-  const i = Math.min(step, ASKS.length - 1);
-  const done = step >= ASKS.length - 1;
+  const i = Math.min(step, FERDI.length - 1);
+  const done = step >= FERDI.length - 1;
+  const rows = [
+    { name: "Fast Ferdi", initials: "Fe", price: FERDI[i]!, status: done ? "Deal" : "Haggling" },
+    { name: "Chatty Chen", initials: "Ch", price: CHEN[i]!, status: CHEN[i]! > BUDGET && done ? "Over budget" : "Haggling" },
+    { name: "Shady Sam", initials: "Sa", price: i >= 2 ? null : 350 - i * 20, status: i >= 2 ? "Scam" : "Haggling" },
+  ];
   return (
-    <figure aria-label="Example negotiation" className="w-full max-w-sm rounded-2xl border border-line bg-paper p-5 shadow-[0_20px_50px_-24px_rgba(47,99,243,0.35)]">
-      <figcaption className="flex items-baseline justify-between text-sm">
-        <span className="font-semibold">Headphones</span>
-        <span className="num text-muted">budget ${BUDGET}</span>
+    <figure aria-label="Example negotiation" className="w-full max-w-[24rem] rounded-2xl border border-line bg-paper p-4 shadow-[0_20px_50px_-24px_rgba(47,99,243,0.35)] sm:p-5">
+      <figcaption className="flex items-center gap-3">
+        <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-[#FFF1E6]">
+          <HeadphonesArt />
+        </span>
+        <span className="min-w-0 flex-1">
+          <span className="block truncate text-sm font-semibold">Noise-cancelling headphones</span>
+          <span className="num block text-xs text-muted">Listed ${LIST} · your budget ${BUDGET}</span>
+        </span>
+        <span className="inline-flex shrink-0 items-center gap-1.5 rounded-md bg-[#E7F7EE] px-2 py-1 text-[11px] font-medium text-[#15803D]">
+          <i className="h-1.5 w-1.5 rounded-full bg-[#22C55E] motion-safe:animate-pulse" />
+          Live
+        </span>
       </figcaption>
-      <div className="relative mt-8 h-14" aria-hidden>
+
+      <div className="relative mt-6 h-12" aria-hidden>
         {/* right of the budget line is never entered */}
         <div className="absolute inset-y-0 right-0 rounded-r-md" style={{ left: `${pct(BUDGET)}%`, backgroundImage: "repeating-linear-gradient(135deg, rgba(205,87,53,.22) 0 1px, transparent 1px 8px)" }} />
         <div className="absolute inset-x-0 top-1/2 h-px bg-line" />
-        <div className="absolute top-1/2 h-1 -translate-y-1/2 rounded-full bg-ultra/15 transition-[left,width] duration-700 ease-out motion-reduce:transition-none" style={{ left: `${pct(OFFERS[i]!)}%`, width: `${pct(ASKS[i]!) - pct(OFFERS[i]!)}%` }} />
+        <div className="absolute top-1/2 h-1 -translate-y-1/2 rounded-full bg-ultra/15 transition-[left,width] duration-700 ease-out motion-reduce:transition-none" style={{ left: `${pct(OFFERS[i]!)}%`, width: `${pct(FERDI[i]!) - pct(OFFERS[i]!)}%` }} />
         <div className="absolute inset-y-0 w-px bg-ink/60" style={{ left: `${pct(BUDGET)}%` }} />
         {[
-          { price: ASKS[i]!, color: "bg-[#F5A524]" },
+          { price: FERDI[i]!, color: "bg-[#F5A524]" },
           { price: OFFERS[i]!, color: "bg-ultra" },
         ].map((d, k) => (
           <span key={k} className="absolute top-1/2 transition-[left] duration-700 ease-out motion-reduce:transition-none" style={{ left: `${pct(d.price)}%` }}>
             <i className={`absolute left-0 top-0 block h-3.5 w-3.5 -translate-x-1/2 -translate-y-1/2 rounded-full ${d.color} ${done ? "ring-4 ring-ink/10" : ""}`} />
-            <span className="num absolute left-0 top-4 -translate-x-1/2 text-xs">${d.price}</span>
+            <span className="num absolute left-0 top-4 -translate-x-1/2 text-[11px]">${d.price}</span>
           </span>
         ))}
       </div>
-      <p role="status" className="mt-5 min-h-[2.5rem] text-sm leading-relaxed text-muted">
+
+      <ul className="mt-6 divide-y divide-line rounded-xl border border-line">
+        {rows.map((r) => (
+          <li key={r.name} className="flex items-center gap-2.5 px-3 py-2">
+            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#F5A524]/25 text-[11px] font-semibold">{r.initials}</span>
+            <span className="min-w-0 flex-1 truncate text-sm">{r.name}</span>
+            <span className={`rounded-md px-1.5 py-0.5 text-[11px] font-medium transition-colors duration-300 ${STATUS[r.status]}`}>{r.status}</span>
+            <span className="num w-12 text-right text-sm">{r.price === null ? "\u2014" : `$${r.price}`}</span>
+          </li>
+        ))}
+      </ul>
+
+      <p role="status" className="mt-4 flex min-h-[1.75rem] items-center justify-between gap-2 text-sm text-muted">
         {done ? (
           <>
-            <span className="font-semibold text-ink">Deal at $225</span>, $25 under budget.
+            <span>
+              <span className="font-semibold text-ink">Best deal $225</span>, $25 under budget
+            </span>
+            <span className="num rounded-md bg-[#E7F7EE] px-2 py-0.5 text-xs font-medium text-[#15803D]">saved ${LIST - 225}</span>
           </>
         ) : (
-          <>
-            Seller asks <span className="num text-ink">${ASKS[i]}</span>. Hagglebot offers <span className="num text-ink">${OFFERS[i]}</span>.
-          </>
+          <span>Comparing three sellers at once...</span>
         )}
       </p>
     </figure>
@@ -189,13 +237,13 @@ export function Hero({ onStart, onContinue }: { onStart: (preset: Preset) => voi
               </div>
             </div>
 
-            <div className={`relative flex min-h-[26rem] items-center justify-center overflow-hidden rounded-2xl bg-chalk p-4 sm:p-8 ${R}`} style={rise(200)}>
+            <div className={`relative flex min-h-[34rem] items-center justify-center overflow-hidden rounded-2xl bg-chalk p-4 sm:p-8 ${R}`} style={rise(200)}>
               <div aria-hidden className="absolute left-1/2 top-1/2 h-72 w-72 -translate-x-1/2 -translate-y-1/2 rounded-full bg-[radial-gradient(circle,#7FA8FF_0%,#B9CFFF_45%,transparent_70%)] opacity-70 blur-2xl motion-safe:animate-float" />
               <Replay />
-              <Float className="left-3 top-8" color="#F97316" delay={0}>Budget never shown</Float>
-              <Float className="right-3 top-24" color="#EF4444" delay={1.2}>Hidden fee refused</Float>
-              <Float className="bottom-10 left-5" color="#22C55E" delay={2.4}>Saved $25</Float>
-              <Float className="bottom-20 right-4" color="#3B82F6" delay={3.4}>Walked away from Sam</Float>
+              <Float className="left-3 top-5" color="#F97316" delay={0}>Budget never shown</Float>
+              <Float className="right-3 top-12" color="#EF4444" delay={1.2}>Hidden fee refused</Float>
+              <Float className="bottom-6 left-4" color="#22C55E" delay={2.4}>Saved $25</Float>
+              <Float className="bottom-12 right-3" color="#3B82F6" delay={3.4}>Walked away from Sam</Float>
             </div>
           </div>
         </main>
