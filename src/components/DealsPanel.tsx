@@ -137,7 +137,7 @@ export function DealsPanel(props: {
             {(d.status === "awaiting_payment" || d.status === "order_created") && (
               <div className="mt-3">
                 <button
-                  className={`${btn} w-full bg-ultra py-2.5 font-semibold text-white [@media(hover:hover)]:hover:bg-[#3040C6]`}
+                  className={`${btn} w-full bg-ultra py-2.5 font-semibold text-white [@media(hover:hover)]:hover:bg-[#2553D6]`}
                   disabled={paying !== null}
                   onClick={() => void pay(d.id)}
                 >

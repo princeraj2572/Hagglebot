@@ -155,7 +155,7 @@ export function MarketplaceView(props: {
     const overBudget = !!want && l.price > budget;
     const negotiateBtn = (
       <button
-        className={`${btn} ${layout === "card" ? "whitespace-nowrap px-2 text-[13px]" : "py-1"} ${isAdded ? "bg-mist text-muted" : "bg-ultra text-white [@media(hover:hover)]:hover:bg-[#3040C6]"}`}
+        className={`${btn} ${layout === "card" ? "whitespace-nowrap px-2 text-[13px]" : "py-1"} ${isAdded ? "bg-mist text-muted" : "bg-ultra text-white [@media(hover:hover)]:hover:bg-[#2553D6]"}`}
         disabled={!want || !canAdd || full || isAdded}
         onClick={(e) => void negotiate(l, e.currentTarget)}
       >

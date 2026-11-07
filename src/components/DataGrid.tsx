@@ -6,7 +6,7 @@ ModuleRegistry.registerModules([AllCommunityModule]);
 
 /** AG Grid dressed in Hagglebot's own tokens, so a table looks like the rest of the app. */
 const theme = themeQuartz.withParams({
-  accentColor: "#3B4CDD",
+  accentColor: "#2F63F3",
   backgroundColor: "#FFFFFF",
   foregroundColor: "#0E1424",
   borderColor: "#DCE1EB",

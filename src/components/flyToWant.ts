@@ -35,7 +35,7 @@ export function flyToWant(from: DOMRect, image: string | null, tag: string): num
     Object.assign(img.style, { width: "100%", height: "100%", objectFit: "contain" } as Partial<CSSStyleDeclaration>);
     chip.appendChild(img);
   } else {
-    chip.style.background = "#3B4CDD";
+    chip.style.background = "#2F63F3";
     chip.style.color = "#fff";
     chip.style.fontWeight = "700";
     chip.style.fontSize = "22px";
@@ -69,7 +69,7 @@ export function flyToWant(from: DOMRect, image: string | null, tag: string): num
     label.textContent = tag;
     Object.assign(label.style, {
       position: "fixed", left: `${t.right - 8}px`, top: `${t.top + 4}px`, transform: "translateX(-100%)", zIndex: "60",
-      pointerEvents: "none", background: "#3B4CDD", color: "#fff", fontSize: "12px", fontWeight: "700",
+      pointerEvents: "none", background: "#2F63F3", color: "#fff", fontSize: "12px", fontWeight: "700",
       padding: "3px 10px", borderRadius: "999px", whiteSpace: "nowrap",
     } as Partial<CSSStyleDeclaration>);
     document.body.appendChild(label);

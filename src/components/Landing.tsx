@@ -32,7 +32,7 @@ export function Landing({ onStart }: { onStart?: ((preset?: Preset) => void) | u
         <p className="mt-3 max-w-lg leading-relaxed text-muted">Add a want and Hagglebot finds sellers, negotiates and pays. Everything is simulated.</p>
         <div className="mt-6 flex flex-wrap items-center gap-3">
           {onStart && (
-            <button className="rounded-full bg-ultra px-6 py-3 font-semibold text-white transition-transform duration-150 active:scale-[0.97] [@media(hover:hover)]:hover:bg-[#3040C6]" onClick={() => onStart()}>
+            <button className="rounded-full bg-ultra px-6 py-3 font-semibold text-white transition-transform duration-150 active:scale-[0.97] [@media(hover:hover)]:hover:bg-[#2553D6]" onClick={() => onStart()}>
               Add your first want
             </button>
           )}

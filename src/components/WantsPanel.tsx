@@ -205,7 +205,7 @@ export function WantsPanel(props: {
                   }`}
                 >
                   <span className="flex items-center gap-2">
-                    <input type="radio" name="style" value={s} checked={form.style === s} onChange={() => setForm({ ...form, style: s })} className="accent-[#3B4CDD]" />
+                    <input type="radio" name="style" value={s} checked={form.style === s} onChange={() => setForm({ ...form, style: s })} className="accent-[#2F63F3]" />
                     <b className="font-semibold">{STYLE_INFO[s].label}</b>
                   </span>
                   <span className="text-[13px] leading-snug text-muted">{STYLE_INFO[s].description}</span>
@@ -215,7 +215,7 @@ export function WantsPanel(props: {
           </fieldset>
 
           <label className="flex cursor-pointer items-start gap-3 rounded-lg bg-ultra/10 px-3 py-3 text-sm">
-            <input type="checkbox" checked={autopilot} onChange={(e) => setAutopilot(e.target.checked)} className="mt-1 accent-[#3B4CDD]" />
+            <input type="checkbox" checked={autopilot} onChange={(e) => setAutopilot(e.target.checked)} className="mt-1 accent-[#2F63F3]" />
             <span>
               <span className="font-semibold">Find sellers and negotiate for me</span>
               <span className="block text-[13px] text-muted">
@@ -225,7 +225,7 @@ export function WantsPanel(props: {
           </label>
 
           <label className="flex cursor-pointer items-start gap-3 rounded-lg bg-mist px-3 py-3 text-sm">
-            <input type="checkbox" checked={form.requireApproval} onChange={(e) => setForm({ ...form, requireApproval: e.target.checked })} className="mt-1 accent-[#3B4CDD]" />
+            <input type="checkbox" checked={form.requireApproval} onChange={(e) => setForm({ ...form, requireApproval: e.target.checked })} className="mt-1 accent-[#2F63F3]" />
             <span>
               <span className="font-medium">Ask me before accepting a price</span>
               <span className="block text-[13px] text-muted">Hagglebot stops at an in-budget price and waits for your OK.</span>

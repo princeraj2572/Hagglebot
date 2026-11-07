@@ -5,13 +5,13 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        chalk: "#F7F7F8", // the canvas behind everything
+        chalk: "#FAFAFB", // the canvas behind everything
         paper: "#FFFFFF", // working surfaces
-        mist: "#EEEFF2", // quiet tonal fills (rails, table headers, inactive controls)
-        ink: "#0D0F14",
-        muted: "#62666F",
-        line: "#E4E5E9",
-        ultra: "#3B4CDD", // Hagglebot: our offers and the pay action
+        mist: "#F1F2F6", // quiet tonal fills (rails, table headers, inactive controls)
+        ink: "#0E0D0D",
+        muted: "#5A5855",
+        line: "#E9EAEE",
+        ultra: "#2F63F3", // Hagglebot: our offers and the pay action
         tag: "#F2B31B", // seller asks (price-tag yellow); fill only, never text
         scam: "#C8283C", // scams only
       },
