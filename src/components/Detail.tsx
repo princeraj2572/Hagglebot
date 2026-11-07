@@ -57,6 +57,11 @@ export function Detail(props: {
             </span>
           )}
           <StatusChip status={t.status} scam={scam} />
+          {t.messages.length > 0 && (
+            <a className="text-sm font-medium text-ultra underline-offset-4 hover:underline" href={`/api/threads/${t.id}/transcript`} download>
+              Download transcript
+            </a>
+          )}
           {t.status === "negotiating" && !replay && (
             <button className={`${ghost} py-1`} disabled={busy} onClick={() => run(() => api(`/api/threads/${t.id}/pause`, "POST"))}>
               Pause

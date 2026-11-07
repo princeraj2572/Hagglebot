@@ -7,6 +7,7 @@ import { GET as getCategories } from "@/app/api/marketplace/categories/route";
 import { POST as marketSearch } from "@/app/api/marketplace/search/route";
 import { POST as buyNow } from "@/app/api/wants/[id]/buy/route";
 import { POST as approveRoute } from "@/app/api/threads/[id]/approve/route";
+import { GET as transcript } from "@/app/api/threads/[id]/transcript/route";
 import { POST as declineRoute } from "@/app/api/threads/[id]/decline/route";
 import { POST as demoPayRoute } from "@/app/api/deals/[id]/demo-pay/route";
 import { POST as negotiate } from "@/app/api/wants/[id]/negotiate/route";
@@ -348,6 +349,21 @@ describe("API", () => {
 
     it("answers 404 for an unknown thread", async () => {
       expect((await approveRoute(post("/api/threads/nope/approve"), ctx({ id: "nope" }))).status).toBe(404);
+    });
+  });
+
+  describe("transcript download", () => {
+    it("serves a negotiation as a Markdown attachment, and 404s for an unknown thread", async () => {
+      const demo = await (await loadDemo(post("/api/demo"))).json();
+      await negotiate(post(`/api/wants/${demo.wantId}/negotiate`), ctx({ id: demo.wantId }));
+      await svc.runner.idle();
+      const t = (await state()).threads[0]!;
+      const res = await transcript(new Request(url(`/api/threads/${t.id}/transcript`)), ctx({ id: t.id }));
+      expect(res.status).toBe(200);
+      expect(res.headers.get("content-type")).toContain("text/markdown");
+      expect(res.headers.get("content-disposition")).toMatch(/^attachment; filename="hagglebot-[a-z-]+\.md"$/);
+      expect(await res.text()).toContain("## Conversation");
+      expect((await transcript(new Request(url("/api/threads/nope/transcript")), ctx({ id: "nope" }))).status).toBe(404);
     });
   });
 });
