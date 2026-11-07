@@ -10,16 +10,20 @@ import { usd } from "./format";
 import { ghost, input, primary } from "./ui";
 
 type Want = DashboardState["wants"][number];
+type Bundle = DashboardState["bundles"][number];
 
 export function WantsPanel(props: {
   wants: Want[];
+  bundles: Bundle[];
   selectedId: string | null;
   listings: boolean;
   onSelect: (id: string) => void;
   onChanged: () => void;
   onError: (msg: string) => void;
 }) {
-  const { wants, selectedId, listings, onSelect, onChanged, onError } = props;
+  const { wants, bundles, selectedId, listings, onSelect, onChanged, onError } = props;
+  const [bundleForm, setBundleForm] = useState({ name: "", total: "" });
+  const [showBundleForm, setShowBundleForm] = useState(false);
   const [form, setForm] = useState<{ item: string; maxPrice: string; notes: string; buyerName: string; style: NegotiationStyle; requireApproval: boolean }>({
     item: "", maxPrice: "", notes: "", buyerName: "", style: "balanced", requireApproval: false,
   });
@@ -120,10 +124,58 @@ export function WantsPanel(props: {
       <ul className="space-y-2">
         {wants.map((w) => (
           <li key={w.id}>
-            <WantCard want={w} selected={w.id === selectedId} listings={listings} onSelect={() => onSelect(w.id)} run={run} />
+            <WantCard want={w} bundles={bundles} selected={w.id === selectedId} listings={listings} onSelect={() => onSelect(w.id)} run={run} />
           </li>
         ))}
       </ul>
+
+      <div className="space-y-2">
+        <div className="flex items-center justify-between gap-2">
+          <h3 className="text-sm font-semibold">Bundles</h3>
+          <button className="rounded py-0.5 text-sm font-medium text-ultra underline-offset-4 hover:underline" aria-expanded={showBundleForm} onClick={() => setShowBundleForm((v) => !v)}>
+            {showBundleForm ? "Close" : "New bundle"}
+          </button>
+        </div>
+        {bundles.length === 0 && !showBundleForm && (
+          <p className="text-[13px] text-muted">A bundle shares one total budget between several wants, for example a whole desk setup.</p>
+        )}
+        <ul className="space-y-1.5">
+          {bundles.map((b) => (
+            <li key={b.id} className="flex items-center gap-2 rounded-md border border-line bg-paper/60 px-2.5 py-1.5 text-sm">
+              <span className="min-w-0 flex-1">
+                <span className="block break-words font-medium leading-tight">{b.name}</span>
+                <span className="num block text-[13px] text-muted">{usd(b.spent)} of {usd(b.total)} spent</span>
+              </span>
+              <button className="shrink-0 rounded px-1 text-muted [@media(hover:hover)]:hover:text-scam" aria-label={`Delete bundle ${b.name}`} onClick={() => run(() => api(`/api/bundles/${b.id}`, "DELETE"))}>
+                ✕
+              </button>
+            </li>
+          ))}
+        </ul>
+        {showBundleForm && (
+          <form
+            className="space-y-2 rounded-md border border-line bg-paper p-3"
+            onSubmit={(e) => {
+              e.preventDefault();
+              void run(async () => {
+                await api("/api/bundles", "POST", { name: bundleForm.name, total: Number(bundleForm.total) });
+                setBundleForm({ name: "", total: "" });
+                setShowBundleForm(false);
+              });
+            }}
+          >
+            <label className="block text-[13px] text-muted">
+              Name
+              <input className={`${input} mt-1`} required maxLength={60} value={bundleForm.name} placeholder="Desk setup" onChange={(e) => setBundleForm({ ...bundleForm, name: e.target.value })} />
+            </label>
+            <label className="block text-[13px] text-muted">
+              Total budget (USD)
+              <input className={`${input} mt-1`} required inputMode="numeric" pattern="[0-9]*" value={bundleForm.total} placeholder="600" onChange={(e) => setBundleForm({ ...bundleForm, total: e.target.value })} />
+            </label>
+            <button className={`${primary} w-full`} disabled={busy} type="submit">Add bundle</button>
+          </form>
+        )}
+      </div>
 
       <button
         className="rounded-md py-1 text-sm font-medium text-ultra underline-offset-4 hover:underline disabled:opacity-50"
@@ -141,8 +193,8 @@ export function WantsPanel(props: {
   );
 }
 
-function WantCard({ want: w, selected, listings, onSelect, run }: {
-  want: Want; selected: boolean; listings: boolean; onSelect: () => void; run: (fn: () => Promise<unknown>) => Promise<void>;
+function WantCard({ want: w, bundles, selected, listings, onSelect, run }: {
+  want: Want; bundles: Bundle[]; selected: boolean; listings: boolean; onSelect: () => void; run: (fn: () => Promise<unknown>) => Promise<void>;
 }) {
   const [persona, setPersona] = useState(PERSONAS[0]?.id ?? "ferdi");
   return (
@@ -157,11 +209,27 @@ function WantCard({ want: w, selected, listings, onSelect, run }: {
           {w.status === "purchased" ? "Purchased" : `${w.sellers.length} seller${w.sellers.length === 1 ? "" : "s"}`}
           {" · "}
           {STYLE_INFO[w.style ?? "balanced"].label}
+          {w.bundleId ? ` · ${bundles.find((b) => b.id === w.bundleId)?.name ?? "Bundle"}` : ""}
         </span>
       </button>
 
       {selected && (
         <div className="mt-3 space-y-2 border-t border-line pt-3">
+          {bundles.length > 0 && (
+            <label className="block text-[13px] text-muted">
+              Bundle
+              <select
+                className={`${input} mt-1`}
+                value={w.bundleId ?? ""}
+                onChange={(e) => run(() => api(`/api/wants/${w.id}/bundle`, "POST", { bundleId: e.target.value || null }))}
+              >
+                <option value="">No bundle (own budget)</option>
+                {bundles.map((b) => (
+                  <option key={b.id} value={b.id}>{b.name} ({usd(b.total - b.spent)} left)</option>
+                ))}
+              </select>
+            </label>
+          )}
           <ul className="space-y-1.5">
             {w.sellers.map((s) => (
               <li key={s.id} className="flex items-center gap-2 text-sm">

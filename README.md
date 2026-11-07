@@ -36,7 +36,10 @@ Built for the PayPal AI Hackathon (Agentic Commerce).
 6. **Refund**: a paid deal has a **Request refund** button (with a confirm step; the simulated seller approves) that
    fully refunds the capture through the PayPal Payments API, tells the seller, and reopens the want so you can
    negotiate again.
-7. **Savings**: once a deal closes, a panel says what Hagglebot saved against the first ask and the budget, with every
+7. **Bundles**: group several wants (for example a whole desk setup) under one total budget. Hagglebot negotiates each
+   want within what is left of the total, and the payment step refuses anything that would take the bundle over it.
+   Only payments actually made count as spent.
+8. **Savings**: once a deal closes, a panel says what Hagglebot saved against the first ask and the budget, with every
    closed deal in a sortable AG Grid table.
 
 ### The simulated marketplace

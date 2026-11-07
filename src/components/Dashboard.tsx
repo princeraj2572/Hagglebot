@@ -123,6 +123,7 @@ export function Dashboard() {
             <aside className={`min-w-0 ${tab === "wants" ? "" : "hidden lg:block"}`}>
               <WantsPanel
                 wants={wants}
+                bundles={state.bundles}
                 selectedId={selected?.id ?? null}
                 listings={state.config.listings}
                 onSelect={(id) => { setSelectedWant(id); setTab("negotiation"); }}
@@ -139,6 +140,7 @@ export function Dashboard() {
                   threads={threads}
                   deals={deals}
                   wants={wants}
+                  bundle={state.bundles.find((b) => b.id === selected?.bundleId)}
                   paypalClientId={state.config.paypalClientId}
                   buyerEmail={state.config.paypalBuyerEmail}
                   busy={busy}

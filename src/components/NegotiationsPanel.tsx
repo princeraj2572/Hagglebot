@@ -49,6 +49,8 @@ export function NegotiationsPanel(props: {
   threads: Thread[];
   deals: Deal[];
   wants: WantRecord[];
+  /** The bundle this want belongs to, if any. */
+  bundle: DashboardState["bundles"][number] | undefined;
   paypalClientId: string | null;
   buyerEmail: string | null;
   busy: boolean;
@@ -61,7 +63,7 @@ export function NegotiationsPanel(props: {
   onChanged: () => void;
   onError: (msg: string) => void;
 }) {
-  const { want, threads, deals, wants, paypalClientId, buyerEmail, busy, demo, restart, canNegotiate, onNegotiate, run, onChanged, onError } = props;
+  const { want, threads, deals, wants, bundle, paypalClientId, buyerEmail, busy, demo, restart, canNegotiate, onNegotiate, run, onChanged, onError } = props;
 
   // Negotiations that finished before this page opened replay once, so the haggling is visible.
   const seen = useRef(new Set<string>());
@@ -144,7 +146,11 @@ export function NegotiationsPanel(props: {
     );
   }
 
-  const axis = axisFor(want.maxPrice, threads);
+  // A want in a bundle may spend at most what is left of the bundle, minus what other wants in it have paid.
+  const ownPaid = deals.filter((d) => d.status === "paid").reduce((sum, d) => sum + d.price, 0);
+  const bundleRoom = bundle ? Math.max(0, bundle.total - (bundle.spent - ownPaid)) : null;
+  const budget = bundleRoom === null ? want.maxPrice : Math.min(want.maxPrice, bundleRoom);
+  const axis = axisFor(budget, threads);
   const listingCount = want.sellers.filter((s) => listingFromEndpoint(s.endpoint)).length;
   const dealThreads = shown.filter((t) => t.status === "deal" && t.dealPrice !== null);
   const best = [...dealThreads].sort((a, b) => (a.dealPrice as number) - (b.dealPrice as number))[0];
@@ -161,6 +167,11 @@ export function NegotiationsPanel(props: {
           <p className="mt-1 text-sm text-muted" title={STYLE_INFO[want.style ?? "balanced"].description}>
             {STYLE_INFO[want.style ?? "balanced"].label} style · opens at {usd(openingOffer(want))}{want.requireApproval ? " · asks before accepting" : ""}
           </p>
+          {bundle && (
+            <p className="num mt-1 text-sm text-muted">
+              Bundle "{bundle.name}": {usd(bundle.spent)} of {usd(bundle.total)} spent, {usd(bundleRoom)} left for this want.
+            </p>
+          )}
         </div>
         <button className={`${primary} shrink-0`} disabled={!canNegotiate || busy} onClick={onNegotiate}>
           {restart ? "Restart" : "Negotiate"}
@@ -187,7 +198,7 @@ export function NegotiationsPanel(props: {
       ) : (
         <>
           <dl className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-            <Stat label="Your budget" value={usd(want.maxPrice)} note="never shown to sellers" />
+            <Stat label="Your budget" value={usd(budget)} note={budget < want.maxPrice ? `limited by the ${bundle?.name} bundle` : "never shown to sellers"} />
             <Stat
               label={liveCount > 0 ? "Talking now" : "Sellers"}
               value={liveCount > 0 ? `${liveCount} of ${shown.length}` : String(shown.length)}
