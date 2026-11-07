@@ -140,6 +140,17 @@ categories, and for each product either **Buy at (price)**, which skips the hagg
 checkout (still capped by your budget), or **Negotiate this**. Real stores rarely haggle, so **Find similar you can
 negotiate** searches used and refurbished listings, which are the more negotiable kind.
 
+## Demo mode (`?demo=1`)
+
+Open the app with `?demo=1` (for example `http://localhost:3001/?demo=1`) to record or present without waiting on
+the language models or PayPal. The top bar then shows a yellow **Demo mode** badge, and:
+
+- **Negotiate** runs instantly with canned text (the template negotiator, no model calls).
+- **Confirm and Pay** completes at once with clearly labelled `DEMO-PAYER` / `DEMO-CAPTURE-...` ids. PayPal is never
+  called, so no payment exists, and a refund of such a payment is also local.
+
+Normal mode (no `?demo=1`) is unchanged: AI-written chats and the real PayPal sandbox checkout.
+
 ## Run
 
 ```bash

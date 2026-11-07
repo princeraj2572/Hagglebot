@@ -14,6 +14,12 @@ Two honest ways to handle it; pick one and say which in the voiceover:
 - **Live, then cut:** press Negotiate on camera for about 10 seconds (the "Live: 4 of 4 sellers" pill and the
   "is writing" lines), then cut to the finished state in the edit. Say that you sped it up.
 
+## Fast mode for recording
+
+Add `?demo=1` to the address (`http://localhost:3001/?demo=1`) and the negotiation and the payment both finish
+instantly, with no model or PayPal wait. A yellow "Demo mode" badge shows on screen, so say so in the voiceover.
+Use the normal address instead to show the real AI chats and the real PayPal sandbox checkout.
+
 ## Before you record (checklist)
 
 1. `.env.local` has your real values (PayPal Client ID, Secret, sandbox buyer email, sandbox business email, and
