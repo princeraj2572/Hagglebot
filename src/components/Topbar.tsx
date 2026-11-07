@@ -49,7 +49,7 @@ export function Topbar(props: {
             </span>
           )}
           {demo ? (
-            <span className="inline-flex items-center rounded-full bg-tag px-2.5 py-1 text-[13px] font-semibold sm:px-3" data-testid="mode-badge" role="status">
+            <span className="inline-block rounded-full bg-tag px-2.5 py-1 text-[13px] font-semibold sm:px-3" data-testid="mode-badge" role="status">
               Demo mode<span className="hidden sm:inline"> · canned negotiation and payment, no PayPal</span>
             </span>
           ) : (
