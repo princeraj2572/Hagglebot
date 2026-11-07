@@ -333,7 +333,7 @@ export function MarketplaceView(props: {
               <div className="relative flex h-44 items-center justify-center border-b border-line bg-paper p-3">
                 <span
                   className={`absolute left-2.5 top-2.5 rounded-md px-2.5 py-1 text-[12px] font-bold capitalize shadow-sm ${
-                    !l.condition ? "bg-paper/85 text-muted" : l.condition === "new" ? "bg-paper text-ink" : "bg-tag text-ink"
+                    !l.condition ? "bg-paper/90 text-muted" : l.condition === "new" ? "bg-[#DCF5E4] text-[#15803D]" : l.condition === "refurbished" ? "bg-[#DDEBFF] text-[#1D4ED8]" : "bg-[#FDF0C2] text-[#8A6100]"
                   }`}
                   title={l.condition ? `Condition: ${l.condition}` : "The store did not say whether this is new or used"}
                 >

@@ -15,7 +15,7 @@ function Shield() {
 
 /**
  * The actual chat between Hagglebot and one seller. Hagglebot speaks on the right, the seller on the left.
- * On wide screens each guardrail note sits in a margin rail beside the message it explains.
+ * A guardrail note sits directly under the message it explains, on the same side, so bubbles keep the full width.
  */
 export function Conversation({ t }: { t: Thread }) {
   const box = useRef<HTMLDivElement>(null);
@@ -43,7 +43,7 @@ export function Conversation({ t }: { t: Thread }) {
       tabIndex={0}
       role="region"
       aria-label={`Conversation with ${t.sellerName}`}
-      className="max-h-[32rem] overflow-y-auto pr-1"
+      className="lg:max-h-[32rem] lg:overflow-y-auto lg:pr-1"
     >
       <ol className="space-y-5">
         {t.messages.map((m, i) => {
@@ -52,10 +52,10 @@ export function Conversation({ t }: { t: Thread }) {
           return (
             <li
               key={i}
-              className={`grid gap-x-5 gap-y-1.5 xl:grid-cols-[minmax(0,1fr)_15rem] ${i >= initial.current ? "motion-safe:animate-msg-in" : ""}`}
+              className={`flex flex-col gap-1.5 ${i >= initial.current ? "motion-safe:animate-msg-in" : ""}`}
             >
               <div className={`flex ${buyer ? "justify-end" : "justify-start"}`}>
-                <div className="min-w-0 max-w-[min(62ch,94%)]">
+                <div className="min-w-0 max-w-[min(62ch,92%)]">
                   <div className={`flex items-center gap-1.5 text-[13px] ${buyer ? "justify-end text-ultra" : "text-muted"}`}>
                     <Avatar name={buyer ? "Hagglebot" : t.sellerName} size="sm" />
                     <span className="min-w-0 truncate font-medium" title={buyer ? "Hagglebot (AI)" : t.sellerName}>{buyer ? "Hagglebot (AI)" : t.sellerName}</span>
@@ -75,8 +75,8 @@ export function Conversation({ t }: { t: Thread }) {
               </div>
               {m.guard && (
                 <p
-                  className={`flex items-start gap-1.5 border-l-2 py-0.5 pl-3 text-[13px] leading-snug xl:self-end ${
-                    scamNote ? "border-scam text-scam" : "border-ink/20 text-ink/75"
+                  className={`flex max-w-[min(62ch,92%)] items-start gap-1.5 border-l-2 py-0.5 pl-3 text-[13px] leading-snug ${buyer ? "self-end" : "self-start"} ${
+                    scamNote ? "border-scam text-scam" : "border-[#8B5CF6] text-[#5B3FC4]"
                   }`}
                   data-testid="guardrail"
                 >

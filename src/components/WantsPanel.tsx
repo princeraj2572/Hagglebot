@@ -14,13 +14,13 @@ type Bundle = DashboardState["bundles"][number];
 
 /** Where a want stands, in a few words, so the list can be scanned without opening anything. */
 function statusOf(w: Want, threads: Thread[], deals: Deal[]): { text: string; dot: string } {
-  if (w.status === "purchased") return { text: "Purchased", dot: "bg-ink" };
+  if (w.status === "purchased") return { text: "Purchased", dot: "bg-[#8B5CF6]" };
   const mine = threads.filter((t) => t.wantId === w.id);
   const live = mine.filter((t) => t.status === "negotiating").length;
   if (live > 0) return { text: `Haggling · ${live} of ${mine.length} live`, dot: "bg-ultra motion-safe:animate-pulse" };
-  if (mine.some((t) => t.status === "awaiting_approval")) return { text: "Needs your approval", dot: "bg-tag" };
+  if (mine.some((t) => t.status === "awaiting_approval")) return { text: "Needs your approval", dot: "bg-[#F5A524]" };
   const ready = deals.filter((d) => d.wantId === w.id && (d.status === "awaiting_payment" || d.status === "order_created")).length;
-  if (ready > 0) return { text: `${ready} deal${ready === 1 ? "" : "s"} ready to pay`, dot: "bg-ultra" };
+  if (ready > 0) return { text: `${ready} deal${ready === 1 ? "" : "s"} ready to pay`, dot: "bg-[#22C55E]" };
   if (mine.length > 0) return { text: "No deal yet", dot: "bg-muted/50" };
   if (w.sellers.length === 0) return { text: "No sellers yet", dot: "bg-muted/40" };
   return { text: `Ready · ${w.sellers.length} seller${w.sellers.length === 1 ? "" : "s"}`, dot: "bg-tag" };

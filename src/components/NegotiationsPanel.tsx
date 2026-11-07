@@ -282,21 +282,21 @@ export function NegotiationsPanel(props: {
             <div className="flex flex-wrap items-end justify-between gap-x-10 gap-y-4">
               <div className="min-w-0">
                 <p className="text-sm text-muted">{savings ? "Best deal" : liveCount > 0 ? "Haggling now" : "Result"}</p>
-                <p className="num mt-1 text-5xl font-semibold leading-none sm:text-6xl">
+                <p className={`num mt-1 text-5xl font-semibold leading-none sm:text-6xl ${savings ? "text-[#15803D]" : ""}`}>
                   {savings ? usd(savings.best.price) : liveCount > 0 ? `${liveCount} of ${shown.length}` : "No deal"}
                 </p>
                 {sentence && <p className="mt-3 max-w-xl text-[15px] leading-relaxed text-muted">{sentence}</p>}
               </div>
-              <p className="flex flex-wrap items-center gap-x-5 gap-y-1 text-sm text-muted">
-                <span>
-                  Budget <span className="num text-ink">{usd(budget)}</span>
+              <p className="flex flex-wrap items-center gap-2 text-sm">
+                <span className="rounded-md bg-[#E8F0FE] px-2 py-1 text-[#1D4ED8]">
+                  Budget <span className="num font-medium">{usd(budget)}</span>
                   {budget < want.maxPrice ? ` (limited by the ${bundle?.name} bundle)` : ""}
                 </span>
-                <span>
-                  {liveCount > 0 ? <><span className="num text-ink">{liveCount}</span> live</> : <><span className="num text-ink">{walked}</span> walked away</>}
+                <span className={`rounded-md px-2 py-1 ${liveCount > 0 ? "bg-[#DCF5E4] text-[#15803D]" : "bg-mist text-muted"}`}>
+                  {liveCount > 0 ? <><span className="num font-medium">{liveCount}</span> live</> : <><span className="num font-medium">{walked}</span> walked away</>}
                 </span>
                 {dealThreads.length > 0 && (
-                  <button className="font-medium text-ultra underline-offset-4 [@media(hover:hover)]:hover:underline" onClick={() => setView("deals")}>
+                  <button className="rounded-md bg-ink px-2 py-1 font-medium text-white [@media(hover:hover)]:hover:bg-[#2A2A2A]" onClick={() => setView("deals")}>
                     {paid > 0 ? `${paid} paid · ` : ""}{dealThreads.length} {dealThreads.length === 1 ? "deal" : "deals"} ready to pay
                   </button>
                 )}
@@ -324,7 +324,7 @@ export function NegotiationsPanel(props: {
 
           <SavingsPanel threads={shown} budget={budget} />
 
-          <div role="tablist" aria-label="Negotiation views" className="flex flex-wrap gap-2">
+          <div role="tablist" aria-label="Negotiation views" className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
             {(
               [
                 ...(listingCount > 0 ? ([["listings", `Listings (${listingCount})`]] as const) : []),
@@ -337,7 +337,7 @@ export function NegotiationsPanel(props: {
                 role="tab"
                 aria-selected={view === id}
                 onClick={() => setView(id)}
-                className={`rounded-md px-4 py-1.5 text-sm font-semibold transition-colors duration-150 ${
+                className={`shrink-0 whitespace-nowrap rounded-md px-4 py-1.5 text-sm font-semibold transition-colors duration-150 ${
                   view === id ? "bg-ink text-white" : "bg-mist text-muted [@media(hover:hover)]:hover:text-ink"
                 }`}
               >

@@ -103,9 +103,9 @@ export function Lane({ t, budget, axis }: { t: Thread; budget: number; axis: Axi
 
       {/* mx-7 keeps price labels near either end inside the card; an end label hides when the budget label would sit on it */}
       <div className="num relative mx-7 mt-1 flex justify-between text-[13px] text-muted" aria-hidden>
-        <span className={axis.pct(budget) < 18 ? "invisible" : ""}>{usd(axis.lo)}</span>
-        <span className={`absolute -translate-x-1/2 whitespace-nowrap font-medium text-ink transition-[left] ${EASE}`} style={{ left: axis.pos(budget) }}>Budget {usd(budget)}</span>
-        <span className={axis.pct(budget) > 82 ? "invisible" : ""}>{usd(axis.hi)}</span>
+        <span className={`max-sm:invisible ${axis.pct(budget) < 18 ? "invisible" : ""}`}>{usd(axis.lo)}</span>
+        <span className={`absolute -translate-x-1/2 whitespace-nowrap font-medium text-ink transition-[left] ${EASE}`} style={{ left: axis.pos(budget) }}>Budget<span className="max-sm:hidden"> {usd(budget)}</span></span>
+        <span className={`max-sm:invisible ${axis.pct(budget) > 82 ? "invisible" : ""}`}>{usd(axis.hi)}</span>
       </div>
 
       <p className="num mt-2 text-sm">

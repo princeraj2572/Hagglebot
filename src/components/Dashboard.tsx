@@ -155,6 +155,7 @@ export function Dashboard() {
     }
     enter();
     setPage(p);
+    setTab("negotiation"); // on phones, show the page itself rather than the Wants list
   };
 
   if (state === null || entered === null) {

@@ -1,3 +1,5 @@
+import { tintFor } from "./tints";
+
 /** Who is who in a chat: Hagglebot is a blue rounded square, sellers are yellow circles. */
 const TAGLINE: Record<string, string> = {
   "Fast Ferdi": "Quick to close",
@@ -28,12 +30,12 @@ export function Avatar({ name, size = "md" }: { name: string; size?: keyof typeo
   // Two letters of the persona name ("Fe", "Fa", "Ch", "Sa") so sellers sharing an initial stay distinct.
   const word = baseName(name.trim()).split(/\s+/).at(-1) ?? "?";
   const letter = word.charAt(0).toUpperCase() + word.slice(1, 2).toLowerCase();
+  const tint = tintFor(name);
   return (
     <span
       aria-hidden
-      className={`inline-flex shrink-0 select-none items-center justify-center font-bold ${SIZE[size]} ${
-        bot ? "rounded-md bg-ultra text-white" : "rounded-full border border-tag bg-tag/40 text-ink"
-      }`}
+      className={`inline-flex shrink-0 select-none items-center justify-center font-bold ${SIZE[size]} ${bot ? "rounded-md bg-ultra text-white" : "rounded-full"}`}
+      style={bot ? undefined : { background: tint.bg, color: tint.fg }}
     >
       {bot ? "H" : letter}
     </span>

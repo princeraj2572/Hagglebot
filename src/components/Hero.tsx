@@ -224,7 +224,7 @@ export function Hero({ onStart, onContinue, nav }: { onStart: (preset: Preset) =
               </div>
             </div>
 
-            <div className={`relative flex min-h-[34rem] items-center justify-center overflow-hidden rounded-2xl bg-chalk p-4 sm:p-8 ${R}`} style={rise(200)}>
+            <div className={`relative flex min-h-[24rem] items-center justify-center overflow-hidden rounded-2xl bg-chalk sm:min-h-[34rem] p-4 sm:p-8 ${R}`} style={rise(200)}>
               <div aria-hidden className="absolute left-1/2 top-1/2 h-72 w-72 -translate-x-1/2 -translate-y-1/2 rounded-full bg-[radial-gradient(circle,#7FA8FF_0%,#B9CFFF_45%,transparent_70%)] opacity-70 blur-2xl motion-safe:animate-float" />
               <Replay />
               <Float className="left-3 top-5" color="#F97316" delay={0}>Budget never shown</Float>
