@@ -119,6 +119,9 @@ export function Dashboard() {
   const restarting = started && !hasNewSellers;
   const liveCount = threads.filter((t) => t.status === "negotiating").length;
 
+  // Nothing to list yet: the landing page gets the whole width and the sidebar appears with the first want.
+  const firstRun = state !== null && wants.length === 0 && state.bundles.length === 0 && page === "negotiate";
+
   return (
     <div className="min-h-screen">
       <Topbar
@@ -138,7 +141,7 @@ export function Dashboard() {
           </p>
         )}
 
-        <nav className="mb-4 flex gap-1 border-b border-line lg:hidden" aria-label="Sections">
+        <nav className={`mb-4 flex gap-1 border-b border-line lg:hidden ${firstRun ? "hidden" : ""}`} aria-label="Sections">
           {TABS.map((t) => (
             <button key={t.id} onClick={() => setTab(t.id)} aria-current={tab === t.id}
               className={`flex-1 border-b-2 px-3 py-2 text-sm font-medium ${
@@ -152,8 +155,8 @@ export function Dashboard() {
         {!state ? (
           <p className="text-sm text-muted">Loading…</p>
         ) : (
-          <div className="grid grid-cols-1 gap-6 lg:grid-cols-[16rem_minmax(0,1fr)]">
-            <aside className={`min-w-0 ${tab === "wants" ? "" : "hidden lg:block"}`}>
+          <div className={`grid grid-cols-1 gap-6 ${firstRun ? "" : "lg:grid-cols-[16rem_minmax(0,1fr)]"}`}>
+            <aside className={`min-w-0 ${firstRun ? "hidden" : tab === "wants" ? "" : "hidden lg:block"}`}>
               <WantsPanel
                 wants={wants}
                 bundles={state.bundles}
@@ -168,7 +171,7 @@ export function Dashboard() {
                 preset={preset}
               />
             </aside>
-            <main className={`min-w-0 ${tab === "negotiation" ? "" : "hidden lg:block"}`}>
+            <main className={`min-w-0 ${firstRun || tab === "negotiation" ? "" : "hidden lg:block"}`}>
               {page === "marketplace" ? (
                 <MarketplaceView key={selected?.id ?? "none"} want={selected} canAdd={liveCount === 0} run={run} onError={setError} onBought={() => { setFocus({ view: "deals" }); setPage("negotiate"); }} onGoToWant={() => setPage("negotiate")} />
               ) : (
