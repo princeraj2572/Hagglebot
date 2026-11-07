@@ -55,6 +55,9 @@ export function NegotiationsPanel(props: {
   demo: boolean;
   /** True when the button redoes everything (Restart); false when it only starts new sellers or a first run. */
   restart: boolean;
+  /** Ask the panel to open a tab once (for example Deals right after a purchase). */
+  focus?: { view: "deals" } | null;
+  onFocusDone?: () => void;
   /** First-run shortcut: load the demo scenario and select it. */
   onLoadDemo?: () => void;
   canNegotiate: boolean;
@@ -63,7 +66,7 @@ export function NegotiationsPanel(props: {
   onChanged: () => void;
   onError: (msg: string) => void;
 }) {
-  const { want, threads, deals, wants, bundle, bundles, listings, paypalClientId, buyerEmail, busy, demo, restart, onLoadDemo, canNegotiate, onNegotiate, run, onChanged, onError } = props;
+  const { want, threads, deals, wants, bundle, bundles, listings, paypalClientId, buyerEmail, busy, demo, restart, focus, onFocusDone, onLoadDemo, canNegotiate, onNegotiate, run, onChanged, onError } = props;
 
   // Negotiations that finished before this page opened replay once, so the haggling is visible.
   const seen = useRef(new Set<string>());
@@ -84,6 +87,15 @@ export function NegotiationsPanel(props: {
     (pick && pick.wantId === wantId ? shown.find((t) => t.id === pick.id) : undefined) ?? shown[0];
 
   useEffect(() => setManageOpen(false), [wantId]);
+
+  useEffect(() => {
+    if (!focus) return;
+    setView(focus.view);
+    setShowDetail(false);
+    onFocusDone?.();
+    // Runs when a focus request arrives; onFocusDone clears it.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [focus]);
 
   useEffect(() => {
     if (!wantId) return;

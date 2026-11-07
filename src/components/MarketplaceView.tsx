@@ -36,8 +36,16 @@ export function MarketplaceView(props: {
   onError: (msg: string) => void;
   /** Called after a product was bought at its listed price, so the app can show the deal. */
   onBought: () => void;
+  /** Jump to the want's negotiation page. */
+  onGoToWant: () => void;
 }) {
-  const { want, canAdd, run, onError, onBought } = props;
+  const { want, canAdd, run, onError, onBought, onGoToWant } = props;
+  const [notice, setNotice] = useState<string | null>(null);
+  useEffect(() => {
+    if (!notice) return;
+    const t = setTimeout(() => setNotice(null), 12_000);
+    return () => clearTimeout(t);
+  }, [notice]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [category, setCategory] = useState<string | null>(null);
   const [condition, setCondition] = useState<Condition>("new");
@@ -107,7 +115,12 @@ export function MarketplaceView(props: {
   const open = want?.status === "open";
   const budget = want?.maxPrice ?? 0;
 
-  const negotiate = (l: Listing) => run(() => api(`/api/wants/${want!.id}/listings`, "POST", { listing: l }));
+  const negotiate = (l: Listing) =>
+    run(async () => {
+      await api(`/api/wants/${want!.id}/listings`, "POST", { listing: l });
+      const n = (want?.sellers.length ?? 0) + 1;
+      setNotice(`Added ${l.retailer} to "${want!.item}". It now has ${n} seller${n === 1 ? "" : "s"}, ready to negotiate.`);
+    });
   const buy = (l: Listing) =>
     run(async () => {
       await api(`/api/wants/${want!.id}/buy`, "POST", { listing: l });
@@ -132,7 +145,7 @@ export function MarketplaceView(props: {
         disabled={!want || !canAdd || full || isAdded}
         onClick={() => void negotiate(l)}
       >
-        {isAdded ? "Added" : "Negotiate this"}
+        {isAdded ? "Added ✓" : "Negotiate this"}
       </button>
     );
     const buyBtn = (
@@ -267,12 +280,19 @@ export function MarketplaceView(props: {
               : `For: ${want.item} (budget ${usd(budget)})`}
           {results && !loading ? ` · ${results.length} products` : ""}
         </p>
-        <div role="group" aria-label="View" className="hidden gap-1 sm:flex">
-          {(["cards", "table"] as const).map((v) => (
-            <button key={v} aria-pressed={view === v} onClick={() => setView(v)} className={chip(view === v)}>
-              {v === "cards" ? "Cards" : "Table"}
+        <div className="flex flex-wrap items-center gap-2">
+          {want && open && want.sellers.length > 0 && (
+            <button className={`${primary} rounded-full`} onClick={onGoToWant}>
+              Go to negotiation ({want.sellers.length} seller{want.sellers.length === 1 ? "" : "s"})
             </button>
-          ))}
+          )}
+          <div role="group" aria-label="View" className="hidden gap-1 sm:flex">
+            {(["cards", "table"] as const).map((v) => (
+              <button key={v} aria-pressed={view === v} onClick={() => setView(v)} className={chip(view === v)}>
+                {v === "cards" ? "Cards" : "Table"}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
@@ -317,6 +337,29 @@ export function MarketplaceView(props: {
           <button className={ghost} onClick={() => void search(query, category, condition, true)}>
             Load more products
           </button>
+        </div>
+      )}
+
+      {notice && (
+        <div
+          role="status"
+          className="fixed inset-x-3 bottom-4 z-40 mx-auto flex max-w-xl flex-wrap items-center justify-between gap-3 rounded-2xl bg-ink px-4 py-3 text-white shadow-lift motion-safe:animate-sheet-in"
+        >
+          <p className="min-w-0 flex-1 text-sm leading-snug">{notice}</p>
+          <span className="flex shrink-0 items-center gap-2">
+            <button
+              className="rounded-full bg-white px-3.5 py-1.5 text-sm font-semibold text-ink transition-transform duration-150 active:scale-[0.97] [@media(hover:hover)]:hover:bg-tag"
+              onClick={() => {
+                setNotice(null);
+                onGoToWant();
+              }}
+            >
+              Go to negotiation
+            </button>
+            <button className="rounded-full p-1.5 text-white/70 [@media(hover:hover)]:hover:text-white" aria-label="Dismiss" onClick={() => setNotice(null)}>
+              ✕
+            </button>
+          </span>
         </div>
       )}
     </section>

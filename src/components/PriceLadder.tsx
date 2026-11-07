@@ -79,9 +79,9 @@ export function PriceLadder({ threads, budget, axis, onOpen }: { threads: Thread
       <div className={`mt-1 grid ${cols} gap-3 px-2`} aria-hidden>
         <span />
         <span className="relative block h-4 text-[12px] text-white/50">
-          <span className="num absolute left-0">{usd(axis.lo)}</span>
+          {axis.pct(budget) > 14 && <span className="num absolute left-0">{usd(axis.lo)}</span>}
           <span className="num absolute -translate-x-1/2 whitespace-nowrap text-white/80" style={{ left: axis.pos(budget) }}>Budget {usd(budget)}</span>
-          <span className="num absolute right-0">{usd(axis.hi)}</span>
+          {axis.pct(budget) < 86 && <span className="num absolute right-0">{usd(axis.hi)}</span>}
         </span>
         <span />
       </div>

@@ -18,6 +18,8 @@ export function Dashboard() {
   const [selectedWant, setSelectedWant] = useState<string | null>(null);
   const [tab, setTab] = useState<Tab>("negotiation");
   const [page, setPage] = useState<"negotiate" | "marketplace">("negotiate");
+  // After buying at the listed price, land on the Deals tab so the next step (pay) is in front of you.
+  const [focus, setFocus] = useState<{ view: "deals" } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const live = useRef(false);
@@ -134,7 +136,7 @@ export function Dashboard() {
             </aside>
             <main className={`min-w-0 ${tab === "negotiation" ? "" : "hidden lg:block"}`}>
               {page === "marketplace" ? (
-                <MarketplaceView key={selected?.id ?? "none"} want={selected} canAdd={liveCount === 0} run={run} onError={setError} onBought={() => setPage("negotiate")} />
+                <MarketplaceView key={selected?.id ?? "none"} want={selected} canAdd={liveCount === 0} run={run} onError={setError} onBought={() => { setFocus({ view: "deals" }); setPage("negotiate"); }} onGoToWant={() => setPage("negotiate")} />
               ) : (
                 <NegotiationsPanel
                   want={selected}
@@ -149,6 +151,8 @@ export function Dashboard() {
                   busy={busy}
                   demo={demo}
                 restart={restarting}
+                focus={focus}
+                onFocusDone={() => setFocus(null)}
                 onLoadDemo={() => run(async () => { const r = await api<{ wantId: string }>("/api/demo", "POST"); setSelectedWant(r.wantId); setTab("negotiation"); })}
                 canNegotiate={!!selected && selected.status === "open" && selected.sellers.length > 0 && liveCount === 0}
                   onNegotiate={() => selected && run(() => api(`/api/wants/${selected.id}/negotiate${restarting ? "?restart=1" : ""}${demo ? (restarting ? "&demo=1" : "?demo=1") : ""}`, "POST"))}
