@@ -137,7 +137,7 @@ export function Dashboard() {
   const restarting = started && !hasNewSellers;
   const liveCount = threads.filter((t) => t.status === "negotiating").length;
 
-  const showHero = state !== null && !entered && wants.length === 0 && state.bundles.length === 0;
+  const showHero = state !== null && !entered;
   if (showHero) {
     return (
       <Hero
@@ -154,6 +154,7 @@ export function Dashboard() {
   return (
     <div className="min-h-screen">
       <Topbar
+        onHome={() => setEntered(false)}
         wantItem={selected?.item}
         live={liveCount}
         total={threads.length}

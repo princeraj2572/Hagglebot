@@ -2,6 +2,8 @@ import { Avatar } from "./Avatar";
 
 /** The app bar: the logo, the two pages, whether anything is live, and the mode. */
 export function Topbar(props: {
+  /** The logo reopens the landing page. */
+  onHome: () => void;
   wantItem: string | undefined;
   live: number;
   total: number;
@@ -10,14 +12,14 @@ export function Topbar(props: {
   page: "negotiate" | "marketplace";
   onPage: (p: "negotiate" | "marketplace") => void;
 }) {
-  const { live, total, marketplace, page, onPage } = props;
+  const { live, total, marketplace, page, onPage, onHome } = props;
   return (
     <header className="sticky top-0 z-30 bg-chalk/85 backdrop-blur">
       <div className="mx-auto flex h-16 max-w-[96rem] items-center gap-2 px-3 sm:gap-4 sm:px-6">
-        <span className="flex shrink-0 items-center gap-2.5 text-lg font-bold tracking-tight">
+        <button onClick={onHome} title="Back to the welcome page" className="flex shrink-0 items-center gap-2.5 rounded-lg text-lg font-bold tracking-tight">
           <Avatar name="Hagglebot" />
           <span className="sr-only sm:not-sr-only">Hagglebot</span>
-        </span>
+        </button>
 
         {marketplace && (
           <nav aria-label="Pages" className="flex items-center gap-0.5 rounded-lg bg-mist p-1">
