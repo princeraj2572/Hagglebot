@@ -6,6 +6,8 @@ import { POST as addListings } from "@/app/api/wants/[id]/listings/route";
 import { GET as getCategories } from "@/app/api/marketplace/categories/route";
 import { POST as marketSearch } from "@/app/api/marketplace/search/route";
 import { POST as buyNow } from "@/app/api/wants/[id]/buy/route";
+import { POST as approveRoute } from "@/app/api/threads/[id]/approve/route";
+import { POST as declineRoute } from "@/app/api/threads/[id]/decline/route";
 import { POST as demoPayRoute } from "@/app/api/deals/[id]/demo-pay/route";
 import { POST as negotiate } from "@/app/api/wants/[id]/negotiate/route";
 import { POST as loadDemo } from "@/app/api/demo/route";
@@ -305,6 +307,47 @@ describe("API", () => {
       expect((await demoPay("nope")).status).toBe(404);
       const cancelled = (await state()).deals.find((d) => d.status === "cancelled");
       if (cancelled) expect((await demoPay(cancelled.id)).status).toBe(409);
+    });
+  });
+
+  describe("approve before accepting (API)", () => {
+    const wantBody = { item: "Headphones", maxPrice: 250, notes: "", buyerName: "Alex", requireApproval: true };
+
+    async function holding() {
+      const w = await (await createWant(post("/api/wants", wantBody))).json();
+      await addSeller(post(`/api/wants/${w.id}/sellers`, { persona: "ferdi" }), ctx({ id: w.id }));
+      await negotiate(post(`/api/wants/${w.id}/negotiate`), ctx({ id: w.id }));
+      await svc.runner.idle();
+      const s = await state();
+      return { wantId: w.id as string, thread: s.threads.find((x) => x.wantId === w.id)! };
+    }
+
+    it("holds the price instead of closing, and creates no deal yet", async () => {
+      const { thread } = await holding();
+      expect(thread.status).toBe("awaiting_approval");
+      expect((await state()).deals).toHaveLength(0);
+    });
+
+    it("approving creates the deal at the held price; approving twice is refused", async () => {
+      const { thread } = await holding();
+      const res = await approveRoute(post(`/api/threads/${thread.id}/approve`), ctx({ id: thread.id }));
+      expect(res.status).toBe(200);
+      const s = await state();
+      expect(s.deals).toHaveLength(1);
+      expect(s.deals[0]!.price).toBe(thread.lastAsk);
+      expect((await approveRoute(post(`/api/threads/${thread.id}/approve`), ctx({ id: thread.id }))).status).toBe(409);
+    });
+
+    it("declining ends the thread with no deal", async () => {
+      const { thread } = await holding();
+      expect((await declineRoute(post(`/api/threads/${thread.id}/decline`), ctx({ id: thread.id }))).status).toBe(200);
+      const s = await state();
+      expect(s.deals).toHaveLength(0);
+      expect(s.threads.find((x) => x.id === thread.id)).toMatchObject({ status: "walked_away", reason: "declined_by_user" });
+    });
+
+    it("answers 404 for an unknown thread", async () => {
+      expect((await approveRoute(post("/api/threads/nope/approve"), ctx({ id: "nope" }))).status).toBe(404);
     });
   });
 });

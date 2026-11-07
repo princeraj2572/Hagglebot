@@ -12,6 +12,8 @@ export interface Want {
   buyerName: string;
   /** Defaults to "balanced". */
   style?: NegotiationStyle;
+  /** When true, Hagglebot stops at an in-budget price and waits for the user to accept it. */
+  requireApproval?: boolean;
 }
 
 export interface Message {
@@ -45,13 +47,14 @@ export interface Seller {
   respond(ctx: SellerContext): Promise<SellerReply>;
 }
 
-export type ThreadStatus = "negotiating" | "deal" | "walked_away" | "paused";
+export type ThreadStatus = "negotiating" | "deal" | "walked_away" | "paused" | "awaiting_approval";
 export type WalkReason =
   | "scam_detected"
   | "too_many_refusals"
   | "over_budget"
   | "message_limit"
-  | "purchased_elsewhere";
+  | "purchased_elsewhere"
+  | "declined_by_user";
 
 export interface Thread {
   id: string;

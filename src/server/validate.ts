@@ -24,6 +24,7 @@ export interface WantInput {
   notes: string;
   buyerName: string;
   style?: NegotiationStyle;
+  requireApproval?: boolean;
 }
 
 export function parseWantInput(body: unknown): WantInput {
@@ -42,7 +43,7 @@ export function parseWantInput(body: unknown): WantInput {
   if (style && !(NEGOTIATION_STYLES as string[]).includes(style)) {
     throw new ValidationError(`Style must be one of: ${NEGOTIATION_STYLES.join(", ")}`);
   }
-  return { item, maxPrice, notes, buyerName, ...(style ? { style: style as NegotiationStyle } : {}) };
+  return { item, maxPrice, notes, buyerName, ...(style ? { style: style as NegotiationStyle } : {}), ...(b.requireApproval === true ? { requireApproval: true } : {}) };
 }
 
 export interface SellerInput {

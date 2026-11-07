@@ -11,7 +11,8 @@ CREATE TABLE IF NOT EXISTS wants (
   buyer_name TEXT NOT NULL,
   status TEXT NOT NULL DEFAULT 'open',
   created_at INTEGER NOT NULL,
-  style TEXT NOT NULL DEFAULT 'balanced'
+  style TEXT NOT NULL DEFAULT 'balanced',
+  approval INTEGER NOT NULL DEFAULT 0
 );
 CREATE TABLE IF NOT EXISTS sellers (
   id TEXT PRIMARY KEY,
@@ -74,5 +75,6 @@ export function openDb(path: string): Database.Database {
   if (!columns.some((c) => c.name === "guard")) db.exec("ALTER TABLE messages ADD COLUMN guard TEXT");
   const wantColumns = db.prepare("PRAGMA table_info(wants)").all() as { name: string }[];
   if (!wantColumns.some((c) => c.name === "style")) db.exec("ALTER TABLE wants ADD COLUMN style TEXT NOT NULL DEFAULT 'balanced'");
+  if (!wantColumns.some((c) => c.name === "approval")) db.exec("ALTER TABLE wants ADD COLUMN approval INTEGER NOT NULL DEFAULT 0");
   return db;
 }

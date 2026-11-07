@@ -157,7 +157,7 @@ export function NegotiationsPanel(props: {
           <h2 className="break-words text-2xl font-bold tracking-tight">{want.item}</h2>
           {want.notes && <p className="mt-1 break-words text-sm text-muted">{want.notes}</p>}
           <p className="mt-1 text-sm text-muted" title={STYLE_INFO[want.style ?? "balanced"].description}>
-            {STYLE_INFO[want.style ?? "balanced"].label} style · opens at {usd(openingOffer(want))}
+            {STYLE_INFO[want.style ?? "balanced"].label} style · opens at {usd(openingOffer(want))}{want.requireApproval ? " · asks before accepting" : ""}
           </p>
         </div>
         <button className={`${primary} shrink-0`} disabled={!canNegotiate || busy} onClick={onNegotiate}>

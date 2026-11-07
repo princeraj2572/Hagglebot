@@ -47,6 +47,8 @@ function walkNote(reason: WalkReason, want: Want): string {
       return "Walked away by rule: scam signals.";
     case "purchased_elsewhere":
       return "Withdrew: bought from another seller.";
+    case "declined_by_user":
+      return "Withdrew: you declined this price.";
   }
 }
 
@@ -55,6 +57,38 @@ function styleNote(want: Want, opening: number): string {
   const style = want.style ?? "balanced";
   const r = rulesFor(want);
   return `${STYLE_INFO[style].label} style: opens at ${fmt(opening)}, rises to your budget in ${r.rises} steps, walks away after more than ${r.maxRefusals} refusals.`;
+}
+
+/** Stops at an in-budget price and waits: the user must accept it before Hagglebot agrees to anything. */
+function holdForApproval(thread: Thread, deps: EngineDeps, want: Want, price: number): Thread {
+  thread.lastAsk = price;
+  thread.dealPrice = null;
+  thread.status = "awaiting_approval";
+  push(
+    thread, deps, "buyer",
+    `${fmt(price)} works within my user's budget. I just need my user to confirm before I accept, so please give me a moment.`,
+    null,
+    `Paused for your approval: ${fmt(price)} is within your ${fmt(want.maxPrice)} budget, but you asked to approve every price first.`,
+  );
+  return thread;
+}
+
+/** The user accepted the price Hagglebot was holding: close the deal. */
+export function approveThread(thread: Thread, want: Want, deps: Pick<EngineDeps, "now" | "onMessage">): Thread {
+  const price = thread.lastAsk;
+  if (thread.status !== "awaiting_approval" || price === null || price > want.maxPrice) throw new Error("Nothing to approve");
+  push(thread, deps as EngineDeps, "buyer", `Thank you for waiting. ${fmt(price)} it is: we have a deal.`, price, `Accepted ${fmt(price)} after you approved it: it is within your ${fmt(want.maxPrice)} budget.`);
+  thread.status = "deal";
+  thread.dealPrice = price;
+  return thread;
+}
+
+/** The user turned the price down: withdraw politely. */
+export function declineThread(thread: Thread, deps: Pick<EngineDeps, "now" | "onMessage">): Thread {
+  if (thread.status !== "awaiting_approval") throw new Error("Nothing to decline");
+  push(thread, deps as EngineDeps, "buyer", "Thank you for your time. My user has decided not to go ahead at this price, so I'm withdrawing from this negotiation.", null, `You declined ${fmt(thread.lastAsk ?? 0)}.`);
+  walk(thread, "declined_by_user");
+  return thread;
 }
 
 /**
@@ -74,6 +108,7 @@ export async function step(thread: Thread, want: Want, seller: Seller, deps: Eng
   }
 
   if (move.type === "accept") {
+    if (want.requireApproval) return holdForApproval(thread, deps, want, move.price);
     const c = await composeBuyerMessage(deps.llm, move, want, thread, { comparing });
     push(thread, deps, "buyer", c.text, move.price, join(c.guard, `Accepted ${fmt(move.price)} by rule: it is within your ${fmt(want.maxPrice)} budget.`));
     thread.status = "deal";
@@ -104,6 +139,7 @@ export async function step(thread: Thread, want: Want, seller: Seller, deps: Eng
       return thread;
     }
     thread.lastAsk = price;
+    if (want.requireApproval) return holdForApproval(thread, deps, want, price);
     const c = await composeBuyerMessage(deps.llm, { type: "accept", price }, want, thread, { comparing });
     push(thread, deps, "buyer", c.text, price, join(c.guard, `Accepted ${fmt(price)} by rule: it is within your ${fmt(want.maxPrice)} budget.`));
     thread.status = "deal";

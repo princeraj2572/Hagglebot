@@ -7,6 +7,7 @@ const EDGE = {
   deal: "border-l-ink",
   negotiating: "border-l-ultra",
   paused: "border-l-tag",
+  awaiting_approval: "border-l-tag",
   walked_away: "border-l-muted",
 } as const;
 
@@ -16,6 +17,7 @@ export function statusLine(t: Thread): string {
   if (t.status === "negotiating") return last?.from === "buyer" ? `${t.sellerName} is replying…` : "Hagglebot is writing…";
   if (t.status === "deal") return "Deal agreed";
   if (t.status === "paused") return "Paused";
+  if (t.status === "awaiting_approval") return `Needs your approval: ${usd(t.lastAsk)}`;
   return t.reason === "scam_detected" ? "Scam detected" : "Walked away";
 }
 

@@ -6,7 +6,7 @@ import { Conversation } from "./Conversation";
 import { usd } from "./format";
 import { Lane, type Axis } from "./Lane";
 import { StatusChip } from "./StatusChip";
-import { ghost } from "./ui";
+import { btn, ghost } from "./ui";
 
 /** One seller in full: who they are, where the haggling stands, and the whole conversation. */
 export function Detail(props: {
@@ -22,7 +22,7 @@ export function Detail(props: {
   const scam = t.reason === "scam_detected";
   const guards = t.messages.filter((m) => m.guard).length;
   const saved = t.status === "deal" && t.dealPrice !== null ? budget - t.dealPrice : 0;
-  const edge = scam ? "border-l-scam" : t.status === "deal" ? "border-l-ink" : t.status === "negotiating" ? "border-l-ultra" : t.status === "paused" ? "border-l-tag" : "border-l-muted";
+  const edge = scam ? "border-l-scam" : t.status === "deal" ? "border-l-ink" : t.status === "negotiating" ? "border-l-ultra" : t.status === "paused" || t.status === "awaiting_approval" ? "border-l-tag" : "border-l-muted";
 
   return (
     <article className={`rounded-md border border-l-4 border-line bg-paper p-4 sm:p-5 ${edge}`} data-testid={`thread-${t.sellerName}`}>
@@ -69,6 +69,26 @@ export function Detail(props: {
           )}
         </div>
       </header>
+
+      {t.status === "awaiting_approval" && !replay && (
+        <div role="alert" className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-md border border-tag bg-tag/15 p-3">
+          <p className="min-w-0 text-sm font-medium">
+            {t.sellerName} will sell at <span className="num font-bold">{usd(t.lastAsk)}</span>, within your {usd(budget)} budget. Hagglebot is waiting for you.
+          </p>
+          <span className="flex gap-2">
+            <button
+              className={`${btn} bg-ultra text-white [@media(hover:hover)]:hover:bg-[#2335b8]`}
+              disabled={busy}
+              onClick={() => run(() => api(`/api/threads/${t.id}/approve`, "POST"))}
+            >
+              Accept {usd(t.lastAsk)}
+            </button>
+            <button className={ghost} disabled={busy} onClick={() => run(() => api(`/api/threads/${t.id}/decline`, "POST"))}>
+              Decline
+            </button>
+          </span>
+        </div>
+      )}
 
       <div className="mt-4">
         <Lane t={t} budget={budget} axis={axis} />

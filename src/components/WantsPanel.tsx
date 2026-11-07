@@ -20,8 +20,8 @@ export function WantsPanel(props: {
   onError: (msg: string) => void;
 }) {
   const { wants, selectedId, listings, onSelect, onChanged, onError } = props;
-  const [form, setForm] = useState<{ item: string; maxPrice: string; notes: string; buyerName: string; style: NegotiationStyle }>({
-    item: "", maxPrice: "", notes: "", buyerName: "", style: "balanced",
+  const [form, setForm] = useState<{ item: string; maxPrice: string; notes: string; buyerName: string; style: NegotiationStyle; requireApproval: boolean }>({
+    item: "", maxPrice: "", notes: "", buyerName: "", style: "balanced", requireApproval: false,
   });
   const [showForm, setShowForm] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -102,6 +102,13 @@ export function WantsPanel(props: {
               </label>
             ))}
           </fieldset>
+          <label className="flex cursor-pointer items-start gap-2 text-sm">
+            <input type="checkbox" checked={form.requireApproval} onChange={(e) => setForm({ ...form, requireApproval: e.target.checked })} className="mt-1 accent-[#2B3FD6]" />
+            <span>
+              Ask me before accepting a price
+              <span className="block text-[13px] text-muted">Hagglebot stops at an in-budget price and waits for your OK.</span>
+            </span>
+          </label>
           <button className={`${primary} w-full`} disabled={busy} type="submit">
             Add want
           </button>

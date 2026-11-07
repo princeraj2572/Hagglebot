@@ -1,5 +1,5 @@
 import type { LLM } from "../lib/llm/types";
-import { createThread, step, type EngineDeps } from "../lib/negotiation/engine";
+import { approveThread, createThread, declineThread, step, type EngineDeps } from "../lib/negotiation/engine";
 import type { Seller, Thread, ThreadStatus, WalkReason } from "../lib/negotiation/types";
 import type { Repo, SellerContact } from "./repo";
 
@@ -66,6 +66,35 @@ export class NegotiationRunner {
       this.launch(t, contacts.length, opts.demo ?? false);
     }
     return threads;
+  }
+
+  /** The user accepted the price a thread was holding: close the deal. */
+  approve(threadId: string): Thread {
+    const { repo } = this.d;
+    const t = repo.getThread(threadId);
+    if (!t) throw new RunnerError("Thread not found", "not_found");
+    if (t.status !== "awaiting_approval") throw new RunnerError(`Nothing to approve: the thread is ${t.status}`, "conflict");
+    const want = repo.getWant(t.wantId);
+    if (!want || want.status !== "open") throw new RunnerError("This want has already been purchased", "conflict");
+    try {
+      approveThread(t, want, { ...(this.d.now ? { now: this.d.now } : {}), onMessage: (th, m) => repo.addMessage(th.id, m) });
+    } catch {
+      throw new RunnerError("That price is no longer within your budget", "conflict");
+    }
+    repo.saveThread(t);
+    repo.createDeal(t);
+    return t;
+  }
+
+  /** The user turned the held price down. */
+  decline(threadId: string): Thread {
+    const { repo } = this.d;
+    const t = repo.getThread(threadId);
+    if (!t) throw new RunnerError("Thread not found", "not_found");
+    if (t.status !== "awaiting_approval") throw new RunnerError(`Nothing to decline: the thread is ${t.status}`, "conflict");
+    declineThread(t, { ...(this.d.now ? { now: this.d.now } : {}), onMessage: (th, m) => repo.addMessage(th.id, m) });
+    repo.saveThread(t);
+    return t;
   }
 
   pause(threadId: string): Thread {

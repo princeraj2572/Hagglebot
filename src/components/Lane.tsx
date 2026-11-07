@@ -49,7 +49,7 @@ export function Lane({ t, budget, axis }: { t: Thread; budget: number; axis: Axi
   };
   const offerNow = t.status === "deal" && t.dealPrice !== null ? t.dealPrice : t.lastOffer;
   const gap = t.lastAsk !== null && offerNow !== null ? Math.abs(t.lastAsk - offerNow) : null;
-  const open = t.status === "negotiating" || t.status === "paused";
+  const open = t.status === "negotiating" || t.status === "paused" || t.status === "awaiting_approval";
   const showGap = (open || t.status === "deal") && gap !== null;
   const gapLeft = gap === null ? 0 : Math.min(axis.pct(t.lastAsk as number), axis.pct(offerNow as number));
   const gapWidth = gap === null ? 0 : Math.abs(axis.pct(t.lastAsk as number) - axis.pct(offerNow as number));

@@ -5,12 +5,14 @@ const LABEL: Record<ThreadStatus, string> = {
   deal: "Deal",
   walked_away: "Walked away",
   paused: "Paused",
+  awaiting_approval: "Needs your approval",
 };
 const DOT: Record<ThreadStatus, string> = {
   negotiating: "bg-ultra",
   deal: "bg-ink",
   walked_away: "bg-muted",
   paused: "bg-tag",
+  awaiting_approval: "bg-tag",
 };
 
 export function StatusChip({ status, scam }: { status: ThreadStatus; scam?: boolean }) {
