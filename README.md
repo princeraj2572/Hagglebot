@@ -126,6 +126,13 @@ pnpm paypal:smoke 1.00
 
 Both are optional: with no keys, Hagglebot runs in template mode (the dashboard badge says which mode is active).
 
+### Channel3 (optional, real listings)
+
+Get a free key at <https://trychannel3.com> (1,000 credits a month) and set `CHANNEL3_API_KEY` in `.env.local`.
+Then **Find real listings** appears on a selected want: it searches Channel3 for the item and adds up to four real
+retailer offers (store, price, condition) as sellers. Each is played by a simulated agent that opens at the real
+price. No retailer is contacted and nothing is bought from one.
+
 ## Run
 
 ```bash
@@ -187,8 +194,9 @@ scripts/              paypal-smoke.ts, negotiate.ts
 
 - **Demo only.** Not a production purchasing agent and not financial advice.
 - **PayPal sandbox only.** No real money moves; there is no switch to live mode.
-- **Simulated sellers.** The four sellers are AI/scripted personas behind mock endpoints, not real
-  marketplace listings, and the scam detector is a heuristic that real fraud could evade.
+- **Simulated sellers.** The sellers are AI/scripted personas behind mock endpoints. With a Channel3 key, their
+  prices and store names can come from real listings, but the haggling is still simulated and no retailer is
+  contacted. The scam detector is a heuristic that real fraud could evade.
 - **Single user, local.** No authentication, intended to run on your own machine. API routes reject
   cross-origin browser requests, but don't expose the server publicly.
 - A negotiation that is in flight when the server restarts is marked *paused* and can be resumed.
