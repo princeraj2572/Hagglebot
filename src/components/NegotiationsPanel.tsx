@@ -10,6 +10,7 @@ import { Inbox } from "./Inbox";
 import { ManagePanel } from "./ManagePanel";
 import { Modal } from "./Modal";
 import { PriceLadder } from "./PriceLadder";
+import { Landing, type Preset } from "./Landing";
 import { SavingsPanel } from "./SavingsPanel";
 import { dealSavings } from "@/lib/negotiation/savings";
 import { ListingsPanel } from "./ListingsPanel";
@@ -63,7 +64,7 @@ export function NegotiationsPanel(props: {
   focus?: { view: "deals" } | null;
   onFocusDone?: () => void;
   /** First-run shortcut: open the New want dialog. */
-  onNewWant?: () => void;
+  onNewWant?: (preset?: Preset) => void;
   canNegotiate: boolean;
   onNegotiate: () => void;
   run: (fn: () => Promise<unknown>) => Promise<void>;
@@ -152,35 +153,7 @@ export function NegotiationsPanel(props: {
   };
 
   if (!want) {
-    return (
-      <section aria-label="Welcome" className="overflow-hidden rounded-3xl bg-ink p-7 text-white sm:p-10">
-        <h2 className="max-w-3xl text-balance text-4xl font-bold leading-[1.05] tracking-tight sm:text-6xl">An AI agent that haggles for you.</h2>
-        <p className="mt-4 max-w-xl text-lg leading-relaxed text-white/75">
-          Tell it what you want and the most you will pay. It talks to every seller at once, never goes over your budget and walks away from scams.
-        </p>
-        <ol className="mt-8 grid gap-3 sm:grid-cols-3">
-          {[
-            ["1", "Say what you want", "An item, your maximum price and how hard to haggle."],
-            ["2", "Watch it negotiate", "Every seller at once, with the reason behind each move."],
-            ["3", "Pay", "When a seller agrees to a price inside your budget. Payments are simulated."],
-          ].map(([n, title, text]) => (
-            <li key={n} className="rounded-2xl bg-white/[0.07] p-4">
-              <span className="num inline-flex h-7 w-7 items-center justify-center rounded-full bg-ultra text-sm font-bold">{n}</span>
-              <p className="mt-3 font-semibold">{title}</p>
-              <p className="mt-1 text-sm leading-relaxed text-white/65">{text}</p>
-            </li>
-          ))}
-        </ol>
-        <div className="mt-8 flex flex-wrap items-center gap-x-5 gap-y-3">
-          {onNewWant && (
-            <button className="rounded-full bg-white px-5 py-2.5 font-semibold text-ink transition-transform duration-150 active:scale-[0.97] [@media(hover:hover)]:hover:bg-tag" onClick={onNewWant}>
-              Add your first want
-            </button>
-          )}
-          <span className="text-sm text-white/60">Hagglebot searches, negotiates and pays for you. Everything is simulated.</span>
-        </div>
-      </section>
-    );
+    return <Landing onStart={onNewWant} />;
   }
 
   // A want in a bundle may spend at most what is left of the bundle, minus what other wants in it have paid.
@@ -305,10 +278,24 @@ export function NegotiationsPanel(props: {
             </div>
           )}
 
-          <section aria-label="Scoreboard" className="rounded-3xl bg-ink p-5 text-white sm:p-7">
+          <section aria-label="Scoreboard" className="relative isolate overflow-hidden rounded-[28px] bg-ink p-5 text-white shadow-lift sm:p-8">
+            {/* A price ruler along the top edge and a soft glow: the scoreboard is a scale you read prices on. */}
+            <div
+              aria-hidden
+              className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-24 opacity-60"
+              style={{
+                backgroundImage:
+                  "repeating-linear-gradient(90deg, rgba(255,255,255,.22) 0 1px, transparent 1px 48px), repeating-linear-gradient(90deg, rgba(255,255,255,.12) 0 1px, transparent 1px 12px)",
+                backgroundSize: "100% 14px, 100% 7px",
+                backgroundRepeat: "no-repeat",
+                maskImage: "linear-gradient(90deg, transparent, #000 25%, #000 75%, transparent)",
+                WebkitMaskImage: "linear-gradient(90deg, transparent, #000 25%, #000 75%, transparent)",
+              }}
+            />
+            <div aria-hidden className="pointer-events-none absolute -right-24 -top-32 -z-10 h-80 w-80 rounded-full bg-ultra/40 blur-3xl" />
             <div className="flex flex-wrap items-end justify-between gap-x-10 gap-y-6">
               <div className="min-w-0">
-                <p className="text-sm font-medium text-white/65">{savings ? "Best deal" : liveCount > 0 ? "Haggling now" : "Result"}</p>
+                <p className="mt-3 text-sm font-medium text-white/65">{savings ? "Best deal" : liveCount > 0 ? "Haggling now" : "Result"}</p>
                 <p className="num mt-1 text-5xl font-bold leading-none tracking-tight sm:text-7xl">
                   {savings ? usd(savings.best.price) : liveCount > 0 ? `${liveCount} of ${shown.length}` : "No deal"}
                 </p>

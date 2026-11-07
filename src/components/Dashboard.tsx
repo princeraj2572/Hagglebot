@@ -27,6 +27,7 @@ export function Dashboard() {
   const live = useRef(false);
   // The welcome screen's button opens the New want dialog in the sidebar.
   const [newWantSignal, setNewWantSignal] = useState(0);
+  const [preset, setPreset] = useState<{ item: string; maxPrice: string; notes: string } | null>(null);
 
   const refresh = useCallback(async () => {
     // Dev-only stress fixture (?data=worst); the NODE_ENV check is inlined by Next, so it is dead code in production.
@@ -164,6 +165,7 @@ export function Dashboard() {
                 onError={setError}
                 onAutopilot={(id) => void autopilot(id)}
                 openNewWant={newWantSignal}
+                preset={preset}
               />
             </aside>
             <main className={`min-w-0 ${tab === "negotiation" ? "" : "hidden lg:block"}`}>
@@ -184,7 +186,7 @@ export function Dashboard() {
                 focus={focus}
                 autoStatus={auto && auto.wantId === selected?.id ? auto.text : null}
                 onFocusDone={() => setFocus(null)}
-                onNewWant={() => setNewWantSignal((n) => n + 1)}
+                onNewWant={(p) => { setPreset(p ?? null); setNewWantSignal((n) => n + 1); }}
                 canNegotiate={!!selected && selected.status === "open" && selected.sellers.length > 0 && liveCount === 0}
                   onNegotiate={() => selected && run(() => api(`/api/wants/${selected.id}/negotiate${restarting ? "?restart=1" : ""}`, "POST"))}
                   run={run}

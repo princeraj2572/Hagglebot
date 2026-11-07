@@ -46,11 +46,12 @@ export function Topbar(props: {
             </span>
           )}
             <span
-              className="hidden items-center gap-2 rounded-full bg-mist px-3 py-1 text-[13px] font-medium text-muted lg:inline-flex"
+              className="hidden items-center gap-2 rounded-full bg-mist px-3 py-1 text-[13px] font-medium text-muted sm:inline-flex"
               data-testid="mode-badge"
+              title="Sellers, negotiation and payments are simulated. No real money moves."
             >
               <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-ink/40" />
-              Simulation · sellers, negotiation and payments are mocked
+              Simulation
             </span>
         </div>
       </div>
