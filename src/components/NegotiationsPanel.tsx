@@ -7,6 +7,7 @@ import { DealsPanel } from "./DealsPanel";
 import { Detail } from "./Detail";
 import { usd } from "./format";
 import { Inbox } from "./Inbox";
+import { SavingsPanel } from "./SavingsPanel";
 import { ListingsPanel } from "./ListingsPanel";
 import { axisFor } from "./Lane";
 import { primary } from "./ui";
@@ -211,6 +212,8 @@ export function NegotiationsPanel(props: {
               }
             />
           </dl>
+
+          <SavingsPanel threads={shown} budget={want.maxPrice} />
 
           {replaying && (
             <p className="text-sm text-muted">
