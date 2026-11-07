@@ -3,9 +3,9 @@ info:
   title: Hagglebot API
   version: 1.0.0
   description: |
-    Hagglebot is an AI buyer agent that haggles with sellers under a budget and pays through PayPal.
-    This is the HTTP API behind its dashboard. It is a single-user, local demo: there is no authentication,
-    PayPal runs in the **sandbox only**, and the sellers are simulated. Browser requests from another
+    Hagglebot is an AI buyer agent that haggles with sellers under a budget and pays.
+    This is the HTTP API behind its dashboard. It is a single-user, local app: there is no authentication.
+    Negotiation and payments are mocked, and the sellers are simulated. Browser requests from another
     origin are rejected with 403.
 
     Prices are whole US dollars. The budget (`maxPrice`) is never sent to a seller and is never exceeded.
@@ -21,8 +21,6 @@ tags:
   - name: Negotiation
   - name: Marketplace
   - name: Payments
-  - name: Demo
-
 paths:
   /api/state:
     get:
@@ -299,12 +297,6 @@ paths:
             type: string
             enum: ["1"]
           description: Delete the existing conversations and start over.
-        - name: demo
-          in: query
-          schema:
-            type: string
-            enum: ["1"]
-          description: Run instantly with canned text and no language model.
       responses:
         "202":
           description: Started.
@@ -483,52 +475,17 @@ paths:
         "502":
           $ref: "#/components/responses/UpstreamError"
 
-  /api/deals/{id}/order:
+  /api/deals/{id}/pay:
     post:
       tags: [Payments]
-      operationId: createOrder
-      summary: Create a PayPal order for a deal
-      description: The amount always comes from the database, never from the request. PayPal sandbox only.
+      operationId: payDeal
+      summary: Pay a closed deal (mock)
+      description: Nothing real is charged. The amount comes from the database, the payer id is `MOCK-PAYER` and the payment id starts with `MOCK-PAYMENT-`. Idempotent.
       parameters:
         - $ref: "#/components/parameters/Id"
       responses:
         "200":
-          description: The PayPal order id, for the PayPal checkout.
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  orderId:
-                    type: string
-        "404":
-          $ref: "#/components/responses/NotFound"
-        "409":
-          $ref: "#/components/responses/Conflict"
-        "502":
-          $ref: "#/components/responses/UpstreamError"
-        "503":
-          description: PayPal sandbox credentials are not configured.
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-
-  /api/orders/{orderId}/capture:
-    post:
-      tags: [Payments]
-      operationId: captureOrder
-      summary: Capture an order the buyer approved in PayPal
-      description: Records the payer id, confirms to the seller, marks the want bought and withdraws from the other sellers.
-      parameters:
-        - name: orderId
-          in: path
-          required: true
-          schema:
-            type: string
-      responses:
-        "200":
-          description: The paid deal.
+          description: The deal, marked paid.
           content:
             application/json:
               schema:
@@ -537,15 +494,13 @@ paths:
           $ref: "#/components/responses/NotFound"
         "409":
           $ref: "#/components/responses/Conflict"
-        "502":
-          $ref: "#/components/responses/UpstreamError"
 
   /api/deals/{id}/refund:
     post:
       tags: [Payments]
       operationId: refundDeal
       summary: Fully refund a paid deal
-      description: Uses the PayPal Payments API and reopens the want. A demo payment is refunded locally. Idempotent.
+      description: A mock refund: reopens the want so it can be negotiated again. Idempotent.
       parameters:
         - $ref: "#/components/parameters/Id"
       responses:
@@ -561,45 +516,6 @@ paths:
           $ref: "#/components/responses/Conflict"
         "502":
           $ref: "#/components/responses/UpstreamError"
-
-  /api/deals/{id}/demo-pay:
-    post:
-      tags: [Demo]
-      operationId: demoPay
-      summary: Demo mode payment, with canned and labelled ids
-      description: PayPal is never called. The payer id is `DEMO-PAYER` and the capture id starts with `DEMO-CAPTURE-`.
-      parameters:
-        - $ref: "#/components/parameters/Id"
-      responses:
-        "200":
-          description: The deal, marked paid.
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Deal"
-        "404":
-          $ref: "#/components/responses/NotFound"
-        "409":
-          $ref: "#/components/responses/Conflict"
-
-  /api/demo:
-    post:
-      tags: [Demo]
-      operationId: loadDemoScenario
-      summary: Load the demo wishlist with four simulated sellers
-      description: Idempotent while the demo want is open.
-      responses:
-        "201":
-          description: The demo want.
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  wantId:
-                    type: string
-                  created:
-                    type: boolean
 
 components:
   parameters:
@@ -630,7 +546,7 @@ components:
           schema:
             $ref: "#/components/schemas/Error"
     UpstreamError:
-      description: PayPal or Channel3 returned an error.
+      description: Channel3 returned an error.
       content:
         application/json:
           schema:
@@ -822,9 +738,6 @@ components:
         status:
           type: string
           enum: [awaiting_payment, order_created, paid, refunded, cancelled]
-        paypalOrderId:
-          type: string
-          nullable: true
         payerId:
           type: string
           nullable: true
@@ -895,16 +808,6 @@ components:
         config:
           type: object
           properties:
-            paypalClientId:
-              type: string
-              nullable: true
-              description: The sandbox client id (public by design).
-            paypalBuyerEmail:
-              type: string
-              nullable: true
-            llmMode:
-              type: string
-              enum: [llm, template]
             listings:
               type: boolean
               description: True when a Channel3 key is set, so real listings and the marketplace are available.

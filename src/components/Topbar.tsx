@@ -3,17 +3,14 @@ import { Avatar } from "./Avatar";
 /** The app bar: the logo, the two pages, whether anything is live, and the mode. */
 export function Topbar(props: {
   wantItem: string | undefined;
-  llmMode: "llm" | "template" | undefined;
   live: number;
   total: number;
   /** Show the page switch only when the marketplace is available (needs a Channel3 key). */
   marketplace: boolean;
-  /** ?demo=1: canned negotiation and a mock payment. */
-  demo: boolean;
   page: "negotiate" | "marketplace";
   onPage: (p: "negotiate" | "marketplace") => void;
 }) {
-  const { llmMode, live, total, marketplace, page, onPage, demo } = props;
+  const { live, total, marketplace, page, onPage } = props;
   return (
     <header className="sticky top-0 z-30 bg-chalk/85 backdrop-blur">
       <div className="mx-auto flex h-16 max-w-[96rem] items-center gap-2 px-3 sm:gap-4 sm:px-6">
@@ -48,19 +45,13 @@ export function Topbar(props: {
               <span className="hidden sm:inline">sellers</span>
             </span>
           )}
-          {demo ? (
-            <span className="inline-block rounded-full bg-tag px-2.5 py-1 text-[13px] font-semibold sm:px-3" data-testid="mode-badge" role="status">
-              Demo mode<span className="hidden sm:inline"> · canned negotiation and payment, no PayPal</span>
-            </span>
-          ) : (
             <span
               className="hidden items-center gap-2 rounded-full bg-mist px-3 py-1 text-[13px] font-medium text-muted lg:inline-flex"
               data-testid="mode-badge"
             >
               <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-ink/40" />
-              Sandbox only · Simulated sellers · {llmMode === "llm" ? "AI-written messages" : "template negotiator"}
+              Simulation · sellers, negotiation and payments are mocked
             </span>
-          )}
         </div>
       </div>
     </header>

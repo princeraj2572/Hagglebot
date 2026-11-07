@@ -6,8 +6,7 @@ import { POST as createWant } from "@/app/api/wants/route";
 import { POST as addSeller } from "@/app/api/wants/[id]/sellers/route";
 import { POST as negotiate } from "@/app/api/wants/[id]/negotiate/route";
 import { POST as buyNow } from "@/app/api/wants/[id]/buy/route";
-import { POST as demoPay } from "@/app/api/deals/[id]/demo-pay/route";
-import { POST as createOrder } from "@/app/api/deals/[id]/order/route";
+import { POST as demoPay } from "@/app/api/deals/[id]/pay/route";
 import { GET as getState } from "@/app/api/state/route";
 import { buildServices, setServicesForTest, type Services } from "./services";
 import type { DashboardState } from "./state";
@@ -55,7 +54,7 @@ describe("budget bundle", () => {
     await buyNow(post(`/api/wants/${a}/buy`, { listing: L(120) }), ctx({ id: a }));
     expect(svc.repo.bundleRoom(b)).toBe(300); // a deal waiting for payment spends nothing yet
     const dealA = (await state()).deals[0]!;
-    await demoPay(post(`/api/deals/${dealA.id}/demo-pay`), ctx({ id: dealA.id }));
+    await demoPay(post(`/api/deals/${dealA.id}/pay`), ctx({ id: dealA.id }));
     expect(svc.repo.bundleRoom(b)).toBe(180);
     expect(svc.repo.getBundle(bundle.id)).toMatchObject({ total: 300, spent: 120 });
     expect(svc.repo.bundleRoom(a)).toBe(300); // a want's own payment is not held against itself
@@ -65,7 +64,7 @@ describe("budget bundle", () => {
     const { a, b } = await setup(300);
     await buyNow(post(`/api/wants/${a}/buy`, { listing: L(200) }), ctx({ id: a }));
     const dealA = (await state()).deals[0]!;
-    await demoPay(post(`/api/deals/${dealA.id}/demo-pay`), ctx({ id: dealA.id }));
+    await demoPay(post(`/api/deals/${dealA.id}/pay`), ctx({ id: dealA.id }));
     const over = await buyNow(post(`/api/wants/${b}/buy`, { listing: L(150, "target.com") }), ctx({ id: b }));
     expect(over.status).toBe(400);
     expect((await over.json()).error).toContain("$100 left in your bundle");
@@ -76,7 +75,7 @@ describe("budget bundle", () => {
     const { a, b } = await setup(300);
     await buyNow(post(`/api/wants/${a}/buy`, { listing: L(200) }), ctx({ id: a }));
     const dealA = (await state()).deals[0]!;
-    await demoPay(post(`/api/deals/${dealA.id}/demo-pay`), ctx({ id: dealA.id }));
+    await demoPay(post(`/api/deals/${dealA.id}/pay`), ctx({ id: dealA.id }));
     // Keyboard's own budget is $250, but only $100 is left in the bundle.
     await addSeller(post(`/api/wants/${b}/sellers`, { persona: "ferdi" }), ctx({ id: b }));
     await negotiate(post(`/api/wants/${b}/negotiate`), ctx({ id: b }));
@@ -93,12 +92,10 @@ describe("budget bundle", () => {
     await buyNow(post(`/api/wants/${a}/buy`, { listing: L(200) }), ctx({ id: a }));
     await buyNow(post(`/api/wants/${b}/buy`, { listing: L(180, "target.com") }), ctx({ id: b })); // both fit alone
     const [dealA, dealB] = (await state()).deals;
-    expect((await demoPay(post(`/api/deals/${dealA!.id}/demo-pay`), ctx({ id: dealA!.id }))).status).toBe(200);
-    const res = await demoPay(post(`/api/deals/${dealB!.id}/demo-pay`), ctx({ id: dealB!.id }));
+    expect((await demoPay(post(`/api/deals/${dealA!.id}/pay`), ctx({ id: dealA!.id }))).status).toBe(200);
+    const res = await demoPay(post(`/api/deals/${dealB!.id}/pay`), ctx({ id: dealB!.id }));
     expect(res.status).toBe(409);
     expect((await res.json()).error).toContain("over its budget");
-    // The real PayPal path has the same guard (it fails on the bundle before it needs PayPal at all).
-    expect((await createOrder(post(`/api/deals/${dealB!.id}/order`), ctx({ id: dealB!.id }))).status).toBe(503);
     expect((await state()).deals.find((d) => d.id === dealB!.id)!.status).not.toBe("paid");
   });
 
@@ -106,7 +103,7 @@ describe("budget bundle", () => {
     const { a, b } = await setup(100);
     await buyNow(post(`/api/wants/${a}/buy`, { listing: L(100) }), ctx({ id: a }));
     const dealA = (await state()).deals[0]!;
-    await demoPay(post(`/api/deals/${dealA.id}/demo-pay`), ctx({ id: dealA.id }));
+    await demoPay(post(`/api/deals/${dealA.id}/pay`), ctx({ id: dealA.id }));
     await addSeller(post(`/api/wants/${b}/sellers`, { persona: "ferdi" }), ctx({ id: b }));
     const res = await negotiate(post(`/api/wants/${b}/negotiate`), ctx({ id: b }));
     expect(res.status).toBe(409);

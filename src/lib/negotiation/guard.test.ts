@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { DEMO_WANT } from "../demo";
+import { TEST_WANT } from "../testWant";
 import { LLMUnavailableError, type LLM } from "../llm/types";
 import { PERSONAS } from "../sellers/personas";
 import { PersonaSeller } from "../sellers/sellerAgent";
@@ -7,8 +7,8 @@ import { createThread, runNegotiation } from "./engine";
 
 const run = async (id: string, llm: LLM | null = null) => {
   const seller = new PersonaSeller(PERSONAS.find((p) => p.id === id)!, null); // seller stays in template mode
-  const thread = createThread(DEMO_WANT, seller);
-  await runNegotiation(thread, DEMO_WANT, seller, { llm, comparing: 4 });
+  const thread = createThread(TEST_WANT, seller);
+  await runNegotiation(thread, TEST_WANT, seller, { llm, comparing: 4 });
   return thread;
 };
 const buyerGuards = (t: { messages: { from: string; guard?: string }[] }) => t.messages.filter((m) => m.from === "buyer").map((m) => m.guard ?? "");
@@ -24,7 +24,7 @@ describe("guardrail notes", () => {
     const t = await run("ferdi");
     expect(t.status).toBe("deal");
     expect(buyerGuards(t).at(-1)).toContain(`Accepted $${t.dealPrice} by rule`);
-    expect(buyerGuards(t).at(-1)).toContain(`$${DEMO_WANT.maxPrice} budget`);
+    expect(buyerGuards(t).at(-1)).toContain(`$${TEST_WANT.maxPrice} budget`);
   });
 
   it("walking away after repeated refusals names the rule", async () => {

@@ -1,12 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { DEMO_WANT } from "../demo";
+import { TEST_WANT } from "../testWant";
 import { PERSONAS } from "../sellers/personas";
 import { PersonaSeller } from "../sellers/sellerAgent";
 import { createThread, runNegotiation } from "./engine";
 import { decide, nextOffer, openingOffer, STYLE_RULES } from "./strategy";
 import { NEGOTIATION_STYLES, type NegotiationStyle, type Thread } from "./types";
 
-const withStyle = (style: NegotiationStyle) => ({ ...DEMO_WANT, style });
+const withStyle = (style: NegotiationStyle) => ({ ...TEST_WANT, style });
 const thread = (over: Partial<Thread>): Thread => ({
   id: "t", wantId: "w", sellerId: "s", sellerName: "S", status: "negotiating", messages: [],
   lastOffer: null, lastAsk: null, refusals: 0, reason: null, detail: null, dealPrice: null, ...over,
@@ -14,7 +14,7 @@ const thread = (over: Partial<Thread>): Thread => ({
 
 describe("negotiation styles: strategy", () => {
   it("balanced is the original behaviour: no style set means balanced", () => {
-    expect(openingOffer(DEMO_WANT)).toBe(175);
+    expect(openingOffer(TEST_WANT)).toBe(175);
     expect(openingOffer(withStyle("balanced"))).toBe(175);
     expect(STYLE_RULES.balanced).toEqual({ anchor: 0.7, rises: 5, maxRefusals: 3 });
   });
@@ -66,7 +66,7 @@ describe("negotiation styles: whole conversations (template mode)", () => {
     for (const style of NEGOTIATION_STYLES) {
       for (const p of PERSONAS) {
         const t = await run(p.id, style);
-        if (t.dealPrice !== null) expect(t.dealPrice).toBeLessThanOrEqual(DEMO_WANT.maxPrice);
+        if (t.dealPrice !== null) expect(t.dealPrice).toBeLessThanOrEqual(TEST_WANT.maxPrice);
       }
     }
   });

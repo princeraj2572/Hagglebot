@@ -82,7 +82,7 @@ export function worstCaseState(): DashboardState {
   });
   return {
     bundles: [],
-    config: { paypalClientId: "x", paypalBuyerEmail: "bartholomew.fitzgerald@northwind-industries-holdings.example.com", llmMode: "llm", listings: true },
+    config: { listings: true },
     wants: [
       w(wantMain, `${longText} ${noSpace(40)}`.slice(0, 120), 400, noSpace(250) + " " + "Must ship this week, black only. ".repeat(8).slice(0, 250), 12),
       w("w2", "All prices identical", 100, "", 2),

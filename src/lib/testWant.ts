@@ -1,7 +1,7 @@
 import type { Want } from "./negotiation/types";
 
 /** Fixed scenario so the demo is reproducible. */
-export const DEMO_WANT: Want = {
+export const TEST_WANT: Want = {
   id: "demo-headphones",
   item: "Wireless noise-cancelling headphones",
   maxPrice: 250,

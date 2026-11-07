@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { DEMO_WANT } from "../demo";
+import { TEST_WANT } from "../testWant";
 import { PERSONAS } from "../sellers/personas";
 import { PersonaSeller } from "../sellers/sellerAgent";
 import { createThread, runNegotiation } from "./engine";
@@ -7,15 +7,15 @@ import { transcriptFileName, transcriptMarkdown } from "./transcript";
 
 const run = async (id: string) => {
   const seller = new PersonaSeller(PERSONAS.find((p) => p.id === id)!, null);
-  const t = createThread(DEMO_WANT, seller);
-  await runNegotiation(t, DEMO_WANT, seller, { llm: null, comparing: 4 });
+  const t = createThread(TEST_WANT, seller);
+  await runNegotiation(t, TEST_WANT, seller, { llm: null, comparing: 4 });
   return t;
 };
 
 describe("transcript", () => {
   it("lists every message and the guardrail notes that shaped them", async () => {
     const t = await run("ferdi");
-    const md = transcriptMarkdown(t, DEMO_WANT);
+    const md = transcriptMarkdown(t, TEST_WANT);
     expect(md).toContain("# Negotiation transcript: Fast Ferdi");
     expect(md).toContain(`Outcome: Deal at $${t.dealPrice}`);
     expect(md).toContain("**Hagglebot (AI)**");
@@ -27,12 +27,12 @@ describe("transcript", () => {
   it("names why a negotiation ended without a deal", async () => {
     const t = await run("sam");
     expect(t.status).toBe("walked_away");
-    expect(transcriptMarkdown(t, DEMO_WANT)).toContain("Outcome: Walked away: scam detected");
+    expect(transcriptMarkdown(t, TEST_WANT)).toContain("Outcome: Walked away: scam detected");
   });
 
   it("says the budget is never shown to the seller, and states it once, in the header only", async () => {
-    const md = transcriptMarkdown(await run("fatima"), DEMO_WANT);
-    expect(md).toContain(`Budget: $${DEMO_WANT.maxPrice} (never shown to the seller)`);
+    const md = transcriptMarkdown(await run("fatima"), TEST_WANT);
+    expect(md).toContain(`Budget: $${TEST_WANT.maxPrice} (never shown to the seller)`);
   });
 
   it("makes a safe file name", async () => {

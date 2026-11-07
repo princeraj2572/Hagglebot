@@ -166,7 +166,7 @@ export function MarketplaceView(props: {
       <button
         className={`${ghost} ${layout === "card" ? "px-2 text-[13px]" : "py-1"}`}
         disabled={!want || !open || overBudget}
-        title={overBudget ? `Above your ${usd(budget)} budget` : "Skip the haggling and pay the listed price through PayPal"}
+        title={overBudget ? `Above your ${usd(budget)} budget` : "Skip the haggling and pay the listed price (mock payment)"}
         onClick={(e) => void buy(l, e.currentTarget)}
       >
         Buy at {usd(l.price)}

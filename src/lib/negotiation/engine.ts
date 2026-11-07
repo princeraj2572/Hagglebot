@@ -126,7 +126,7 @@ export async function step(thread: Thread, want: Want, seller: Seller, deps: Eng
   const agreed = reply.action === "accept" ? reply.price : null;
   const scam = detectScam(reply.message, agreed);
   if (scam.isScam) {
-    push(thread, deps, "buyer", SCAM_WALK_MESSAGE, null, `Scam signals in the seller's message (${scam.signals.join("; ")}). Refused to pay outside PayPal and walked away.`);
+    push(thread, deps, "buyer", SCAM_WALK_MESSAGE, null, `Scam signals in the seller's message (${scam.signals.join("; ")}). Refused to pay outside the platform and walked away.`);
     walk(thread, "scam_detected", scam.signals.join("; "));
     return thread;
   }

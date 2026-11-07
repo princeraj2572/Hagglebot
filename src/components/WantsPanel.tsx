@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { STYLE_INFO } from "@/lib/negotiation/strategy";
 import { NEGOTIATION_STYLES, type NegotiationStyle, type Thread } from "@/lib/negotiation/types";
 import type { Deal } from "@/server/repo";
@@ -37,8 +37,10 @@ export function WantsPanel(props: {
   onError: (msg: string) => void;
   /** Find sellers for a new want and negotiate, without further clicks. */
   onAutopilot?: (wantId: string) => void;
+  /** Increases each time something else asks for the New want dialog to open. */
+  openNewWant?: number;
 }) {
-  const { wants, bundles, threads, deals, selectedId, onSelect, onChanged, onError, onAutopilot } = props;
+  const { wants, bundles, threads, deals, selectedId, onSelect, onChanged, onError, onAutopilot, openNewWant = 0 } = props;
   const [autopilot, setAutopilot] = useState(true);
   const [form, setForm] = useState<{ item: string; maxPrice: string; notes: string; buyerName: string; style: NegotiationStyle; requireApproval: boolean }>({
     item: "", maxPrice: "", notes: "", buyerName: "", style: "balanced", requireApproval: false,
@@ -46,6 +48,9 @@ export function WantsPanel(props: {
   const [bundleForm, setBundleForm] = useState({ name: "", total: "" });
   const [dialog, setDialog] = useState<"want" | "bundle" | null>(null);
   const [busy, setBusy] = useState(false);
+  useEffect(() => {
+    if (openNewWant > 0) setDialog("want");
+  }, [openNewWant]);
 
   const run = async (fn: () => Promise<unknown>) => {
     setBusy(true);
@@ -143,19 +148,6 @@ export function WantsPanel(props: {
           </ul>
         )}
       </div>
-
-      <button
-        className={`${ghost} w-full`}
-        disabled={busy}
-        onClick={() =>
-          run(async () => {
-            const r = await api<{ wantId: string }>("/api/demo", "POST");
-            onSelect(r.wantId);
-          })
-        }
-      >
-        Load demo scenario
-      </button>
 
       <Modal open={dialog === "want"} onClose={() => setDialog(null)} title="New want">
         <form

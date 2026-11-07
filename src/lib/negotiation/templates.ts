@@ -27,7 +27,7 @@ export function templateBody(move: Move, want: Want, opts: { comparing: number; 
       return pick(fmt(move.price), want.item, extra);
     }
     case "accept":
-      return `That works. We have a deal at ${fmt(move.price)} for the ${want.item}, all-in with no extra fees. I'll arrange payment through PayPal and confirm here once it's done.`;
+      return `That works. We have a deal at ${fmt(move.price)} for the ${want.item}, all-in with no extra fees. I'll arrange payment through the platform and confirm here once it's done.`;
     case "walk":
       switch (move.reason) {
         case "too_many_refusals":
@@ -41,4 +41,4 @@ export function templateBody(move: Move, want: Want, opts: { comparing: number; 
 }
 
 export const SCAM_WALK_MESSAGE =
-  "Thank you, but I can't accept additional fees or off-platform payment: the price we agreed was all-in, and payments go through PayPal only. I'm going to step away from this listing.";
+  "Thank you, but I can't accept additional fees or off-platform payment: the price we agreed was all-in, and payments go through this platform only. I'm going to step away from this listing.";

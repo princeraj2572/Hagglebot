@@ -1,11 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { DEMO_WANT } from "../demo";
+import { TEST_WANT } from "../testWant";
 import { PERSONAS } from "../sellers/personas";
 import { PersonaSeller } from "../sellers/sellerAgent";
 import { approveThread, createThread, declineThread, runNegotiation } from "./engine";
 import type { Want } from "./types";
 
-const ask: Want = { ...DEMO_WANT, requireApproval: true };
+const ask: Want = { ...TEST_WANT, requireApproval: true };
 const noop = { onMessage: () => undefined };
 
 const run = async (want: Want, id = "ferdi") => {
@@ -17,7 +17,7 @@ const run = async (want: Want, id = "ferdi") => {
 
 describe("approve before accepting", () => {
   it("is off by default: a good price closes the deal on its own", async () => {
-    expect((await run(DEMO_WANT)).status).toBe("deal");
+    expect((await run(TEST_WANT)).status).toBe("deal");
   });
 
   it("stops at an in-budget price and waits, without agreeing to anything", async () => {
@@ -48,8 +48,8 @@ describe("approve before accepting", () => {
   });
 
   it("cannot approve or decline a thread that is not waiting", async () => {
-    const t = await run(DEMO_WANT);
-    expect(() => approveThread(t, DEMO_WANT, noop)).toThrow();
+    const t = await run(TEST_WANT);
+    expect(() => approveThread(t, TEST_WANT, noop)).toThrow();
     expect(() => declineThread(t, noop)).toThrow();
   });
 

@@ -3,15 +3,14 @@ import { PERSONAS, type Persona } from "./personas";
 
 /**
  * A real retailer listing played by a simulated agent: the price, retailer and condition are real,
- * the haggling is not (no retailer is ever contacted). Real stores only ever get an honest
- * personality: the scammy personas stay on made-up sellers.
+ * the haggling is not (no retailer is ever contacted). Any persona can play the seller, honest or not.
  */
-const HONEST = PERSONAS.filter((p) => p.hiddenFeeRate === 0);
 
 export const LISTING_PREFIX = "listing:";
 
-export function personaIdForListing(index: number): string {
-  return HONEST[index % HONEST.length]!.id;
+/** Picks which persona plays a listing's seller. Random by default; tests pass their own roll. */
+export function personaIdForListing(_index: number, roll: () => number = Math.random): string {
+  return PERSONAS[Math.floor(roll() * PERSONAS.length) % PERSONAS.length]!.id;
 }
 
 /** Scales a persona to the listing's real price; all of a persona's pricing rules are ratios of its list price. */

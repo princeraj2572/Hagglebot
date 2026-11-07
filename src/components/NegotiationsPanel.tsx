@@ -52,10 +52,7 @@ export function NegotiationsPanel(props: {
   bundles: DashboardState["bundles"];
   /** True when a Channel3 key is set, so real listings can be added. */
   listings: boolean;
-  paypalClientId: string | null;
-  buyerEmail: string | null;
   busy: boolean;
-  demo: boolean;
   /** True when the button redoes everything (Restart); false when it only starts new sellers or a first run. */
   restart: boolean;
   /** What "find sellers and negotiate for me" is doing right now, if it is running for this want. */
@@ -65,15 +62,15 @@ export function NegotiationsPanel(props: {
   /** Ask the panel to open a tab once (for example Deals right after a purchase). */
   focus?: { view: "deals" } | null;
   onFocusDone?: () => void;
-  /** First-run shortcut: load the demo scenario and select it. */
-  onLoadDemo?: () => void;
+  /** First-run shortcut: open the New want dialog. */
+  onNewWant?: () => void;
   canNegotiate: boolean;
   onNegotiate: () => void;
   run: (fn: () => Promise<unknown>) => Promise<void>;
   onChanged: () => void;
   onError: (msg: string) => void;
 }) {
-  const { want, threads, deals, wants, bundle, bundles, listings, paypalClientId, buyerEmail, busy, demo, restart, autoStatus, onFindProducts, focus, onFocusDone, onLoadDemo, canNegotiate, onNegotiate, run, onChanged, onError } = props;
+  const { want, threads, deals, wants, bundle, bundles, listings, busy, restart, autoStatus, onFindProducts, focus, onFocusDone, onNewWant, canNegotiate, onNegotiate, run, onChanged, onError } = props;
 
   // Negotiations that finished before this page opened replay once, so the haggling is visible.
   const seen = useRef(replayed);
@@ -165,7 +162,7 @@ export function NegotiationsPanel(props: {
           {[
             ["1", "Say what you want", "An item, your maximum price and how hard to haggle."],
             ["2", "Watch it negotiate", "Every seller at once, with the reason behind each move."],
-            ["3", "Pay through PayPal", "When a seller agrees to a price inside your budget."],
+            ["3", "Pay", "When a seller agrees to a price inside your budget. Payments are simulated."],
           ].map(([n, title, text]) => (
             <li key={n} className="rounded-2xl bg-white/[0.07] p-4">
               <span className="num inline-flex h-7 w-7 items-center justify-center rounded-full bg-ultra text-sm font-bold">{n}</span>
@@ -175,12 +172,12 @@ export function NegotiationsPanel(props: {
           ))}
         </ol>
         <div className="mt-8 flex flex-wrap items-center gap-x-5 gap-y-3">
-          {onLoadDemo && (
-            <button className="rounded-full bg-white px-5 py-2.5 font-semibold text-ink transition-transform duration-150 active:scale-[0.97] [@media(hover:hover)]:hover:bg-tag" onClick={onLoadDemo}>
-              Load the demo scenario
+          {onNewWant && (
+            <button className="rounded-full bg-white px-5 py-2.5 font-semibold text-ink transition-transform duration-150 active:scale-[0.97] [@media(hover:hover)]:hover:bg-tag" onClick={onNewWant}>
+              Add your first want
             </button>
           )}
-          <span className="text-sm text-white/60">or click New want to add your own</span>
+          <span className="text-sm text-white/60">Hagglebot searches, negotiates and pays for you. Everything is simulated.</span>
         </div>
       </section>
     );
@@ -412,7 +409,7 @@ export function NegotiationsPanel(props: {
           ) : view === "listings" ? (
             <ListingsPanel sellers={want.sellers} threads={shown} />
           ) : (
-            <DealsPanel deals={deals} wants={wants} demo={demo} paypalClientId={paypalClientId} buyerEmail={buyerEmail} onChanged={onChanged} onError={onError} />
+            <DealsPanel deals={deals} wants={wants} onChanged={onChanged} onError={onError} />
           )}
         </>
       )}

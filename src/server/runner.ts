@@ -6,8 +6,7 @@ import type { Repo, SellerContact } from "./repo";
 export interface RunnerDeps {
   repo: Repo;
   llm: LLM | null;
-  /** `demo` runs with canned text (no language model), for the ?demo=1 mode. */
-  sellerFor: (contact: SellerContact, initialAsk: number | null, demo?: boolean, budget?: number) => Seller;
+  sellerFor: (contact: SellerContact, initialAsk: number | null, budget?: number) => Seller;
   now?: () => number;
   log?: (msg: string, err?: unknown) => void;
   maxSteps?: number;
@@ -38,7 +37,7 @@ export class NegotiationRunner {
   constructor(private readonly d: RunnerDeps) {}
 
   /** Create a thread per seller contact and start them all in parallel. */
-  start(wantId: string, opts: { restart?: boolean; demo?: boolean } = {}): Thread[] {
+  start(wantId: string, opts: { restart?: boolean } = {}): Thread[] {
     const { repo } = this.d;
     const want = repo.getWant(wantId);
     if (!want) throw new RunnerError("Want not found", "not_found");
@@ -59,7 +58,7 @@ export class NegotiationRunner {
       });
       for (const t of added) {
         this.paused.delete(t.id);
-        this.launch(t, contacts.length, opts.demo ?? false);
+        this.launch(t, contacts.length);
       }
       return added;
     }
@@ -79,7 +78,7 @@ export class NegotiationRunner {
     });
     for (const t of threads) {
       this.paused.delete(t.id); // restarted threads reuse ids; clear stale pause flags
-      this.launch(t, contacts.length, opts.demo ?? false);
+      this.launch(t, contacts.length);
     }
     return threads;
   }
@@ -188,15 +187,15 @@ export class NegotiationRunner {
     if (live && live.status === "negotiating") live.status = "paused";
   }
 
-  private launch(thread: Thread, comparing: number, demo = false): void {
+  private launch(thread: Thread, comparing: number): void {
     const { repo } = this.d;
     const contact = repo.listSellers(thread.wantId).find((c) => c.id === thread.sellerId);
     const stored = repo.getWant(thread.wantId);
     if (!contact || !stored) return;
     const want = this.effectiveWant(stored);
-    const seller = this.d.sellerFor(contact, thread.lastAsk, demo, stored.maxPrice);
+    const seller = this.d.sellerFor(contact, thread.lastAsk, stored.maxPrice);
     const deps: EngineDeps = {
-      llm: demo ? null : this.d.llm,
+      llm: this.d.llm,
       comparing,
       ...(this.d.now ? { now: this.d.now } : {}),
       onMessage: (t, m) => {
@@ -217,7 +216,7 @@ export class NegotiationRunner {
           await step(thread, want, seller, deps);
           repo.saveThread(thread);
           if (statusOf(thread) === "deal") repo.createDeal(thread);
-          const delay = demo ? 0 : (this.d.stepDelayMs ?? 0);
+          const delay = this.d.stepDelayMs ?? 0;
           if (delay > 0 && statusOf(thread) === "negotiating") await sleep(delay);
         }
       } catch (err) {

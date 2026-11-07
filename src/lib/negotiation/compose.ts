@@ -42,7 +42,7 @@ function describeMove(move: Move, want: Want, comparing: number, turn: number): 
     case "counter":
       return `Counter-offer exactly ${fmt(move.price)}. Politely ask for a better price first. This turn's angle: ${ANGLES[turn % ANGLES.length]}.${comparing > 1 ? ` You may truthfully say you are comparing ${comparing} listings.` : ""}`;
     case "accept":
-      return `Accept the deal at exactly ${fmt(move.price)}, all-in with no extra fees, and say payment will be arranged through PayPal.`;
+      return `Accept the deal at exactly ${fmt(move.price)}, all-in with no extra fees, and say payment will be arranged through the platform.`;
     case "walk":
       return `Gracefully end the negotiation and walk away (reason: ${move.reason.replace(/_/g, " ")}). Do not mention the user's budget.`;
   }

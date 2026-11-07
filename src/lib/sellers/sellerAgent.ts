@@ -96,7 +96,7 @@ export class PersonaSeller implements Seller {
     const id = this.persona.id;
     if (m.action === "accept") {
       if (m.fee > 0) {
-        return `Deal at ${fmt(m.price)}! Just a ${fmt(m.fee)} processing fee on top, so ${fmt(m.price + m.fee)} total. Easiest is to pay me directly outside PayPal, no hassle.`;
+        return `Deal at ${fmt(m.price)}! Just a ${fmt(m.fee)} processing fee on top, so ${fmt(m.price + m.fee)} total. Easiest is to pay me directly, off the platform, no hassle.`;
       }
       return `You've got a deal at ${fmt(m.price)} for the ${item}!`;
     }

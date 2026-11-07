@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { DEMO_WANT } from "../demo";
+import { TEST_WANT } from "../testWant";
 import { LLMUnavailableError, type LLM } from "../llm/types";
 import { PERSONAS } from "../sellers/personas";
 import { PersonaSeller } from "../sellers/sellerAgent";
@@ -9,8 +9,8 @@ import { MAX_MESSAGES } from "./types";
 const persona = (id: string) => PERSONAS.find((p) => p.id === id)!;
 const run = async (id: string, llm: LLM | null = null) => {
   const seller = new PersonaSeller(persona(id), llm);
-  const thread = createThread(DEMO_WANT, seller);
-  await runNegotiation(thread, DEMO_WANT, seller, { llm, comparing: 4 });
+  const thread = createThread(TEST_WANT, seller);
+  await runNegotiation(thread, TEST_WANT, seller, { llm, comparing: 4 });
   return thread;
 };
 
@@ -32,7 +32,7 @@ describe("demo scenario (template mode, no LLM)", () => {
   it("Chatty Chen: slow but kind, deal within budget near the end", async () => {
     const t = await run("chen");
     expect(t.status).toBe("deal");
-    expect(t.dealPrice).toBeLessThanOrEqual(DEMO_WANT.maxPrice);
+    expect(t.dealPrice).toBeLessThanOrEqual(TEST_WANT.maxPrice);
     expect(t.messages.length).toBeGreaterThan(8);
   });
 
@@ -49,9 +49,9 @@ describe("safety invariants", () => {
   it.each(PERSONAS.map((p) => p.id))("%s: <=15 messages, never above budget, AI disclosure first", async (id) => {
     const t = await run(id);
     expect(t.messages.length).toBeLessThanOrEqual(MAX_MESSAGES);
-    if (t.dealPrice !== null) expect(t.dealPrice).toBeLessThanOrEqual(DEMO_WANT.maxPrice);
+    if (t.dealPrice !== null) expect(t.dealPrice).toBeLessThanOrEqual(TEST_WANT.maxPrice);
     for (const m of t.messages.filter((m) => m.from === "buyer" && m.price !== null)) {
-      expect(m.price).toBeLessThanOrEqual(DEMO_WANT.maxPrice);
+      expect(m.price).toBeLessThanOrEqual(TEST_WANT.maxPrice);
     }
     expect(t.messages[0]?.text.startsWith("Hi, I'm an AI buyer agent for Alex. May I ask about your listing?")).toBe(true);
     // the budget ceiling is never announced
@@ -63,8 +63,8 @@ describe("LLM output gate", () => {
   const llmReturning = (text: string): LLM => ({ name: "fake", generate: vi.fn().mockResolvedValue(text) });
   const firstBuyerMessage = async (llm: LLM) => {
     const seller = new PersonaSeller(persona("ferdi"), null);
-    const t = createThread(DEMO_WANT, seller);
-    await step(t, DEMO_WANT, seller, { llm });
+    const t = createThread(TEST_WANT, seller);
+    await step(t, TEST_WANT, seller, { llm });
     return t.messages[0]!.text;
   };
 
@@ -94,18 +94,18 @@ describe("LLM output gate", () => {
 describe("pause killswitch", () => {
   it("stops before the next step and resumes where it left off", async () => {
     const seller = new PersonaSeller(persona("chen"), null);
-    const t = createThread(DEMO_WANT, seller);
+    const t = createThread(TEST_WANT, seller);
     let paused = false;
     const deps = { llm: null };
-    await step(t, DEMO_WANT, seller, deps);
+    await step(t, TEST_WANT, seller, deps);
     paused = true;
     const n = t.messages.length;
-    await runNegotiation(t, DEMO_WANT, seller, deps, { isPaused: () => paused });
+    await runNegotiation(t, TEST_WANT, seller, deps, { isPaused: () => paused });
     expect(t.status).toBe("paused");
     expect(t.messages.length).toBe(n);
     paused = false;
     resume(t);
-    await runNegotiation(t, DEMO_WANT, seller, deps, { isPaused: () => paused });
+    await runNegotiation(t, TEST_WANT, seller, deps, { isPaused: () => paused });
     expect(t.status).toBe("deal");
   });
 });

@@ -1,3 +1,4 @@
+import { POST as payRoute } from "@/app/api/deals/[id]/pay/route";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { POST as createWant } from "@/app/api/wants/route";
 import { DELETE as deleteWant } from "@/app/api/wants/[id]/route";
@@ -9,15 +10,11 @@ import { POST as buyNow } from "@/app/api/wants/[id]/buy/route";
 import { POST as approveRoute } from "@/app/api/threads/[id]/approve/route";
 import { GET as transcript } from "@/app/api/threads/[id]/transcript/route";
 import { POST as declineRoute } from "@/app/api/threads/[id]/decline/route";
-import { POST as demoPayRoute } from "@/app/api/deals/[id]/demo-pay/route";
 import { POST as negotiate } from "@/app/api/wants/[id]/negotiate/route";
-import { POST as loadDemo } from "@/app/api/demo/route";
 import { GET as getState } from "@/app/api/state/route";
 import { POST as pause } from "@/app/api/threads/[id]/pause/route";
 import { POST as resume } from "@/app/api/threads/[id]/resume/route";
-import { POST as createOrder } from "@/app/api/deals/[id]/order/route";
 import { POST as refund } from "@/app/api/deals/[id]/refund/route";
-import { POST as capture } from "@/app/api/orders/[orderId]/capture/route";
 import { PERSONAS } from "@/lib/sellers/personas";
 import { PersonaSeller } from "@/lib/sellers/sellerAgent";
 import { NegotiationRunner } from "./runner";
@@ -39,22 +36,25 @@ const post = (p: string, body?: unknown, headers: Record<string, string> = {}) =
     ...(body === undefined ? {} : { body: JSON.stringify(body) }),
   });
 const ctx = <T extends Record<string, string>>(p: T) => ({ params: Promise.resolve(p) });
+
+async function seedWant(): Promise<{ wantId: string }> {
+  const res = await createWant(post("/api/wants", { item: "Wireless noise-cancelling headphones", maxPrice: 250, notes: "", buyerName: "Alex" }));
+  const want = await res.json();
+  for (const persona of ["ferdi", "fatima", "chen", "sam"]) await addSeller(post(`/api/wants/${want.id}/sellers`, { persona }), ctx({ id: want.id }));
+  return { wantId: want.id };
+}
 const state = async (): Promise<DashboardState> => (await getState(new Request(url("/api/state")))).json();
 
 describe("API", () => {
-  it("full demo flow: load, negotiate, observe results", async () => {
-    const demo = await loadDemo(post("/api/demo"));
-    expect(demo.status).toBe(201);
-    const { wantId, created } = await demo.json();
-    expect(created).toBe(true);
-    expect((await (await loadDemo(post("/api/demo"))).json()).created).toBe(false); // idempotent
+  it("full flow: add a want and sellers, negotiate, observe results", async () => {
+    const { wantId } = await seedWant();
 
     const started = await negotiate(post(`/api/wants/${wantId}/negotiate`), ctx({ id: wantId }));
     expect(started.status).toBe(202);
     await svc.runner.idle();
 
     const s = await state();
-    expect(s.config).toEqual({ paypalClientId: null, paypalBuyerEmail: null, llmMode: "template", listings: false });
+    expect(s.config).toEqual({ listings: false });
     expect(s.wants[0]!.sellers).toHaveLength(4);
     expect(s.threads.map((t) => [t.sellerName, t.status]).sort()).toEqual([
       ["Chatty Chen", "deal"], ["Fast Ferdi", "deal"], ["Firm Fatima", "walked_away"], ["Shady Sam", "walked_away"],
@@ -85,8 +85,8 @@ describe("API", () => {
     expect((await createWant(wrongType)).status).toBe(400);
     const badJson = new Request(url("/api/wants"), { method: "POST", headers: { "content-type": "application/json" }, body: "{" });
     expect((await createWant(badJson)).status).toBe(400);
-    const evil = post("/api/demo", undefined, { origin: "https://evil.example" });
-    expect((await loadDemo(evil)).status).toBe(403);
+    const evil = post("/api/wants", { item: "x", maxPrice: 5, buyerName: "A" }, { origin: "https://evil.example" });
+    expect((await createWant(evil)).status).toBe(403);
     expect((await state()).wants).toHaveLength(0);
   });
 
@@ -104,7 +104,7 @@ describe("API", () => {
     });
     setServicesForTest({ ...svc, runner });
 
-    const { wantId } = await (await loadDemo(post("/api/demo"))).json();
+    const { wantId } = await seedWant();
     const { threads } = await (await negotiate(post(`/api/wants/${wantId}/negotiate`), ctx({ id: wantId }))).json();
     const id = threads[0] as string; // Fast Ferdi
 
@@ -123,19 +123,8 @@ describe("API", () => {
     expect((await pause(post("/x"), ctx({ id: "ghost" }))).status).toBe(404);
   });
 
-  it("payments return 503 (not a crash) when PayPal is not configured", async () => {
-    const { wantId } = await (await loadDemo(post("/api/demo"))).json();
-    await negotiate(post(`/api/wants/${wantId}/negotiate`), ctx({ id: wantId }));
-    await svc.runner.idle();
-    const deal = (await state()).deals[0]!;
-    const res = await createOrder(post("/x"), ctx({ id: deal.id }));
-    expect(res.status).toBe(503);
-    expect((await res.json()).error).toMatch(/PAYPAL_CLIENT_ID/);
-    expect((await capture(post("/x"), ctx({ orderId: "ORD" }))).status).toBe(503);
-  });
-
   it("deleting a want removes its threads and deals", async () => {
-    const { wantId } = await (await loadDemo(post("/api/demo"))).json();
+    const { wantId } = await seedWant();
     await negotiate(post(`/api/wants/${wantId}/negotiate`), ctx({ id: wantId }));
     await svc.runner.idle();
     const del = new Request(url(`/api/wants/${wantId}`), { method: "DELETE", headers: { host: "localhost:3000" } });
@@ -146,7 +135,7 @@ describe("API", () => {
   });
   it("refund route maps errors: unknown deal 404, unpaid deal 409", async () => {
     expect((await refund(post("/api/deals/nope/refund"), ctx({ id: "nope" }))).status).toBe(404);
-    const { wantId } = await (await loadDemo(post("/api/demo"))).json();
+    const { wantId } = await seedWant();
     await negotiate(post(`/api/wants/${wantId}/negotiate`), ctx({ id: wantId }));
     await svc.runner.idle();
     const deal = (await state()).deals[0]!;
@@ -268,56 +257,45 @@ describe("API", () => {
     });
   });
 
-  describe("demo mode (?demo=1)", () => {
-    const demoNegotiate = (wantId: string) => negotiate(post(`/api/wants/${wantId}/negotiate?demo=1`), ctx({ id: wantId }));
-    const demoPay = (dealId: string) => demoPayRoute(post(`/api/deals/${dealId}/demo-pay`), ctx({ id: dealId }));
+  describe("mock payments", () => {
+    const pay = (dealId: string) => payRoute(post(`/api/deals/${dealId}/pay`), ctx({ id: dealId }));
 
     async function closedDeal() {
-      const demo = await (await loadDemo(post("/api/demo"))).json();
-      await demoNegotiate(demo.wantId);
+      const { wantId } = await seedWant();
+      await negotiate(post(`/api/wants/${wantId}/negotiate`), ctx({ id: wantId }));
       await svc.runner.idle();
-      return (await state()).deals.find((d) => d.wantId === demo.wantId)!;
+      return (await state()).deals.find((d) => d.wantId === wantId)!;
     }
 
-    it("runs the negotiation to the end with canned text and no delay", async () => {
-      const demo = await (await loadDemo(post("/api/demo"))).json();
-      expect((await demoNegotiate(demo.wantId)).status).toBe(202);
-      await svc.runner.idle();
-      const s = await state();
-      expect(s.threads.every((t) => t.status !== "negotiating")).toBe(true);
-      expect(s.deals.length).toBeGreaterThan(0);
-    });
-
-    it("pays with DEMO-labelled ids, never calls PayPal, buys the want and withdraws from the others", async () => {
+    it("pays with MOCK-labelled ids, buys the want and withdraws from the others", async () => {
       const deal = await closedDeal();
-      expect(svc.publicConfig.paypalClientId).toBeNull(); // no PayPal configured: the real flow could not have run
-      const res = await demoPay(deal.id);
+      const res = await pay(deal.id);
       expect(res.status).toBe(200);
-      expect(await res.json()).toMatchObject({ status: "paid", payerId: "DEMO-PAYER", captureId: `DEMO-CAPTURE-${deal.id}` });
+      expect(await res.json()).toMatchObject({ status: "paid", payerId: "MOCK-PAYER", captureId: `MOCK-PAYMENT-${deal.id}` });
       const s = await state();
       expect(s.wants.find((w) => w.id === deal.wantId)!.status).toBe("purchased");
       const paidThread = s.threads.find((t) => t.id === deal.threadId)!;
-      expect(paidThread.messages.at(-1)!.text).toContain("DEMO MODE");
+      expect(paidThread.messages.at(-1)!.text).toContain("mock payment");
       expect(s.threads.filter((t) => t.id !== deal.threadId).every((t) => t.status === "walked_away" || t.status === "deal")).toBe(true);
     });
 
-    it("can refund a demo payment without PayPal, and says it was a demo", async () => {
+    it("can refund a mock payment and says it was a mock", async () => {
       const deal = await closedDeal();
-      await demoPay(deal.id);
+      await pay(deal.id);
       const res = await refund(post(`/api/deals/${deal.id}/refund`), ctx({ id: deal.id }));
       expect(res.status).toBe(200);
       expect((await res.json()).status).toBe("refunded");
       const t = (await state()).threads.find((x) => x.id === deal.threadId)!;
-      expect(t.messages.at(-1)!.text).toContain("DEMO MODE");
+      expect(t.messages.at(-1)!.text).toContain("mock refund");
     });
 
     it("is idempotent, and refuses unknown or cancelled deals", async () => {
       const deal = await closedDeal();
-      expect((await demoPay(deal.id)).status).toBe(200);
-      expect((await demoPay(deal.id)).status).toBe(200);
-      expect((await demoPay("nope")).status).toBe(404);
+      expect((await pay(deal.id)).status).toBe(200);
+      expect((await pay(deal.id)).status).toBe(200);
+      expect((await pay("nope")).status).toBe(404);
       const cancelled = (await state()).deals.find((d) => d.status === "cancelled");
-      if (cancelled) expect((await demoPay(cancelled.id)).status).toBe(409);
+      if (cancelled) expect((await pay(cancelled.id)).status).toBe(409);
     });
   });
 
@@ -364,7 +342,7 @@ describe("API", () => {
 
   describe("transcript download", () => {
     it("serves a negotiation as a Markdown attachment, and 404s for an unknown thread", async () => {
-      const demo = await (await loadDemo(post("/api/demo"))).json();
+      const demo = await seedWant();
       await negotiate(post(`/api/wants/${demo.wantId}/negotiate`), ctx({ id: demo.wantId }));
       await svc.runner.idle();
       const t = (await state()).threads[0]!;

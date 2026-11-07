@@ -226,8 +226,8 @@ export const PERSONAS: Persona[] = [
 ];
 
 
-/** The four sellers the demo scenario and the tests use; the rest are available from the Add seller menu. */
-export const DEMO_PERSONAS: Persona[] = PERSONAS.slice(0, 4);
+/** The four sellers the tests use; every persona is available from the Add seller menu. */
+export const STARTER_PERSONAS: Persona[] = PERSONAS.slice(0, 4);
 
 /** The budget the persona price lists were written for: 399 opening asks against a $250 want. */
 const REFERENCE_BUDGET = 250;

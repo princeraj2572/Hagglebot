@@ -4,7 +4,6 @@ import type { Deal, WantRecord } from "@/server/repo";
 import { api } from "./api";
 import { Avatar } from "./Avatar";
 import { usd } from "./format";
-import { PayPalCheckout } from "./PayPalCheckout";
 import { btn } from "./ui";
 
 const LABEL: Record<Deal["status"], string> = {
@@ -18,29 +17,24 @@ const LABEL: Record<Deal["status"], string> = {
 export function DealsPanel(props: {
   deals: Deal[];
   wants: WantRecord[];
-  paypalClientId: string | null;
-  /** ?demo=1: pay with a labelled mock instead of the PayPal popup. */
-  demo?: boolean;
-  buyerEmail?: string | null;
   onChanged: () => void;
   onError: (msg: string) => void;
 }) {
-  const { deals, wants, paypalClientId, buyerEmail, onChanged, onError, demo = false } = props;
-  const [paying, setPaying] = useState<string | null>(null);
+  const { deals, wants, onChanged, onError } = props;
   const [confirming, setConfirming] = useState<string | null>(null);
   const [refunding, setRefunding] = useState(false);
-  const [demoPaying, setDemoPaying] = useState<string | null>(null);
+  const [paying, setPaying] = useState<string | null>(null);
 
-  const demoPay = async (dealId: string) => {
-    setDemoPaying(dealId);
+  const pay = async (dealId: string) => {
+    setPaying(dealId);
     try {
       await new Promise((r) => setTimeout(r, 700)); // a beat, so it reads as a payment going through
-      await api(`/api/deals/${dealId}/demo-pay`, "POST");
+      await api(`/api/deals/${dealId}/pay`, "POST");
       onChanged();
     } catch (e) {
       onError(e instanceof Error ? e.message : String(e));
     } finally {
-      setDemoPaying(null);
+      setPaying(null);
     }
   };
 
@@ -67,13 +61,8 @@ export function DealsPanel(props: {
       <p className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted">
         <span className="inline-flex items-center gap-2 rounded-full bg-mist px-3 py-1 text-[13px]">
           <span aria-hidden className="h-2 w-2 rounded-full bg-ink/40" />
-          PayPal sandbox only. No real money moves.
+          Mock payments. No real money moves.
         </span>
-        {buyerEmail && (
-          <span className="min-w-0 break-all">
-            Sandbox buyer: <span className="font-medium text-ink">{buyerEmail}</span>
-          </span>
-        )}
       </p>
 
       {deals.length === 0 && (
@@ -115,8 +104,8 @@ export function DealsPanel(props: {
 
             {d.status === "paid" && (
               <dl className="mt-4 space-y-1 border-t border-dashed border-ink/25 pt-4 text-sm">
-                <div className="break-words"><span className="text-muted">PayPal payer-id</span> <span className="num break-all font-semibold">{d.payerId ?? "n/a"}</span></div>
-                <div className="break-words"><span className="text-muted">Capture</span> <span className="num break-all font-semibold">{d.captureId ?? "n/a"}</span></div>
+                <div className="break-words"><span className="text-muted">Payer</span> <span className="num break-all font-semibold">{d.payerId ?? "n/a"}</span></div>
+                <div className="break-words"><span className="text-muted">Payment</span> <span className="num break-all font-semibold">{d.captureId ?? "n/a"}</span></div>
                 <div className="text-ultra">Confirmation sent to the seller</div>
                 <div className="pt-2">
                   {confirming === d.id ? (
@@ -134,46 +123,27 @@ export function DealsPanel(props: {
                       Request refund of {usd(d.price)}
                     </button>
                   )}
-                  <p className="mt-1 text-[13px] text-muted">{d.captureId?.startsWith("DEMO-") ? "Demo: the simulated seller always approves. No PayPal payment was made, so nothing is refunded there." : "Demo: the simulated seller always approves, then PayPal's refund call runs. In real life the seller issues the refund."}</p>
+                  <p className="mt-1 text-[13px] text-muted">Simulation: the simulated seller always approves. Nothing real was charged, so nothing real is refunded.</p>
                 </div>
               </dl>
             )}
 
             {d.status === "refunded" && (
               <p className="mt-4 border-t border-dashed border-ink/25 pt-4 text-sm">
-                {d.sellerName} approved the refund{d.captureId?.startsWith("DEMO-") ? " (demo: no PayPal payment was made)" : ", and it was paid back in full through PayPal"}. The want is open again, so you can negotiate it again.
+                {d.sellerName} approved the refund (mock: nothing real was charged). The want is open again, so you can negotiate it again.
               </p>
             )}
 
             {(d.status === "awaiting_payment" || d.status === "order_created") && (
               <div className="mt-3">
-                {demo ? (
-                  <>
-                    <button
-                      className={`${btn} w-full bg-ultra py-2.5 font-semibold text-white [@media(hover:hover)]:hover:bg-[#2335b8]`}
-                      disabled={demoPaying !== null}
-                      onClick={() => void demoPay(d.id)}
-                    >
-                      {demoPaying === d.id ? "Paying…" : `Confirm and Pay ${usd(d.price)} (demo)`}
-                    </button>
-                    <p className="mt-2 text-sm text-muted">Demo mode: no PayPal payment is made. The proof of payment is labelled DEMO.</p>
-                  </>
-                ) : paying === d.id && paypalClientId ? (
-                  <PayPalCheckout dealId={d.id} clientId={paypalClientId} onPaid={() => { setPaying(null); onChanged(); }} />
-                ) : (
-                  <button
-                    className={`${btn} w-full bg-ultra py-2.5 font-semibold text-white [@media(hover:hover)]:hover:bg-[#2335b8]`}
-                    disabled={!paypalClientId}
-                    onClick={() => setPaying(d.id)}
-                  >
-                    Confirm and Pay {usd(d.price)}
-                  </button>
-                )}
-                {!demo && !paypalClientId && (
-                  <p className="mt-2 text-sm text-muted">
-                    PayPal is not configured. Add PAYPAL_CLIENT_ID and PAYPAL_CLIENT_SECRET to .env.local and restart.
-                  </p>
-                )}
+                <button
+                  className={`${btn} w-full bg-ultra py-2.5 font-semibold text-white [@media(hover:hover)]:hover:bg-[#2335b8]`}
+                  disabled={paying !== null}
+                  onClick={() => void pay(d.id)}
+                >
+                  {paying === d.id ? "Paying…" : `Confirm and Pay ${usd(d.price)}`}
+                </button>
+                <p className="mt-2 text-sm text-muted">Mock payment: no real money moves. The proof of payment is labelled MOCK.</p>
               </div>
             )}
           </li>

@@ -25,9 +25,8 @@ export function Dashboard() {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const live = useRef(false);
-  // ?demo=1: negotiation runs instantly with canned text and payment is a labelled mock (no models, no PayPal).
-  const [demo, setDemo] = useState(false);
-  useEffect(() => setDemo(new URLSearchParams(window.location.search).get("demo") === "1"), []);
+  // The welcome screen's button opens the New want dialog in the sidebar.
+  const [newWantSignal, setNewWantSignal] = useState(0);
 
   const refresh = useCallback(async () => {
     // Dev-only stress fixture (?data=worst); the NODE_ENV check is inlined by Next, so it is dead code in production.
@@ -123,11 +122,9 @@ export function Dashboard() {
     <div className="min-h-screen">
       <Topbar
         wantItem={selected?.item}
-        llmMode={state?.config.llmMode}
         live={liveCount}
         total={threads.length}
         marketplace={state?.config.listings ?? false}
-        demo={demo}
         page={page}
         onPage={setPage}
       />
@@ -166,6 +163,7 @@ export function Dashboard() {
                 onChanged={refresh}
                 onError={setError}
                 onAutopilot={(id) => void autopilot(id)}
+                openNewWant={newWantSignal}
               />
             </aside>
             <main className={`min-w-0 ${tab === "negotiation" ? "" : "hidden lg:block"}`}>
@@ -180,18 +178,15 @@ export function Dashboard() {
                   bundle={state.bundles.find((b) => b.id === selected?.bundleId)}
                   bundles={state.bundles}
                   listings={state.config.listings}
-                  paypalClientId={state.config.paypalClientId}
-                  buyerEmail={state.config.paypalBuyerEmail}
                   busy={busy}
-                  demo={demo}
                 restart={restarting}
                 onFindProducts={state.config.listings ? () => setPage("marketplace") : undefined}
                 focus={focus}
                 autoStatus={auto && auto.wantId === selected?.id ? auto.text : null}
                 onFocusDone={() => setFocus(null)}
-                onLoadDemo={() => run(async () => { const r = await api<{ wantId: string }>("/api/demo", "POST"); setSelectedWant(r.wantId); setTab("negotiation"); })}
+                onNewWant={() => setNewWantSignal((n) => n + 1)}
                 canNegotiate={!!selected && selected.status === "open" && selected.sellers.length > 0 && liveCount === 0}
-                  onNegotiate={() => selected && run(() => api(`/api/wants/${selected.id}/negotiate${restarting ? "?restart=1" : ""}${demo ? (restarting ? "&demo=1" : "?demo=1") : ""}`, "POST"))}
+                  onNegotiate={() => selected && run(() => api(`/api/wants/${selected.id}/negotiate${restarting ? "?restart=1" : ""}`, "POST"))}
                   run={run}
                   onChanged={refresh}
                   onError={setError}
@@ -202,7 +197,7 @@ export function Dashboard() {
         )}
 
         <footer className="mt-10 border-t border-line pt-4 text-[13px] text-muted">
-          Hagglebot always identifies itself as an AI agent, never exceeds your budget, and only pays through the PayPal sandbox. Demo software, not financial advice.
+          Hagglebot always identifies itself as an AI agent and never exceeds your budget. Sellers, negotiation and payments are simulated: no real money moves.
         </footer>
       </div>
     </div>

@@ -7,11 +7,12 @@ import { PersonaSeller } from "./sellerAgent";
 const l: Listing = { title: "Sony WH-1000XM6", retailer: "bestbuy.com", price: 378, condition: "new", url: "https://bestbuy.com/x", image: null };
 
 describe("real listing sellers", () => {
-  it("never gives a real retailer a scam personality", () => {
-    for (let i = 0; i < 30; i++) {
-      const p = PERSONAS.find((x) => x.id === personaIdForListing(i))!;
-      expect(p.hiddenFeeRate).toBe(0);
-    }
+  it("can pick any persona, honest or not, depending on the roll", () => {
+    expect(personaIdForListing(0, () => 0)).toBe(PERSONAS[0]!.id);
+    expect(personaIdForListing(0, () => 0.999999)).toBe(PERSONAS.at(-1)!.id);
+    const seen = new Set(Array.from({ length: 400 }, () => personaIdForListing(0)));
+    expect(seen.size).toBeGreaterThan(PERSONAS.length / 2);
+    expect([...seen].some((id) => PERSONAS.find((p) => p.id === id)!.hiddenFeeRate > 0)).toBe(true);
   });
 
   it("takes the real price, retailer name and facts, and keeps the persona's ratios", () => {
