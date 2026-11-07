@@ -2,6 +2,7 @@
 @tailwind components;
 @tailwind utilities;
 
+html { scrollbar-gutter: stable; }
 body { @apply bg-chalk font-display text-ink antialiased; font-feature-settings: "ss01", "cv11"; background-image: radial-gradient(rgba(14,13,13,0.07) 1px, transparent 1px); background-size: 18px 18px; }
 :focus-visible { outline: 2px solid #2F63F3; outline-offset: 2px; }
 /* Every price and count is set in the mono face, tabular: the numbers are the product. */

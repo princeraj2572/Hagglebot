@@ -5,8 +5,11 @@ import { api } from "./api";
 import { MarketplaceView } from "./MarketplaceView";
 import { NegotiationsPanel } from "./NegotiationsPanel";
 import { Hero } from "./Hero";
-import { Topbar } from "./Topbar";
+import { Topbar, type NavPage } from "./Topbar";
 import { WantsPanel } from "./WantsPanel";
+
+/** Where the last dashboard is kept so the next visit can show it before the server answers. */
+const STATE_CACHE = "hagglebot-state";
 
 type Tab = "wants" | "negotiation";
 const TABS: { id: Tab; label: string }[] = [
@@ -28,10 +31,13 @@ export function Dashboard() {
   const live = useRef(false);
   // The welcome screen's button opens the New want dialog in the sidebar.
   // The hero is the first screen for someone with nothing yet; "Continue" (or starting a want) enters the dashboard.
-  const [entered, setEntered] = useState(true);
+  const [entered, setEntered] = useState<boolean | null>(null); // null until the browser's saved settings are read
   useEffect(() => {
     try {
       setEntered(localStorage.getItem("hagglebot-entered") === "1");
+      // Show the last dashboard straight away; the live one replaces it a moment later.
+      const saved = localStorage.getItem(STATE_CACHE);
+      if (saved) setState((cur) => cur ?? (JSON.parse(saved) as DashboardState));
     } catch {
       setEntered(false);
     }
@@ -57,6 +63,11 @@ export function Dashboard() {
       const s = await api<DashboardState>("/api/state");
       live.current = s.threads.some((t) => t.status === "negotiating");
       setState(s);
+      try {
+        localStorage.setItem(STATE_CACHE, JSON.stringify(s));
+      } catch {
+        /* storage full or blocked: the next visit just waits for the server */
+      }
       setError((e) => (e?.startsWith("Lost connection") ? null : e));
     } catch {
       setError("Lost connection to the Hagglebot server. Retrying…");
@@ -137,10 +148,28 @@ export function Dashboard() {
   const restarting = started && !hasNewSellers;
   const liveCount = threads.filter((t) => t.status === "negotiating").length;
 
-  const showHero = state !== null && !entered;
+  const navigate = (p: NavPage) => {
+    if (p === "home") {
+      setEntered(false);
+      return;
+    }
+    enter();
+    setPage(p);
+  };
+
+  if (state === null || entered === null) {
+    return (
+      <div className="grid min-h-screen place-items-center" role="status" aria-label="Loading">
+        <span aria-hidden className="flex h-9 w-9 items-center justify-center rounded-lg bg-ink text-sm font-bold text-white motion-safe:animate-pulse">H</span>
+      </div>
+    );
+  }
+
+  const showHero = !entered;
   if (showHero) {
     return (
       <Hero
+        nav={{ onNavigate: navigate, live: liveCount, total: threads.length, marketplace: state?.config.listings ?? false }}
         onContinue={enter}
         onStart={(p) => {
           enter();
@@ -154,16 +183,14 @@ export function Dashboard() {
   return (
     <div className="min-h-screen">
       <Topbar
-        onHome={() => setEntered(false)}
-        wantItem={selected?.item}
+        page={page}
+        onNavigate={navigate}
         live={liveCount}
         total={threads.length}
         marketplace={state?.config.listings ?? false}
-        page={page}
-        onPage={setPage}
       />
 
-      <div className="mx-auto max-w-[96rem] px-3 pb-6 pt-3 sm:px-5 sm:pt-4">
+      <div className="mx-auto max-w-7xl px-3 pb-6 pt-3 sm:px-5 sm:pt-4">
         {error && (
           <p role="alert" className="mb-4 border-l-4 border-scam bg-paper px-3 py-2 text-sm text-scam">
             {error}{" "}
@@ -182,9 +209,8 @@ export function Dashboard() {
           ))}
         </nav>
 
-        {!state ? (
-          <p className="text-sm text-muted">Loading…</p>
-        ) : (
+        {(
+
           <div className="grid grid-cols-1 gap-4 rounded-[28px] border border-line bg-paper p-3 sm:p-4 lg:grid-cols-[17rem_minmax(0,1fr)]">
             <aside className={`min-w-0 rounded-2xl bg-chalk p-3 sm:p-4 ${tab === "wants" ? "" : "hidden lg:block"}`}>
               <WantsPanel

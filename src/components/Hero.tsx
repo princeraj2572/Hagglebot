@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState, type CSSProperties, type ReactNode } from "react";
 import type { Preset } from "./Landing";
+import { Topbar, type NavPage } from "./Topbar";
 
 const reduced = () => typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
@@ -162,7 +163,7 @@ const EXPLAINED = [
 ] as const;
 
 /** The first thing a new visitor sees. A quick way in (what and how much), or straight on to the dashboard. */
-export function Hero({ onStart, onContinue }: { onStart: (preset: Preset) => void; onContinue: () => void }) {
+export function Hero({ onStart, onContinue, nav }: { onStart: (preset: Preset) => void; onContinue: () => void; nav: { onNavigate: (p: NavPage) => void; live: number; total: number; marketplace: boolean } }) {
   const [item, setItem] = useState("");
   const [price, setPrice] = useState("");
   const field = "min-w-0 rounded-lg border border-line bg-paper px-3.5 py-2.5 text-sm outline-none placeholder:text-muted focus:border-ultra focus:ring-2 focus:ring-ultra/20";
@@ -173,22 +174,8 @@ export function Hero({ onStart, onContinue }: { onStart: (preset: Preset) => voi
   const outline = "rounded-lg border border-line bg-paper px-4 py-2.5 text-sm font-medium transition-transform duration-150 active:scale-[0.98] [@media(hover:hover)]:hover:bg-mist";
   return (
     <div className="min-h-screen bg-chalk text-ink">
-      <div className="mx-auto max-w-6xl px-3 pt-3 sm:px-5 sm:pt-4">
-        <nav className="flex items-center justify-between rounded-xl border border-line bg-paper px-4 py-2.5 shadow-lift">
-          <span className="flex items-center gap-2 text-[15px] font-semibold tracking-tight">
-            <span aria-hidden className="flex h-6 w-6 items-center justify-center rounded-md bg-ink text-xs font-bold text-white">H</span>
-            Hagglebot
-          </span>
-          <ul className="hidden items-center gap-7 text-sm text-muted md:flex">
-            <li><a className="hover:text-ink" href="#features">Features</a></li>
-            <li><a className="hover:text-ink" href="#explained">Transparency</a></li>
-            <li><a className="hover:text-ink" href="#start">Start</a></li>
-          </ul>
-          <button className="rounded-lg bg-ink px-3.5 py-2 text-sm font-medium text-white [@media(hover:hover)]:hover:bg-[#2A2A2A]" onClick={onContinue}>
-            Open dashboard
-          </button>
-        </nav>
-
+      <Topbar page="home" {...nav} />
+      <div className="mx-auto max-w-7xl px-3 pt-3 sm:px-5 sm:pt-4">
         <main className="mt-3 rounded-[28px] border border-line bg-paper p-3 sm:mt-4 sm:p-4">
           <div className="grid gap-4 lg:grid-cols-[1fr_1.05fr]">
             <div className="flex flex-col p-4 sm:p-8">
