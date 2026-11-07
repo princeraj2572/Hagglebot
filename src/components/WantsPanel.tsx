@@ -122,7 +122,7 @@ export function WantsPanel(props: {
       <div className="space-y-2">
         <div className="flex items-baseline justify-between gap-2 px-1">
           <h3 className="text-sm font-semibold">Bundles</h3>
-          <button className="rounded py-0.5 text-sm font-semibold text-ultra underline-offset-4 hover:underline" onClick={() => setDialog("bundle")}>
+          <button className="rounded py-0.5 text-sm font-semibold text-ultra underline-offset-4 [@media(hover:hover)]:hover:underline" onClick={() => setDialog("bundle")}>
             New bundle
           </button>
         </div>

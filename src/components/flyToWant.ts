@@ -50,7 +50,7 @@ export function flyToWant(from: DOMRect, image: string | null, tag: string): num
       { transform: `translate(${dx * 0.5}px, ${dy * 0.5 - 70}px) scale(0.85)`, opacity: 1, offset: 0.5 },
       { transform: `translate(${dx}px, ${dy}px) scale(0.3)`, opacity: 0.55 },
     ],
-    { duration, easing: "cubic-bezier(0.4, 0, 0.2, 1)", fill: "forwards" },
+    { duration, easing: "cubic-bezier(0.77, 0, 0.175, 1)", fill: "forwards" },
   );
 
   flight.onfinish = () => {
@@ -79,7 +79,7 @@ export function flyToWant(from: DOMRect, image: string | null, tag: string): num
         { transform: "translate(-100%, -6px)", opacity: 1, offset: 0.25 },
         { transform: "translate(-100%, -22px)", opacity: 0 },
       ],
-      { duration: 1100, easing: "ease-out" },
+      { duration: 1100, easing: "cubic-bezier(0.23, 1, 0.32, 1)" },
     );
     rise.onfinish = () => label.remove();
   };

@@ -25,7 +25,7 @@ export function Detail(props: {
 
   return (
     <article className="rounded-xl bg-paper p-5 shadow-lift sm:p-7" data-testid={`thread-${t.sellerName}`}>
-      <button className="mb-3 rounded-md py-1 text-sm font-medium text-ultra underline-offset-4 hover:underline xl:hidden" onClick={onBack}>
+      <button className="mb-3 rounded-md py-1 text-sm font-medium text-ultra underline-offset-4 [@media(hover:hover)]:hover:underline xl:hidden" onClick={onBack}>
         Back to all sellers
       </button>
 
@@ -49,7 +49,7 @@ export function Detail(props: {
           {saved > 0 && <span className="num rounded-md bg-mist px-2 py-0.5 text-sm text-ink">{usd(saved)} under budget</span>}
           <StatusChip status={t.status} scam={scam} />
           {t.messages.length > 0 && (
-            <a className="text-sm font-medium text-ultra underline-offset-4 hover:underline" href={`/api/threads/${t.id}/transcript`} download>
+            <a className="text-sm font-medium text-ultra underline-offset-4 [@media(hover:hover)]:hover:underline" href={`/api/threads/${t.id}/transcript`} download>
               Download transcript
             </a>
           )}

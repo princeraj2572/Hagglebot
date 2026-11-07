@@ -28,7 +28,7 @@ export function lastMove(t: Thread): string | null {
   return prev !== null && price > prev ? `Hagglebot raised the offer to ${usd(price)} (from ${usd(prev)})` : `Hagglebot offers ${usd(price)}`;
 }
 
-const EASE = "duration-[450ms] ease-[cubic-bezier(0.23,1,0.32,1)] motion-reduce:transition-none";
+const EASE = "duration-300 ease-[cubic-bezier(0.23,1,0.32,1)] motion-reduce:transition-none";
 const ASK_Y = "26%";
 const OFFER_Y = "74%";
 

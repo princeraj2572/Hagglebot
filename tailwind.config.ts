@@ -45,6 +45,9 @@ const config: Config = {
         "sheet-in": "sheet-in 240ms cubic-bezier(0.23,1,0.32,1) both",
         "drawer-in": "drawer-in 260ms cubic-bezier(0.23,1,0.32,1) both",
       },
+      transitionTimingFunction: {
+        "out-strong": "cubic-bezier(0.23, 1, 0.32, 1)",
+      },
       fontFamily: {
         display: ["var(--font-display)", "system-ui", "sans-serif"],
         serif: ["var(--font-display)", "system-ui", "sans-serif"],

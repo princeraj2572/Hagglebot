@@ -296,7 +296,7 @@ export function NegotiationsPanel(props: {
                   {liveCount > 0 ? <><span className="num text-ink">{liveCount}</span> live</> : <><span className="num text-ink">{walked}</span> walked away</>}
                 </span>
                 {dealThreads.length > 0 && (
-                  <button className="font-medium text-ultra underline-offset-4 hover:underline" onClick={() => setView("deals")}>
+                  <button className="font-medium text-ultra underline-offset-4 [@media(hover:hover)]:hover:underline" onClick={() => setView("deals")}>
                     {paid > 0 ? `${paid} paid · ` : ""}{dealThreads.length} {dealThreads.length === 1 ? "deal" : "deals"} ready to pay
                   </button>
                 )}

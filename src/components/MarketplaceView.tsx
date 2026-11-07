@@ -173,13 +173,13 @@ export function MarketplaceView(props: {
       </button>
     );
     const viewLink = href && (
-      <a href={href} target="_blank" rel="noopener noreferrer" className="text-[13px] font-semibold text-ultra underline-offset-4 hover:underline">
+      <a href={href} target="_blank" rel="noopener noreferrer" className="text-[13px] font-semibold text-ultra underline-offset-4 [@media(hover:hover)]:hover:underline">
         View
       </a>
     );
     const similarBtn = (
       <button
-        className={layout === "card" ? "py-0.5 text-left text-[13px] font-medium text-ultra underline-offset-4 hover:underline" : "text-sm font-medium text-ultra underline-offset-4 hover:underline"}
+        className={layout === "card" ? "py-0.5 text-left text-[13px] font-medium text-ultra underline-offset-4 [@media(hover:hover)]:hover:underline" : "text-sm font-medium text-ultra underline-offset-4 [@media(hover:hover)]:hover:underline"}
         onClick={() => similar(l)}
       >
         {layout === "card" ? "Find similar you can negotiate" : "Similar"}

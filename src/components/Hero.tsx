@@ -68,13 +68,13 @@ function Replay() {
         {/* right of the budget line is never entered */}
         <div className="absolute inset-y-0 right-0 rounded-r-md" style={{ left: `${pct(BUDGET)}%`, backgroundImage: "repeating-linear-gradient(135deg, rgba(205,87,53,.22) 0 1px, transparent 1px 8px)" }} />
         <div className="absolute inset-x-0 top-1/2 h-px bg-line" />
-        <div className="absolute top-1/2 h-1 -translate-y-1/2 rounded-full bg-ultra/15 transition-[left,width] duration-700 ease-out motion-reduce:transition-none" style={{ left: `${pct(OFFERS[i]!)}%`, width: `${pct(FERDI[i]!) - pct(OFFERS[i]!)}%` }} />
+        <div className="absolute top-1/2 h-1 -translate-y-1/2 rounded-full bg-ultra/15 transition-[left,width] duration-700 ease-out-strong motion-reduce:transition-none" style={{ left: `${pct(OFFERS[i]!)}%`, width: `${pct(FERDI[i]!) - pct(OFFERS[i]!)}%` }} />
         <div className="absolute inset-y-0 w-px bg-ink/60" style={{ left: `${pct(BUDGET)}%` }} />
         {[
           { price: FERDI[i]!, color: "bg-[#F5A524]" },
           { price: OFFERS[i]!, color: "bg-ultra" },
         ].map((d, k) => (
-          <span key={k} className="absolute top-1/2 transition-[left] duration-700 ease-out motion-reduce:transition-none" style={{ left: `${pct(d.price)}%` }}>
+          <span key={k} className="absolute top-1/2 transition-[left] duration-700 ease-out-strong motion-reduce:transition-none" style={{ left: `${pct(d.price)}%` }}>
             <i className={`absolute left-0 top-0 block h-3.5 w-3.5 -translate-x-1/2 -translate-y-1/2 rounded-full ${d.color} ${done ? "ring-4 ring-ink/10" : ""}`} />
             <span className="num absolute left-0 top-4 -translate-x-1/2 text-[11px]">${d.price}</span>
           </span>
