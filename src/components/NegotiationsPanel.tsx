@@ -164,14 +164,21 @@ export function NegotiationsPanel(props: {
       </div>
 
       {!started ? (
-        <div className="rounded-md border border-dashed border-line bg-paper p-6">
-          <h3 className="text-lg font-semibold">Ready to negotiate</h3>
-          <p className="mt-1 text-sm text-muted">
-            {want.sellers.length === 0
-              ? "Add at least one seller in the sidebar, then press Negotiate."
-              : `Hagglebot will chat with ${want.sellers.length} seller${want.sellers.length === 1 ? "" : "s"} at once. Your budget of ${usd(want.maxPrice)} is never shown to them. Press Negotiate to start.`}
-          </p>
-          <ListingsPanel sellers={want.sellers} threads={[]} />
+        <div className="space-y-5">
+          {listingCount > 0 && (
+            <div className="space-y-2">
+              <h3 className="text-lg font-semibold">Real listings found ({listingCount})</h3>
+              <ListingsPanel sellers={want.sellers} threads={[]} />
+            </div>
+          )}
+          <div className="rounded-md border border-dashed border-line bg-paper p-6">
+            <h3 className="text-lg font-semibold">Ready to negotiate</h3>
+            <p className="mt-1 text-sm text-muted">
+              {want.sellers.length === 0
+                ? "Add at least one seller in the sidebar, then press Negotiate."
+                : `Hagglebot will chat with ${want.sellers.length} seller${want.sellers.length === 1 ? "" : "s"} at once. Your budget of ${usd(want.maxPrice)} is never shown to them. Press Negotiate to start.`}
+            </p>
+          </div>
         </div>
       ) : (
         <>
@@ -215,9 +222,9 @@ export function NegotiationsPanel(props: {
           <div role="tablist" aria-label="Negotiation views" className="flex gap-1 border-b border-line">
             {(
               [
+                ...(listingCount > 0 ? ([["listings", `Listings (${listingCount})`]] as const) : []),
                 ["conversations", `Conversations (${shown.length})`],
                 ["deals", deals.length > 0 ? `Deals (${deals.length})` : "Deals"],
-                ...(listingCount > 0 ? ([["listings", `Listings (${listingCount})`]] as const) : []),
               ] as const
             ).map(([id, label]) => (
               <button
