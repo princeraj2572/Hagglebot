@@ -98,7 +98,7 @@ export function WantsPanel(props: {
               <button
                 onClick={() => onSelect(w.id)}
                 aria-pressed={selected}
-                className={`relative flex w-full items-start gap-3 rounded-xl px-4 py-3 text-left transition-[background-color,box-shadow] duration-150 ${
+                className={`relative flex w-full items-start gap-3 rounded-xl px-4 py-3 text-left transition-[background-color,box-shadow,transform] duration-150 ease-out-strong active:scale-[0.99] ${
                   selected
                     ? "bg-paper shadow-lift before:absolute before:bottom-3 before:left-0 before:top-3 before:w-1 before:rounded-full before:bg-ultra"
                     : "[@media(hover:hover)]:hover:bg-paper/60"
@@ -137,7 +137,7 @@ export function WantsPanel(props: {
                   <div className="flex items-start justify-between gap-2">
                     <span className="min-w-0 break-words font-semibold leading-tight">{b.name}</span>
                     <button
-                      className="-mr-1 -mt-0.5 shrink-0 rounded-full p-1 text-muted transition-colors [@media(hover:hover)]:hover:bg-mist [@media(hover:hover)]:hover:text-scam"
+                      className="-mr-1 -mt-0.5 shrink-0 rounded-full p-1 text-muted transition-[background-color,color,transform] duration-150 active:scale-90 [@media(hover:hover)]:hover:bg-mist [@media(hover:hover)]:hover:text-scam"
                       aria-label={`Delete bundle ${b.name}`}
                       onClick={() => run(() => api(`/api/bundles/${b.id}`, "DELETE"))}
                     >

@@ -21,7 +21,7 @@ export function Topbar(props: {
   return (
     <header className="sticky top-2 z-30 mx-auto w-full max-w-7xl px-3 pt-3 sm:px-5 sm:pt-4">
       <div className="grid h-14 grid-cols-[auto_1fr_auto] items-center gap-2 rounded-xl border border-line bg-paper px-3 shadow-lift sm:gap-4 sm:px-4">
-        <button onClick={() => onNavigate("home")} title="Home" className="flex items-center gap-2 rounded-lg text-[15px] font-semibold tracking-tight">
+        <button onClick={() => onNavigate("home")} title="Home" className="flex items-center gap-2 rounded-lg text-[15px] font-semibold tracking-tight transition-transform duration-150 ease-out-strong active:scale-95">
           <span aria-hidden className="flex h-6 w-6 items-center justify-center rounded-md bg-ink text-xs font-bold text-white">H</span>
           <span className="sr-only sm:not-sr-only">Hagglebot</span>
         </button>
@@ -32,7 +32,7 @@ export function Topbar(props: {
               key={it.id}
               aria-current={page === it.id ? "page" : undefined}
               onClick={() => onNavigate(it.id)}
-              className={`rounded-md px-2 py-1.5 font-medium transition-colors duration-150 sm:px-3 ${
+              className={`rounded-md px-2 py-1.5 font-medium transition-[background-color,color,transform] duration-150 ease-out-strong active:scale-[0.96] sm:px-3 ${
                 page === it.id ? "bg-mist text-ink" : "text-muted [@media(hover:hover)]:hover:text-ink"
               }`}
             >

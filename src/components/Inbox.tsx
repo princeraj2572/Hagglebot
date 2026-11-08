@@ -49,7 +49,7 @@ export function Inbox(props: {
             <button
               onClick={() => onSelect(t.id)}
               aria-current={selected}
-              className={`flex w-full items-start gap-3 rounded-xl p-3.5 text-left transition-[background-color,box-shadow] duration-150 ease-out-strong ${
+              className={`flex w-full items-start gap-3 rounded-xl p-3.5 text-left transition-[background-color,box-shadow,transform] duration-150 ease-out-strong active:scale-[0.99] ${
                 selected ? "bg-paper shadow-lift ring-1 ring-ultra/25" : "[@media(hover:hover)]:hover:bg-paper/70"
               }`}
             >

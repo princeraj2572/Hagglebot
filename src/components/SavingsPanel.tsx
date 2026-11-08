@@ -45,7 +45,7 @@ export function SavingsPanel({ threads, budget }: { threads: Thread[]; budget: n
   return (
     <section aria-label="Savings" className="min-w-0">
       <button
-        className="inline-flex items-center gap-2 rounded-md bg-paper px-4 py-2 text-sm font-semibold transition-colors duration-150 [@media(hover:hover)]:hover:bg-mist"
+        className="inline-flex items-center gap-2 rounded-md bg-paper px-4 py-2 text-sm font-semibold transition-[background-color,transform] duration-150 ease-out-strong active:scale-[0.98] [@media(hover:hover)]:hover:bg-mist"
         aria-expanded={open}
         onClick={() => setOpen((v) => !v)}
       >

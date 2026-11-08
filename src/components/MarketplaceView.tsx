@@ -232,7 +232,7 @@ export function MarketplaceView(props: {
   ];
 
   const chip = (active: boolean) =>
-    `shrink-0 rounded-md px-3.5 py-1.5 text-sm font-semibold transition-colors duration-150 ${
+    `shrink-0 rounded-md px-3.5 py-1.5 text-sm font-semibold transition-[background-color,color,transform] duration-150 ease-out-strong active:scale-[0.97] ${
       active ? "bg-ink text-white" : "bg-paper text-ink [@media(hover:hover)]:hover:bg-mist"
     }`;
 

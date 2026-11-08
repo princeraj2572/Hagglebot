@@ -202,7 +202,7 @@ export function Dashboard() {
         <nav className={`mb-4 flex gap-1 border-b border-line lg:hidden `} aria-label="Sections">
           {TABS.map((t) => (
             <button key={t.id} onClick={() => setTab(t.id)} aria-current={tab === t.id}
-              className={`flex-1 border-b-2 px-3 py-2 text-sm font-medium ${
+              className={`flex-1 border-b-2 px-3 py-2 text-sm font-medium transition-[color,border-color,transform] duration-150 ease-out-strong active:scale-[0.97] ${
                 tab === t.id ? "border-ultra text-ultra" : "border-transparent text-muted"
               }`}>
               {t.id === "negotiation" && page === "marketplace" ? "Marketplace" : t.label}
@@ -228,7 +228,7 @@ export function Dashboard() {
                 preset={preset}
               />
             </aside>
-            <main className={`min-w-0 p-1 sm:p-3 ${tab === "negotiation" ? "" : "hidden lg:block"}`}>
+            <main key={page} className={`min-w-0 p-1 motion-safe:animate-fade-in sm:p-3 ${tab === "negotiation" ? "" : "hidden lg:block"}`}>
               {page === "marketplace" ? (
                 <MarketplaceView key={selected?.id ?? "none"} want={selected} canAdd={liveCount === 0} run={run} onError={setError} onBought={() => { setFocus({ view: "deals" }); setPage("negotiate"); }} onGoToWant={() => setPage("negotiate")} />
               ) : (
