@@ -16,6 +16,8 @@ const TAGLINE: Record<string, string> = {
   "Wholesale Wei": "Bulk and quick",
   "Cash-Only Carl": "Prefers transfers",
   "Neighbor Nina": "Friendly local",
+  "Injection Ivy": "Attacks the AI",
+  "Live seller": "A real person",
 };
 
 /** "Shady Sam 2" is the second Shady Sam: look up the personality by the name without the number. */

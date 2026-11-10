@@ -2,6 +2,7 @@ import { PERSONAS, scaledPersona } from "../lib/sellers/personas";
 import { listCategories, searchListings, type Category, type Page, type SearchOptions } from "../lib/channel3/search";
 import { LISTING_PREFIX, personaFromEndpoint } from "../lib/sellers/listing";
 import { PersonaSeller } from "../lib/sellers/sellerAgent";
+import { HUMAN_PERSONA, HumanSeller } from "../lib/sellers/humanSeller";
 import { openDb } from "./db";
 import { PaymentService } from "./payments";
 import { Repo } from "./repo";
@@ -29,6 +30,7 @@ export function buildServices(env: Record<string, string | undefined> = process.
     stepDelayMs: Number.isFinite(delay) && delay >= 0 ? Math.min(delay, 30_000) : 700,
     log: (m, e) => console.error(m, e),
     sellerFor: (contact, initialAsk, budget) => {
+      if (contact.persona === HUMAN_PERSONA) return new HumanSeller(contact.id, contact.name, `${contact.wantId}:${contact.id}`);
       if (contact.endpoint.startsWith(LISTING_PREFIX)) return new PersonaSeller(personaFromEndpoint(contact.endpoint), null, initialAsk);
       const persona = PERSONAS.find((p) => p.id === contact.persona);
       if (!persona) throw new Error(`Unknown seller persona "${contact.persona}"`);

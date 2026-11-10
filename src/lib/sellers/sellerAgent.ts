@@ -110,7 +110,7 @@ export class PersonaSeller implements Seller {
       ];
       return id === "fatima" ? firm[n % firm.length]! : `Sorry, that's too low for me. I can't go that far. My price is ${fmt(m.price)}.`;
     }
-    const own = this.persona.line?.(fmt(m.price), item);
+    const own = this.persona.line?.(fmt(m.price), item, ctx.history.filter((h: Message) => h.from === "seller").length);
     if (own) return own;
     switch (id) {
       case "ferdi":

@@ -361,7 +361,7 @@ export function NegotiationsPanel(props: {
               </div>
               <div className={`min-w-0 ${showDetail ? "" : "hidden xl:block"}`}>
                 {selected && (
-                  <Detail t={selected} budget={want.maxPrice} axis={axis} busy={busy} replay={replaying} run={run} onBack={() => setShowDetail(false)} />
+                  <Detail t={selected} budget={want.maxPrice} axis={axis} busy={busy} replay={replaying} live={want.sellers.some((s) => s.id === selected.sellerId && s.persona === "human")} run={run} onBack={() => setShowDetail(false)} />
                 )}
               </div>
             </div>

@@ -1,4 +1,4 @@
-export type NavPage = "home" | "negotiate" | "marketplace";
+export type NavPage = "home" | "negotiate" | "marketplace" | "copilot" | "scorecard";
 
 /**
  * The one navigation bar, used by the landing page and the dashboard alike: same width, same place,
@@ -17,6 +17,8 @@ export function Topbar(props: {
     { id: "home", label: "Home" },
     { id: "negotiate", label: "Negotiate" },
     ...(marketplace ? [{ id: "marketplace" as const, label: "Marketplace" }] : []),
+    { id: "copilot", label: "Copilot" },
+    { id: "scorecard", label: "Scorecard" },
   ];
   return (
     <header className="sticky top-2 z-30 mx-auto w-full max-w-7xl px-3 pt-3 sm:px-5 sm:pt-4">
@@ -26,13 +28,13 @@ export function Topbar(props: {
           <span className="sr-only sm:not-sr-only">Hagglebot</span>
         </button>
 
-        <nav aria-label="Pages" className="flex min-w-0 items-center justify-center gap-0.5 text-[13px] sm:gap-1 sm:text-sm">
+        <nav aria-label="Pages" className="flex min-w-0 items-center justify-start gap-0.5 overflow-x-auto text-[13px] [scrollbar-width:none] sm:justify-center sm:gap-1 sm:text-sm">
           {items.map((it) => (
             <button
               key={it.id}
               aria-current={page === it.id ? "page" : undefined}
               onClick={() => onNavigate(it.id)}
-              className={`rounded-md px-2 py-1.5 font-medium transition-[background-color,color,transform] duration-150 ease-out-strong active:scale-[0.96] sm:px-3 ${
+              className={`shrink-0 rounded-md px-2 py-1.5 font-medium transition-[background-color,color,transform] duration-150 ease-out-strong active:scale-[0.96] sm:px-3 ${
                 page === it.id ? "bg-mist text-ink" : "text-muted [@media(hover:hover)]:hover:text-ink"
               }`}
             >

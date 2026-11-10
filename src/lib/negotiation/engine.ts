@@ -1,5 +1,6 @@
 import type { LLM } from "../llm/types";
 import { composeBuyerMessage } from "./compose";
+import { detectInjection, injectionNote } from "./injection";
 import { fmt } from "./money";
 import { detectScam } from "./scam";
 import { decide, rulesFor, STYLE_INFO } from "./strategy";
@@ -121,7 +122,8 @@ export async function step(thread: Thread, want: Want, seller: Seller, deps: Eng
   const offer = await composeBuyerMessage(deps.llm, move, want, thread, { comparing });
   push(thread, deps, "buyer", offer.text, move.price, move.type === "opening" ? join(offer.guard, styleNote(want, move.price)) : offer.guard);
   const reply = await seller.respond({ want, history: thread.messages, buyerOffer: move.price });
-  push(thread, deps, "seller", reply.message, reply.price);
+  const injection = detectInjection(reply.message);
+  push(thread, deps, "seller", reply.message, reply.price, injection.length > 0 ? injectionNote(injection) : undefined);
 
   const agreed = reply.action === "accept" ? reply.price : null;
   const scam = detectScam(reply.message, agreed);

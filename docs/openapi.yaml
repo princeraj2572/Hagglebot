@@ -168,7 +168,7 @@ paths:
               properties:
                 persona:
                   type: string
-                  description: Persona id, for example `ferdi`, `fatima`, `chen` or `sam`.
+                  description: Persona id, for example `ferdi`, `fatima`, `chen`, `sam` or `ivy`, or `human` for a live seller on a phone.
                 name:
                   type: string
                   maxLength: 60
@@ -410,6 +410,148 @@ paths:
                 type: string
         "404":
           $ref: "#/components/responses/NotFound"
+
+  /api/threads/{id}/seller:
+    get:
+      tags: [Negotiation]
+      operationId: getLiveSellerView
+      summary: The seller's side of a live ("Beat the bot") negotiation
+      description: |
+        Only for sellers added with persona `human`. Returns the chat without the buyer's guardrail notes
+        (they mention the budget); notes under the seller's own messages, such as caught prompt injections, are kept.
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "200":
+          description: The seller's view.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  item: { type: string }
+                  sellerName: { type: string }
+                  status: { type: string }
+                  yourTurn: { type: boolean, description: True while Hagglebot is waiting for the seller. }
+                  buyerOffer: { type: integer, nullable: true }
+                  messages:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        from: { type: string, enum: [buyer, seller] }
+                        text: { type: string }
+                        price: { type: integer, nullable: true }
+                        at: { type: integer }
+                        guard: { type: string }
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /api/threads/{id}/reply:
+    post:
+      tags: [Negotiation]
+      operationId: replyAsLiveSeller
+      summary: Answer Hagglebot as the live seller
+      description: |
+        `accept` takes Hagglebot's current offer. `counter` needs a price, from `price` or the last $ amount in the message.
+        The message goes through the same scam and prompt-injection checks as any seller's. A live seller who does not
+        reply within 10 minutes pauses the negotiation.
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [message, action]
+              properties:
+                message: { type: string, maxLength: 500 }
+                action: { type: string, enum: [counter, accept, refuse] }
+                price: { type: integer, minimum: 1 }
+      responses:
+        "200":
+          description: The reply was handed to the negotiation.
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+
+  /api/benchmark:
+    get:
+      tags: [Negotiation]
+      operationId: runBenchmark
+      summary: Run simulated negotiations and return the safety scorecard
+      description: Plays `n` negotiations against every persona with random budgets and all styles. Repeatable.
+      parameters:
+        - name: n
+          in: query
+          schema: { type: integer, minimum: 1, maximum: 1000, default: 200 }
+      responses:
+        "200":
+          description: The scorecard.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  runs: { type: integer }
+                  deals: { type: integer }
+                  avgSaved: { type: number }
+                  budgetBreaches: { type: integer }
+                  budgetLeaks: { type: integer }
+                  scamAttempts: { type: integer }
+                  scamDeals: { type: integer }
+                  injectionAttempts: { type: integer }
+                  injectionsFlagged: { type: integer }
+
+  /api/copilot:
+    post:
+      tags: [Negotiation]
+      operationId: draftCopilotMessage
+      summary: Draft the next message for a negotiation you run yourself
+      description: |
+        Haggle copilot for real listings. The chat lives in the browser and is sent back each turn; nothing is sent to
+        any seller. The listing's asking price counts as the seller's first ask.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [item, maxPrice, askingPrice, history]
+              properties:
+                item: { type: string, maxLength: 120 }
+                maxPrice: { type: integer, minimum: 1, maximum: 100000 }
+                style: { type: string, enum: [patient, balanced, quick] }
+                buyerName: { type: string, maxLength: 60 }
+                askingPrice: { type: number, minimum: 1 }
+                history:
+                  type: array
+                  maxItems: 30
+                  items:
+                    type: object
+                    required: [from, text]
+                    properties:
+                      from: { type: string, enum: [buyer, seller] }
+                      text: { type: string, maxLength: 1000 }
+                      price: { type: number, nullable: true }
+      responses:
+        "200":
+          description: The next message to send.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  text: { type: string }
+                  price: { type: integer, nullable: true }
+                  status: { type: string, enum: [negotiating, deal, walked_away] }
+                  notes: { type: array, items: { type: string } }
+        "400":
+          $ref: "#/components/responses/BadRequest"
 
   /api/marketplace/categories:
     get:

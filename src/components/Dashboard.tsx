@@ -2,7 +2,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { DashboardState } from "@/server/state";
 import { api } from "./api";
+import { CopilotView } from "./CopilotView";
 import { MarketplaceView } from "./MarketplaceView";
+import { ScorecardView } from "./ScorecardView";
 import { NegotiationsPanel } from "./NegotiationsPanel";
 import { Hero } from "./Hero";
 import { Topbar, type NavPage } from "./Topbar";
@@ -21,7 +23,7 @@ export function Dashboard() {
   const [state, setState] = useState<DashboardState | null>(null);
   const [selectedWant, setSelectedWant] = useState<string | null>(null);
   const [tab, setTab] = useState<Tab>("negotiation");
-  const [page, setPage] = useState<"negotiate" | "marketplace">("negotiate");
+  const [page, setPage] = useState<Exclude<NavPage, "home">>("negotiate");
   // After buying at the listed price, land on the Deals tab so the next step (pay) is in front of you.
   const [focus, setFocus] = useState<{ view: "deals" } | null>(null);
   // Progress of "find sellers and negotiate for me" for one want, shown on its page.
@@ -199,7 +201,7 @@ export function Dashboard() {
           </p>
         )}
 
-        <nav className={`mb-4 flex gap-1 border-b border-line lg:hidden `} aria-label="Sections">
+        <nav className={`mb-4 flex gap-1 border-b border-line lg:hidden ${page === "copilot" || page === "scorecard" ? "hidden" : ""}`} aria-label="Sections">
           {TABS.map((t) => (
             <button key={t.id} onClick={() => setTab(t.id)} aria-current={tab === t.id}
               className={`flex-1 border-b-2 px-3 py-2 text-sm font-medium transition-[color,border-color,transform] duration-150 ease-out-strong active:scale-[0.97] ${
@@ -210,7 +212,11 @@ export function Dashboard() {
           ))}
         </nav>
 
-        {(
+        {page === "copilot" || page === "scorecard" ? (
+          <main key={page} className="rounded-[28px] border border-line bg-paper p-4 motion-safe:animate-fade-in sm:p-6">
+            {page === "copilot" ? <CopilotView /> : <ScorecardView />}
+          </main>
+        ) : (
 
           <div className="grid grid-cols-1 gap-4 rounded-[28px] border border-line bg-paper p-3 sm:p-4 lg:grid-cols-[17rem_minmax(0,1fr)]">
             <aside className={`min-w-0 rounded-2xl bg-chalk p-3 sm:p-4 ${tab === "wants" ? "" : "hidden lg:block"}`}>

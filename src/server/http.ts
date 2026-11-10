@@ -3,12 +3,12 @@ import { ValidationError } from "./validate";
 
 const MAX_BODY = 8 * 1024;
 
-export async function readJson(req: Request): Promise<unknown> {
+export async function readJson(req: Request, maxBody = MAX_BODY): Promise<unknown> {
   if (!(req.headers.get("content-type") ?? "").includes("application/json")) {
     throw new ValidationError("Content-Type must be application/json");
   }
   const text = await req.text();
-  if (text.length > MAX_BODY) throw new ValidationError("Request body too large");
+  if (text.length > maxBody) throw new ValidationError("Request body too large");
   try {
     return JSON.parse(text);
   } catch {

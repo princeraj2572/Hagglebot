@@ -5,6 +5,7 @@ import { Avatar, tagline } from "./Avatar";
 import { Conversation } from "./Conversation";
 import { usd } from "./format";
 import { Lane, type Axis } from "./Lane";
+import { LiveSellerCard } from "./LiveSellerCard";
 import { StatusChip } from "./StatusChip";
 import { btn, ghost } from "./ui";
 
@@ -15,10 +16,12 @@ export function Detail(props: {
   axis: Axis;
   busy: boolean;
   replay: boolean;
+  /** Played by a person on their phone rather than a simulated persona. */
+  live?: boolean;
   run: (fn: () => Promise<unknown>) => Promise<void>;
   onBack: () => void;
 }) {
-  const { t, budget, axis, busy, replay, run, onBack } = props;
+  const { t, budget, axis, busy, replay, live, run, onBack } = props;
   const scam = t.reason === "scam_detected";
   const guards = t.messages.filter((m) => m.guard).length;
   const saved = t.status === "deal" && t.dealPrice !== null ? budget - t.dealPrice : 0;
@@ -85,6 +88,8 @@ export function Detail(props: {
           </span>
         </div>
       )}
+
+      {live && (t.status === "negotiating" || t.status === "paused") && !replay && <LiveSellerCard threadId={t.id} />}
 
       <div className="mt-4">
         <Lane t={t} budget={budget} axis={axis} />

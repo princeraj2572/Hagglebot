@@ -53,6 +53,7 @@ export function ManagePanel(props: {
             {PERSONAS.map((p) => (
               <option key={p.id} value={p.id}>{p.name}</option>
             ))}
+            <option value="human">Live seller (a person on a phone)</option>
           </select>
           <button className={ghost} disabled={busy} onClick={() => run(() => api(`/api/wants/${w.id}/sellers`, "POST", { persona }))}>
             Add seller

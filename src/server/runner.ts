@@ -220,9 +220,12 @@ export class NegotiationRunner {
           if (delay > 0 && statusOf(thread) === "negotiating") await sleep(delay);
         }
       } catch (err) {
-        // Fail safe: an unexpected error pauses the thread rather than guessing.
-        thread.status = "paused";
-        thread.detail = `Stopped by an error: ${err instanceof Error ? err.message : String(err)}`;
+        // Fail safe: an unexpected error pauses the thread rather than guessing. A thread already ended
+        // (say, withdrawn while a live seller was still typing) keeps its outcome.
+        if (statusOf(thread) === "negotiating" || statusOf(thread) === "paused") {
+          thread.status = "paused";
+          thread.detail = `Stopped by an error: ${err instanceof Error ? err.message : String(err)}`;
+        }
         this.d.log?.(`negotiation ${thread.id} failed`, err);
       } finally {
         repo.saveThread(thread);
