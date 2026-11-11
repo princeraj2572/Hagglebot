@@ -50,7 +50,10 @@ export function SellerChat({ threadId }: { threadId: string }) {
   }, [path]);
 
   const count = view?.messages.length ?? 0;
-  useEffect(() => end.current?.scrollIntoView({ block: "end" }), [count]);
+  // Braces: newer Chrome's scrollIntoView returns a Promise, which React rejects as an effect cleanup.
+  useEffect(() => {
+    end.current?.scrollIntoView({ block: "end" });
+  }, [count]);
 
   const send = async (action: "counter" | "accept" | "refuse") => {
     setBusy(true);
