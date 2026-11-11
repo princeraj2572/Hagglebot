@@ -12,6 +12,18 @@ services:
     envVars:
       - key: NODE_VERSION
         value: "22"
+      # PayPal SANDBOX app credentials. Without them payments fall back to a labelled mock.
+      - key: PAYPAL_CLIENT_ID
+        sync: false
+      - key: PAYPAL_CLIENT_SECRET
+        sync: false
+      - key: PAYPAL_BUYER_EMAIL
+        sync: false
+      # Language model that phrases the messages. Without a key, templates are used.
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: GROQ_API_KEY
+        sync: false
       # Optional: real product listings in the marketplace.
       - key: CHANNEL3_API_KEY
         sync: false
