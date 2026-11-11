@@ -37,7 +37,7 @@ function toResponse(err: unknown): NextResponse {
   const json = (error: string, status: number) => NextResponse.json({ error }, { status });
   if (isNamed(err, "ValidationError")) return json(err.message, 400);
   if (isNamed(err, "RunnerError")) return json(err.message, err.code === "not_found" ? 404 : err.code === "conflict" ? 409 : 400);
-  if (isNamed(err, "Channel3Error")) return json(err.message, 502);
+  if (isNamed(err, "Channel3Error") || isNamed(err, "MarketplaceError")) return json(err.message, 502);
   if (isNamed(err, "PaymentError")) {
     const status = ({ not_configured: 503, not_found: 404, conflict: 409, paypal: 502 } as Record<string, number>)[err.code] ?? 500;
     return json(err.message, status);

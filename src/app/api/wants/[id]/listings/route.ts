@@ -16,7 +16,7 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
     req,
     async () => {
       const { repo, findListings } = getServices();
-      if (!findListings) throw new RunnerError("Real listings need a Channel3 key: set CHANNEL3_API_KEY and restart.", "invalid");
+      if (!findListings) throw new RunnerError("Real listings need a marketplace key: set CHANNEL3_API_KEY, EBAY_CLIENT_ID + EBAY_CLIENT_SECRET, or ETSY_API_KEY and restart.", "invalid");
       const want = repo.getWant(id);
       if (!want) throw new RunnerError("Want not found", "not_found");
       if (repo.listThreads(id).some((t) => t.status === "negotiating")) throw new RunnerError("Wait for the negotiation to finish before adding sellers", "conflict");

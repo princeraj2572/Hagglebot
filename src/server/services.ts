@@ -1,5 +1,7 @@
 import { PERSONAS, scaledPersona } from "../lib/sellers/personas";
-import { listCategories, searchListings, type Category, type Page, type SearchOptions } from "../lib/channel3/search";
+import { listCategories, mergeSources, searchListings, type Category, type Page, type SearchOptions } from "../lib/channel3/search";
+import { searchEbay } from "../lib/ebay/search";
+import { searchEtsy } from "../lib/etsy/search";
 import { LISTING_PREFIX, personaFromEndpoint } from "../lib/sellers/listing";
 import { PersonaSeller } from "../lib/sellers/sellerAgent";
 import { HUMAN_PERSONA, HumanSeller } from "../lib/sellers/humanSeller";
@@ -12,7 +14,7 @@ export interface Services {
   repo: Repo;
   runner: NegotiationRunner;
   payments: PaymentService;
-  /** Real retailer listings from Channel3; null until CHANNEL3_API_KEY is set. */
+  /** Real listings from Channel3, eBay and Etsy (whichever have keys); null until at least one is set. */
   findListings: ((query: string, opts?: Omit<SearchOptions, "limit" | "fetchImpl">) => Promise<Page>) | null;
   /** The marketplace's top-level categories; cached because they rarely change. */
   categories: (() => Promise<Category[]>) | null;
@@ -42,10 +44,23 @@ export function buildServices(env: Record<string, string | undefined> = process.
   const payments = new PaymentService({ repo, runner });
 
   const c3 = env.CHANNEL3_API_KEY?.trim();
-  const findListings = c3 ? (q: string, opts: Omit<SearchOptions, "limit" | "fetchImpl"> = {}) => searchListings(q, c3, { ...opts, limit: 24 }) : null;
+  const ebayId = env.EBAY_CLIENT_ID?.trim();
+  const ebaySecret = env.EBAY_CLIENT_SECRET?.trim();
+  const etsy = env.ETSY_API_KEY?.trim();
+  type Opts = Omit<SearchOptions, "limit" | "fetchImpl" | "pageToken">;
+  const sources: Record<string, (q: string, opts: Opts, pageToken: string | undefined) => Promise<Page>> = {};
+  if (c3) sources.channel3 = (q, o, pageToken) => searchListings(q, c3, { ...o, pageToken, limit: 24 });
+  if (ebayId && ebaySecret) sources.ebay = (q, o, pageToken) => searchEbay(q, ebayId, ebaySecret, { ...o, pageToken, limit: 12 });
+  if (etsy) sources.etsy = (q, o, pageToken) => searchEtsy(q, etsy, { ...o, pageToken, limit: 12 });
+  const findListings =
+    Object.keys(sources).length > 0
+      ? (q: string, { pageToken, ...o }: Omit<SearchOptions, "limit" | "fetchImpl"> = {}) =>
+          mergeSources(Object.fromEntries(Object.entries(sources).map(([n, s]) => [n, (t: string | undefined) => s(q, o, t)])), pageToken)
+      : null;
   let cached: { at: number; list: Category[] } | null = null;
-  const categories = c3
+  const categories = findListings
     ? async () => {
+        if (!c3) return []; // categories come from Channel3; eBay and Etsy are searched by text only
         if (!cached || Date.now() - cached.at > 3_600_000) cached = { at: Date.now(), list: await listCategories(c3) };
         return cached.list;
       }

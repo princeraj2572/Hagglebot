@@ -51,7 +51,7 @@ export function NegotiationsPanel(props: {
   bundle: DashboardState["bundles"][number] | undefined;
   /** Every bundle, for the manage drawer. */
   bundles: DashboardState["bundles"];
-  /** True when a Channel3 key is set, so real listings can be added. */
+  /** True when a marketplace key (Channel3, eBay or Etsy) is set, so real listings can be added. */
   listings: boolean;
   busy: boolean;
   /** True when the button redoes everything (Restart); false when it only starts new sellers or a first run. */

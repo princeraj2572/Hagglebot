@@ -26,7 +26,7 @@ export function ListingsPanel({ sellers, threads }: { sellers: Seller[]; threads
   return (
     <section aria-label="Marketplace listings" className="space-y-3">
       <p className="text-sm text-muted">
-        Real listings from Channel3. Prices and stores are real; the haggling is simulated and no store is contacted.
+        Real listings from Channel3, eBay or Etsy. Prices and stores are real; the haggling is simulated and no store is contacted.
       </p>
       <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
         {items.map(({ seller, l }) => {

@@ -19,7 +19,34 @@ export class Channel3Error extends Error {
   }
 }
 
-const URL_SEARCH = "https://api.trychannel3.com/v1/search";
+/** A failed eBay or Etsy call, with a message safe to show the user. */
+export class MarketplaceError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "MarketplaceError";
+  }
+}
+
+/** One page from every source: each source's results interleaved, and a token that holds each source's own next page. */
+export async function mergeSources(sources: Record<string, (pageToken: string | undefined) => Promise<Page>>, pageToken?: string): Promise<Page> {
+  let state: Record<string, string | null>;
+  try {
+    state = pageToken ? (JSON.parse(pageToken) as Record<string, string | null>) : {};
+  } catch {
+    state = {};
+  }
+  // First page asks every source; later pages only those that still have more.
+  const names = Object.keys(sources).filter((n) => !pageToken || typeof state[n] === "string");
+  const settled = await Promise.allSettled(names.map((n) => sources[n]!(pageToken ? state[n]! : undefined)));
+  const ok = settled.flatMap((s, i) => (s.status === "fulfilled" ? [{ name: names[i]!, page: s.value }] : []));
+  // One failing source should not hide the others' results.
+  if (ok.length === 0 && settled[0]?.status === "rejected") throw settled[0].reason;
+
+  const listings: Listing[] = [];
+  for (let i = 0; ok.some((o) => i < o.page.listings.length); i++) for (const o of ok) if (o.page.listings[i]) listings.push(o.page.listings[i]!);
+  const next = Object.fromEntries(ok.filter((o) => o.page.next).map((o) => [o.name, o.page.next]));
+  return { listings, next: Object.keys(next).length > 0 ? JSON.stringify(next) : null };
+}
 
 interface RawOffer { url?: unknown; domain?: unknown; price?: { price?: unknown; currency?: unknown }; availability?: unknown; condition?: unknown }
 interface RawImage { url?: unknown; cleaned_url?: unknown; is_main_image?: unknown }

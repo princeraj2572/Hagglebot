@@ -23,7 +23,7 @@ pnpm test         # unit and API tests
 pnpm build && pnpm start
 ```
 
-Optional `.env.local` (see `.env.example`): `CHANNEL3_API_KEY` for real listings, `HAGGLEBOT_STEP_DELAY_MS` for pacing. Data lives in `data/hagglebot.db`; `pnpm reset` wipes it.
+Optional `.env.local` (see `.env.example`): `CHANNEL3_API_KEY`, `EBAY_CLIENT_ID` + `EBAY_CLIENT_SECRET` and/or `ETSY_API_KEY` for real listings (each source is searched when its key is set; categories come from Channel3), `HAGGLEBOT_STEP_DELAY_MS` for pacing. Data lives in `data/hagglebot.db`; `pnpm reset` wipes it.
 
 ## Stack
 

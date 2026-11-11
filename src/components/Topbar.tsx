@@ -9,7 +9,7 @@ export function Topbar(props: {
   onNavigate: (p: NavPage) => void;
   live: number;
   total: number;
-  /** The marketplace needs a Channel3 key; without one the link is not shown. */
+  /** The marketplace needs a Channel3, eBay or Etsy key; without one the link is not shown. */
   marketplace: boolean;
 }) {
   const { page, onNavigate, live, total, marketplace } = props;

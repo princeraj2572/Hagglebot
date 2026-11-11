@@ -10,7 +10,7 @@ const SLUG = /^[a-z0-9][a-z0-9-]{0,80}$/;
 export async function POST(req: Request) {
   return handle(req, async () => {
     const { findListings } = getServices();
-    if (!findListings) throw new RunnerError("The marketplace needs a Channel3 key: set CHANNEL3_API_KEY and restart.", "invalid");
+    if (!findListings) throw new RunnerError("The marketplace needs a key: set CHANNEL3_API_KEY, EBAY_CLIENT_ID + EBAY_CLIENT_SECRET, or ETSY_API_KEY and restart.", "invalid");
     const b = (await readJson(req)) as { query?: unknown; category?: unknown; condition?: unknown; minPrice?: unknown; maxPrice?: unknown; pageToken?: unknown };
     const query = typeof b.query === "string" ? b.query.trim().slice(0, 120) : "";
     const category = typeof b.category === "string" && SLUG.test(b.category) ? b.category : undefined;
