@@ -62,6 +62,8 @@ export function NegotiationsPanel(props: {
   onFindProducts?: (() => void) | undefined;
   /** Ask the panel to open a tab once (for example Deals right after a purchase). */
   focus?: { view: "deals" } | null;
+  /** PayPal sandbox checkout settings; null when payments are mocked. */
+  paypal: { clientId: string; buyerEmail: string | null } | null;
   onFocusDone?: () => void;
   /** First-run shortcut: open the New want dialog. */
   onNewWant?: (preset?: Preset) => void;
@@ -71,7 +73,7 @@ export function NegotiationsPanel(props: {
   onChanged: () => void;
   onError: (msg: string) => void;
 }) {
-  const { want, threads, deals, wants, bundle, bundles, listings, busy, restart, autoStatus, onFindProducts, focus, onFocusDone, onNewWant, canNegotiate, onNegotiate, run, onChanged, onError } = props;
+  const { want, threads, deals, wants, bundle, bundles, listings, busy, restart, autoStatus, onFindProducts, focus, paypal, onFocusDone, onNewWant, canNegotiate, onNegotiate, run, onChanged, onError } = props;
 
   // Negotiations that finished before this page opened replay once, so the haggling is visible.
   const seen = useRef(replayed);
@@ -368,7 +370,7 @@ export function NegotiationsPanel(props: {
           ) : view === "listings" ? (
             <ListingsPanel sellers={want.sellers} threads={shown} />
           ) : (
-            <DealsPanel deals={deals} wants={wants} onChanged={onChanged} onError={onError} />
+            <DealsPanel deals={deals} wants={wants} paypal={paypal} onChanged={onChanged} onError={onError} />
           )}
         </>
       )}

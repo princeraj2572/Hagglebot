@@ -4,6 +4,7 @@ import type { Deal, WantRecord } from "@/server/repo";
 import { api } from "./api";
 import { Avatar } from "./Avatar";
 import { usd } from "./format";
+import { PayPalCheckout } from "./PayPalCheckout";
 import { btn } from "./ui";
 
 const LABEL: Record<Deal["status"], string> = {
@@ -17,10 +18,12 @@ const LABEL: Record<Deal["status"], string> = {
 export function DealsPanel(props: {
   deals: Deal[];
   wants: WantRecord[];
+  /** PayPal sandbox checkout settings; null when no credentials are set, and payments are then mocked. */
+  paypal: { clientId: string; buyerEmail: string | null } | null;
   onChanged: () => void;
   onError: (msg: string) => void;
 }) {
-  const { deals, wants, onChanged, onError } = props;
+  const { deals, wants, paypal, onChanged, onError } = props;
   const [confirming, setConfirming] = useState<string | null>(null);
   const [refunding, setRefunding] = useState(false);
   const [paying, setPaying] = useState<string | null>(null);
@@ -41,8 +44,8 @@ export function DealsPanel(props: {
   const refund = async (dealId: string) => {
     setRefunding(true);
     try {
-      // The seller is simulated and always approves; a short wait lets the request read as a request.
-      await new Promise((r) => setTimeout(r, 1500));
+      // A mock refund is instant; a short wait lets the request read as a request.
+      if (!paypal) await new Promise((r) => setTimeout(r, 1500));
       await api(`/api/deals/${dealId}/refund`, "POST");
       setConfirming(null);
       onChanged();
@@ -61,7 +64,7 @@ export function DealsPanel(props: {
       <p className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted">
         <span className="inline-flex items-center gap-2 rounded-md bg-mist px-3 py-1 text-[13px]">
           <span aria-hidden className="h-2 w-2 rounded-full bg-ink/40" />
-          Mock payments. No real money moves.
+          {paypal ? "PayPal sandbox payments. No real money moves." : "Mock payments (no PayPal keys set). No real money moves."}
         </span>
       </p>
 
@@ -123,29 +126,42 @@ export function DealsPanel(props: {
                       Request refund of {usd(d.price)}
                     </button>
                   )}
-                  <p className="mt-1 text-[13px] text-muted">Simulation: the simulated seller always approves. Nothing real was charged, so nothing real is refunded.</p>
+                  <p className="mt-1 text-[13px] text-muted">
+                    {d.captureId && !d.captureId.startsWith("MOCK-")
+                      ? "Refunded in full through the PayPal Payments API (sandbox)."
+                      : "Mock payment: nothing real was charged, so nothing real is refunded."}
+                  </p>
                 </div>
               </dl>
             )}
 
             {d.status === "refunded" && (
               <p className="mt-4 border-t border-dashed border-ink/25 pt-4 text-sm">
-                {d.sellerName} approved the refund (mock: nothing real was charged). The want is open again, so you can negotiate it again.
+                Refunded {usd(d.price)}{d.captureId && !d.captureId.startsWith("MOCK-") ? " through PayPal (sandbox)" : " (mock: nothing real was charged)"}. The want is open again, so you can negotiate it again.
               </p>
             )}
 
-            {(d.status === "awaiting_payment" || d.status === "order_created") && (
-              <div className="mt-3">
-                <button
-                  className={`${btn} w-full bg-ink py-2.5 text-white [@media(hover:hover)]:hover:bg-[#2A2A2A]`}
-                  disabled={paying !== null}
-                  onClick={() => void pay(d.id)}
-                >
-                  {paying === d.id ? "Paying…" : `Confirm and Pay ${usd(d.price)}`}
-                </button>
-                <p className="mt-2 text-sm text-muted">Mock payment: no real money moves. The proof of payment is labelled MOCK.</p>
-              </div>
-            )}
+            {(d.status === "awaiting_payment" || d.status === "order_created") &&
+              (paypal ? (
+                <div className="mt-3">
+                  <PayPalCheckout dealId={d.id} clientId={paypal.clientId} onPaid={onChanged} />
+                  <p className="mt-2 text-sm text-muted">
+                    PayPal sandbox: no real money moves.
+                    {paypal.buyerEmail ? ` Log in with the sandbox buyer account ${paypal.buyerEmail}.` : " Log in with your sandbox buyer account."}
+                  </p>
+                </div>
+              ) : (
+                <div className="mt-3">
+                  <button
+                    className={`${btn} w-full bg-ink py-2.5 text-white [@media(hover:hover)]:hover:bg-[#2A2A2A]`}
+                    disabled={paying !== null}
+                    onClick={() => void pay(d.id)}
+                  >
+                    {paying === d.id ? "Paying…" : `Confirm and Pay ${usd(d.price)}`}
+                  </button>
+                  <p className="mt-2 text-sm text-muted">Mock payment: no real money moves. The proof of payment is labelled MOCK.</p>
+                </div>
+              ))}
           </li>
         ))}
       </ul>

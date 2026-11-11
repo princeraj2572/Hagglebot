@@ -15,6 +15,8 @@ import { GET as getState } from "@/app/api/state/route";
 import { POST as pause } from "@/app/api/threads/[id]/pause/route";
 import { POST as resume } from "@/app/api/threads/[id]/resume/route";
 import { POST as refund } from "@/app/api/deals/[id]/refund/route";
+import { POST as orderRoute } from "@/app/api/deals/[id]/order/route";
+import { POST as captureRoute } from "@/app/api/orders/[orderId]/capture/route";
 import { PERSONAS } from "@/lib/sellers/personas";
 import { PersonaSeller } from "@/lib/sellers/sellerAgent";
 import { NegotiationRunner } from "./runner";
@@ -54,7 +56,7 @@ describe("API", () => {
     await svc.runner.idle();
 
     const s = await state();
-    expect(s.config).toEqual({ listings: false });
+    expect(s.config).toEqual({ listings: false, paypalClientId: null, paypalBuyerEmail: null, llmMode: "template" });
     expect(s.wants[0]!.sellers).toHaveLength(4);
     expect(s.threads.map((t) => [t.sellerName, t.status]).sort()).toEqual([
       ["Chatty Chen", "deal"], ["Fast Ferdi", "deal"], ["Firm Fatima", "walked_away"], ["Shady Sam", "walked_away"],
@@ -254,6 +256,31 @@ describe("API", () => {
       it("answers 404 for an unknown want", async () => {
         expect((await buyNow(post("/api/wants/nope/buy", { listing: L }), ctx({ id: "nope" }))).status).toBe(404);
       });
+    });
+  });
+
+  describe("PayPal and model settings", () => {
+    it("without keys, the PayPal routes answer 503 and never touch a deal", async () => {
+      const { wantId } = await seedWant();
+      await negotiate(post(`/api/wants/${wantId}/negotiate`), ctx({ id: wantId }));
+      await svc.runner.idle();
+      const deal = (await state()).deals.find((d) => d.wantId === wantId)!;
+      expect((await orderRoute(post(`/api/deals/${deal.id}/order`), ctx({ id: deal.id }))).status).toBe(503);
+      expect((await captureRoute(post("/api/orders/ORD-1/capture"), ctx({ orderId: "ORD-1" }))).status).toBe(503);
+      expect((await state()).deals.find((d) => d.id === deal.id)!.status).toBe("awaiting_payment");
+    });
+
+    it("with keys, exposes only the public client id and refuses the mock payment", async () => {
+      svc = buildServices({
+        HAGGLEBOT_DB: ":memory:", HAGGLEBOT_STEP_DELAY_MS: "0",
+        PAYPAL_CLIENT_ID: "sb-client", PAYPAL_CLIENT_SECRET: "sb-secret", PAYPAL_BUYER_EMAIL: "buyer@example.com", GEMINI_API_KEY: "k",
+      });
+      setServicesForTest(svc);
+      const s = await state();
+      expect(s.config).toEqual({ listings: false, paypalClientId: "sb-client", paypalBuyerEmail: "buyer@example.com", llmMode: "llm" });
+      expect(JSON.stringify(s)).not.toContain("sb-secret");
+      expect(svc.payments.paypalEnabled).toBe(true);
+      expect((await payRoute(post("/api/deals/nope/pay"), ctx({ id: "nope" }))).status).toBe(409);
     });
   });
 

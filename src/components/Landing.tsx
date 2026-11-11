@@ -19,7 +19,7 @@ const STEPS = [
   { title: "Say what you want", text: "Type the item and the most you would pay. Pick how hard to haggle: patient, balanced or quick. Your budget is never shown to a seller." },
   { title: "Let it find sellers", text: "With 'Find sellers and negotiate for me' ticked, Hagglebot searches the marketplace, adds the best offers and starts. Or open the Marketplace tab, check each listing's condition and negotiate the ones you like." },
   { title: "Watch it negotiate", text: "Every seller is a live conversation. The price scale shows each ask and offer, and a note beside a message explains the rule that shaped it. Some sellers will try to scam you: Hagglebot walks away." },
-  { title: "Pay, or ask first", text: "A deal inside your budget appears under Deals. Confirm and Pay completes a mock payment and withdraws from the other sellers. Turn on 'Ask me before accepting a price' to approve each deal yourself." },
+  { title: "Pay, or ask first", text: "A deal inside your budget appears under Deals. Pay with PayPal (sandbox) and Hagglebot sends the seller the proof and withdraws from the other sellers. Turn on 'Ask me before accepting a price' to approve each deal yourself." },
 ];
 
 /** The empty dashboard: a few ready-made things to try and a short walkthrough. */

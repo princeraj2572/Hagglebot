@@ -1,3 +1,7 @@
+import { createLLMFromEnv } from "../lib/llm";
+import type { LLM } from "../lib/llm/types";
+import { createOrdersController, createPaymentsController } from "../lib/paypal/client";
+import { loadPayPalConfig } from "../lib/paypal/config";
 import { PERSONAS, scaledPersona } from "../lib/sellers/personas";
 import { listCategories, mergeSources, searchListings, type Category, type Page, type SearchOptions } from "../lib/channel3/search";
 import { searchEbay } from "../lib/ebay/search";
@@ -18,30 +22,55 @@ export interface Services {
   findListings: ((query: string, opts?: Omit<SearchOptions, "limit" | "fetchImpl">) => Promise<Page>) | null;
   /** The marketplace's top-level categories; cached because they rarely change. */
   categories: (() => Promise<Category[]>) | null;
-  /** Safe to expose to the browser. */
-  publicConfig: { listings: boolean };
+  /** Safe to expose to the browser: the sandbox client id is public by design. */
+  publicConfig: {
+    listings: boolean;
+    /** PayPal sandbox client id for the checkout; null when no credentials are set (payments are then mocked). */
+    paypalClientId: string | null;
+    /** Sandbox buyer account, shown as a hint for which account to log in with. */
+    paypalBuyerEmail: string | null;
+    /** "llm" when a language model phrases the messages, "template" when no model key is set. */
+    llmMode: "llm" | "template";
+  };
 }
 
 export function buildServices(env: Record<string, string | undefined> = process.env): Services {
   const repo = new Repo(openDb(env.HAGGLEBOT_DB ?? "data/hagglebot.db"));
 
+  // The language model only phrases each move; the code decides every price. With no key, templates are used.
+  const haveLlm = Boolean(env.GEMINI_API_KEY?.trim() || env.GROQ_API_KEY?.trim());
+  const llm: LLM | null = haveLlm ? createLLMFromEnv(env) : null;
+
+  let paypal: ReturnType<typeof loadPayPalConfig> | null = null;
+  try {
+    paypal = loadPayPalConfig(env);
+  } catch {
+    paypal = null; // no sandbox credentials: payments are mocked
+  }
+
   const delay = Number(env.HAGGLEBOT_STEP_DELAY_MS ?? 700);
   const runner = new NegotiationRunner({
     repo,
-    llm: null, // mock negotiation: the template negotiator writes every message
+    llm,
     stepDelayMs: Number.isFinite(delay) && delay >= 0 ? Math.min(delay, 30_000) : 700,
     log: (m, e) => console.error(m, e),
     sellerFor: (contact, initialAsk, budget) => {
       if (contact.persona === HUMAN_PERSONA) return new HumanSeller(contact.id, contact.name, `${contact.wantId}:${contact.id}`);
-      if (contact.endpoint.startsWith(LISTING_PREFIX)) return new PersonaSeller(personaFromEndpoint(contact.endpoint), null, initialAsk);
+      if (contact.endpoint.startsWith(LISTING_PREFIX)) return new PersonaSeller(personaFromEndpoint(contact.endpoint), llm, initialAsk);
       const persona = PERSONAS.find((p) => p.id === contact.persona);
       if (!persona) throw new Error(`Unknown seller persona "${contact.persona}"`);
-      return new PersonaSeller(budget ? scaledPersona(persona, budget) : persona, null, initialAsk);
+      return new PersonaSeller(budget ? scaledPersona(persona, budget) : persona, llm, initialAsk);
     },
   });
   runner.recoverInterrupted();
 
-  const payments = new PaymentService({ repo, runner });
+  const payments = new PaymentService({
+    repo,
+    runner,
+    orders: paypal ? createOrdersController(paypal) : null,
+    paymentsApi: paypal ? createPaymentsController(paypal) : null,
+    sellerEmail: paypal?.sellerEmail,
+  });
 
   const c3 = env.CHANNEL3_API_KEY?.trim();
   const ebayId = env.EBAY_CLIENT_ID?.trim();
@@ -66,7 +95,13 @@ export function buildServices(env: Record<string, string | undefined> = process.
       }
     : null;
 
-  return { repo, runner, payments, findListings, categories, publicConfig: { listings: findListings !== null } };
+  return { repo, runner, payments, findListings, categories, publicConfig: {
+      listings: findListings !== null,
+      paypalClientId: paypal?.clientId ?? null,
+      paypalBuyerEmail: paypal?.buyerEmail ?? null,
+      llmMode: haveLlm ? "llm" : "template",
+    },
+  };
 }
 
 const g = globalThis as unknown as { __hagglebot?: Services };

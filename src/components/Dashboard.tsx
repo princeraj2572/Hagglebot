@@ -246,6 +246,7 @@ export function Dashboard() {
                   bundle={state.bundles.find((b) => b.id === selected?.bundleId)}
                   bundles={state.bundles}
                   listings={state.config.listings}
+                  paypal={state.config.paypalClientId ? { clientId: state.config.paypalClientId, buyerEmail: state.config.paypalBuyerEmail } : null}
                   busy={busy}
                 restart={restarting}
                 onFindProducts={state.config.listings ? () => setPage("marketplace") : undefined}
