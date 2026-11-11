@@ -13,10 +13,12 @@
     "start": "next start",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
+    "paypal:smoke": "tsx scripts/paypal-smoke.ts",
     "reset": "node -e \"require('node:fs').rmSync('data',{recursive:true,force:true})\""
   },
   "dependencies": {
     "@google/generative-ai": "0.24.1",
+    "@paypal/paypal-server-sdk": "2.5.0",
     "ag-grid-community": "36.2.0",
     "ag-grid-react": "36.2.0",
     "better-sqlite3": "12.4.1",

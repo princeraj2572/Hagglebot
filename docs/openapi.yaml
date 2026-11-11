@@ -5,7 +5,7 @@ info:
   description: |
     Hagglebot is an AI buyer agent that haggles with sellers under a budget and pays.
     This is the HTTP API behind its dashboard. It is a single-user, local app: there is no authentication.
-    Negotiation and payments are mocked, and the sellers are simulated. Browser requests from another
+    Payments use the PayPal sandbox (a labelled mock when no credentials are set), and the sellers are simulated. Browser requests from another
     origin are rejected with 403.
 
     Prices are whole US dollars. The budget (`maxPrice`) is never sent to a seller and is never exceeded.
@@ -617,12 +617,75 @@ paths:
         "502":
           $ref: "#/components/responses/UpstreamError"
 
+  /api/deals/{id}/order:
+    post:
+      tags: [Payments]
+      operationId: createOrder
+      summary: Create a PayPal order for a deal
+      description: PayPal Orders v2, sandbox only. The amount always comes from the database, never from the request.
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "200":
+          description: The PayPal order id, for the PayPal checkout.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  orderId:
+                    type: string
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "502":
+          $ref: "#/components/responses/UpstreamError"
+        "503":
+          description: PayPal sandbox credentials are not configured.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /api/orders/{orderId}/capture:
+    post:
+      tags: [Payments]
+      operationId: captureOrder
+      summary: Capture an order the buyer approved in PayPal
+      description: Records the payer id, confirms to the seller, marks the want bought and withdraws from the other sellers. Idempotent.
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: The paid deal.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Deal"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "502":
+          $ref: "#/components/responses/UpstreamError"
+        "503":
+          description: PayPal sandbox credentials are not configured.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
   /api/deals/{id}/pay:
     post:
       tags: [Payments]
       operationId: payDeal
-      summary: Pay a closed deal (mock)
-      description: Nothing real is charged. The amount comes from the database, the payer id is `MOCK-PAYER` and the payment id starts with `MOCK-PAYMENT-`. Idempotent.
+      summary: Pay a closed deal without PayPal (mock)
+      description: Only available when no PayPal credentials are set; with PayPal configured this returns 409 and the deal is paid through the order and capture routes. Nothing real is charged. The amount comes from the database, the payer id is `MOCK-PAYER` and the payment id starts with `MOCK-PAYMENT-`. Idempotent.
       parameters:
         - $ref: "#/components/parameters/Id"
       responses:
@@ -642,7 +705,7 @@ paths:
       tags: [Payments]
       operationId: refundDeal
       summary: Fully refund a paid deal
-      description: A mock refund: reopens the want so it can be negotiated again. Idempotent.
+      description: Refunds a PayPal capture in full through the Payments API (sandbox) and reopens the want. A mock payment is refunded locally. Idempotent.
       parameters:
         - $ref: "#/components/parameters/Id"
       responses:
